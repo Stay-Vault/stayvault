@@ -1,0 +1,22 @@
+skip_local_validator = true
+
+[toolchain]
+anchor_version = "1.2.0"
+solana_version = "4.1.2"
+package_manager = "yarn"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+stayvault = "GJet47eJPYYAxHz5RFvxqVKv3n6d6uWZWPsRUSzjB5ZG"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "cargo test"
+
+[hooks]
