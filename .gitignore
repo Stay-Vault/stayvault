@@ -1,0 +1,10 @@
+.env
+.env.local
+**/*-keypair.json
+wallet*.json
+test-ledger/
+.DS_Store
+target/
+.anchor/
+node_modules/
+dist/
