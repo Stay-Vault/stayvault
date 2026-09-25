@@ -8,5 +8,6 @@
 - 作業ブランチは feat/escrow の1本だけ。新しいブランチを切る提案をしない
 - anchor deploy は更新権限のある端末でしか実行しない（CLAUDE.md の「更新権限のある財布」を見る）
 - 鍵ファイル（id.json、stayvault-keypair.json、wallet-demo.json、*-backup.json）をコミットしない。内容を表示・貼り付けしない
+- 例外: app/demo-public.json だけは意図的に公開してよい（詳細は CLAUDE.md）
 
 手順書は `docs/escrow-guide-windows.md`。

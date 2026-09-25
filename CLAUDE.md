@@ -35,3 +35,5 @@ Solana上の家賃エスクロー。親が全週分を入金し、入居確認�
 - 鍵のバックアップ（*-backup.json）は .gitignore に当てはまらない。リポジトリの中に置かない
 - wallet-demo.json は端末ごとに scripts/setup-demo.mjs で作る
 - Windows では Gemini、Mac では Claude Code を使う。どちらもこのファイルの決まりに従う
+- 例外: app/demo-public.json は審査員向けに意図的に公開する devnet 専用のデモ財布。コミットしてよい。作り直すときは scripts/make-public-demo.mjs を使う
+- ~/.config/solana/id.json は更新権限とテスト用USDCの発行権限を持つので、どんな理由でも公開しない。demo-public.json に含めない

@@ -1,7 +1,6 @@
-# stayvault
 ## Live demo
 
-**Try it:** [https://Stay-Vault.github.io/stayvault/](https://Stay-Vault.github.io/stayvault/)
+**Try it:** https://<organization>.github.io/stayvault/
 
 The demo runs on Solana **devnet** against the deployed StayVault escrow program
 (`GJet47eJPYYAxHz5RFvxqVKv3n6d6uWZWPsRUSzjB5ZG`). Login and bank connection screens are mocks;
@@ -24,5 +23,3 @@ They are published on purpose so that anyone can try the demo without installing
 They hold only devnet SOL and a test token with no real value, and are never used on mainnet.
 In production, the parent signs with their own wallet and the operator signs from their own dashboard.
 If the demo stops because the balance ran out, please watch the demo video above.
-
-StayVault is a Solana-based escrow solution for international student rent. Parents deposit USDC, funds are released automatically for rent, and accommodation providers receive AUD—reducing payment risk for everyone.

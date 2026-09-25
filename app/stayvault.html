@@ -229,7 +229,15 @@ const ATA = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 const DEMO_INTERVAL = 10n;      // デモでは10秒を1週として扱う
 const DEMO_DEADLINE = 600n;     // 入居確認の期限：作成から10分
 
-const cfg = await (await fetch("./wallet-demo.json")).json();
+// 手元の開発では wallet-demo.json、公開版（GitHub Pages）では demo-public.json を使う
+async function loadCfg() {
+  for (const f of ["./wallet-demo.json", "./demo-public.json"]) {
+    const r = await fetch(f, { cache: "no-store" });
+    if (r.ok) { console.log("demo config:", f); return r.json(); }
+  }
+  throw new Error("wallet-demo.json も demo-public.json も見つかりません");
+}
+const cfg = await loadCfg();
 const conn = new Connection(cfg.rpc, "confirmed");
 const PID = new PublicKey(cfg.programId), MINT = new PublicKey(cfg.mint);
 const parent = Keypair.fromSecretKey(Uint8Array.from(cfg.parent));
