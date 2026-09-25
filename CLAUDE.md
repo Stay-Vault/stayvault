@@ -30,7 +30,7 @@ Solana上の家賃エスクロー。親が全週分を入金し、入居確認�
 - anchor build / anchor keys sync はどちらの端末でもよい。keys sync の前に solana address -k target/deploy/stayvault-keypair.json で上の ID が出ることを確かめる
 - DeclaredProgramIdMismatch やID不一致のエラーが出たら、keys sync で ID を書き換えて直そうとしない。まずその端末の鍵ファイルの ID を確かめる
 - anchor deploy は更新権限のある端末だけで実行する。デプロイ前に必ず git pull と anchor build をする
-- 更新権限のある財布: 未定（最初のデプロイのあと、端末名と solana address の値をここに書く）
+- 更新権限のある財布: Windows (~/.config/solana/id.json、アドレス 9o5Cn87tuPi5JSX5kAg9YPxSnr71pFr9cm1BXUT8LszU)
 - Git に入らないもの: ~/.config/solana/id.json、target/deploy/stayvault-keypair.json、app/wallet-demo.json。どれも秘密鍵入りなので絶対にコミットしない
 - 鍵のバックアップ（*-backup.json）は .gitignore に当てはまらない。リポジトリの中に置かない
 - wallet-demo.json は端末ごとに scripts/setup-demo.mjs で作る
