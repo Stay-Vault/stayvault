@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>StayVault — 家賃の送金</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Figtree:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F3F5F8;--panel:#FFF;--ink:#16213A;--sub:#5B6478;--line:#DDE2EA;--jac:#6D4FA3;--jac-soft:#EDE7F7;--ok:#2E8A68;--ok-soft:#E2F2EB;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1524;--panel:#172035;--ink:#E8ECF4;--sub:#9AA3B8;--line:#2A3550;--jac:#A98BE0;--jac-soft:#2A2344;--ok:#5BC39A;--ok-soft:#173A30}}
+:root[data-theme="dark"]{--bg:#0F1524;--panel:#172035;--ink:#E8ECF4;--sub:#9AA3B8;--line:#2A3550;--jac:#A98BE0;--jac-soft:#2A2344;--ok:#5BC39A;--ok-soft:#173A30}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--bg)}
+body{font-family:"Zen Kaku Gothic New",system-ui,sans-serif;color:var(--ink);line-height:1.7;font-size:15px}
+.num{font-family:"Figtree","Zen Kaku Gothic New",sans-serif;font-feature-settings:"tnum"}
+.app{max-width:440px;margin:0 auto;min-height:100%;background:var(--panel);display:flex;flex-direction:column}
+@media(min-width:480px){.app{margin:24px auto;min-height:auto;border:1px solid var(--line);border-radius:22px;overflow:hidden}}
+.top{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.back{border:0;background:none;color:var(--ink);font-size:22px;width:32px;cursor:pointer;visibility:hidden}
+.back.show{visibility:visible}
+.logo{font-family:Figtree;font-weight:800;font-size:18px;letter-spacing:-.02em}.logo span{color:var(--jac)}
+.bar{height:3px;background:var(--line)}.bar i{display:block;height:100%;background:var(--jac);transition:width .3s}
+.screen{display:none;padding:24px 20px 28px;flex:1}.screen.active{display:block}
+h1{font-size:22px;font-weight:700;line-height:1.4;margin-bottom:6px}
+.lead{color:var(--sub);font-size:14px;margin-bottom:20px}
+label{display:block;font-size:13px;color:var(--sub);margin:14px 0 5px}
+input{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:11px;background:var(--bg);color:var(--ink);font:inherit}
+input:focus,button:focus-visible{outline:2px solid var(--jac);outline-offset:1px}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:14px;font:inherit;font-weight:700;cursor:pointer;margin-top:22px;background:var(--jac);color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--ink);margin-top:10px}
+.hero{text-align:center;padding:30px 0 10px}
+.hero .logo{font-size:34px}
+.hero p{color:var(--sub);margin-top:8px}
+.rcp{list-style:none;padding:0}
+.rcp li{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.rcp li[aria-checked="true"]{border:2px solid var(--jac);background:var(--jac-soft)}
+.rcp b{display:block;font-size:15px}.rcp small{color:var(--sub);font-size:12px}
+.tag{font-size:12px;color:var(--ok);background:var(--ok-soft);border-radius:999px;padding:2px 10px;white-space:nowrap}
+.add{border:1px dashed var(--line);border-radius:14px;padding:12px;text-align:center;color:var(--sub);font-size:14px}
+.amt{display:flex;align-items:baseline;gap:8px;border-bottom:2px solid var(--jac);padding:6px 0}
+.amt input{border:0;background:none;padding:0;font-family:Figtree;font-size:40px;font-weight:800;outline:none}
+.amt span{font-weight:700;color:var(--sub)}
+.chips{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.chips button{border:1px solid var(--line);background:none;color:var(--ink);border-radius:999px;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer}
+.conv{margin-top:18px;background:var(--bg);border-radius:12px;padding:14px;font-size:14px}
+.conv .big{font-size:24px;font-weight:800}
+.sched{font-size:13px;color:var(--sub);margin-top:8px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:9px 14px;font-size:14px;padding:16px;border:1px solid var(--line);border-radius:14px}
+dt{color:var(--sub)}dd{text-align:right}
+.total{border-top:1px solid var(--line);padding-top:9px;font-weight:700}
+.note{font-size:12px;color:var(--sub);margin-top:12px}
+.bank{border:2px solid var(--jac);border-radius:16px;padding:18px;margin-top:6px}
+.bank .row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;gap:10px}
+.bank .row:last-child{border:0}
+.bank .row span{color:var(--sub)}
+.copy{border:1px solid var(--line);background:none;color:var(--jac);border-radius:8px;padding:2px 10px;font:inherit;font-size:12px;cursor:pointer;margin-left:8px}
+.warn{margin-top:14px;background:var(--jac-soft);border-radius:12px;padding:12px 14px;font-size:13px}
+.deadline{text-align:center;margin:4px 0 16px;font-size:14px;color:var(--sub)}
+.deadline b{color:var(--ink);font-size:18px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);opacity:0;background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:13px;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.acct{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.acct[aria-checked="true"]{border:2px solid var(--jac);background:var(--jac-soft)}
+.acct small{display:block;color:var(--sub);font-size:12px}
+.err{margin-top:14px;border:1px solid #C0504D;border-radius:12px;padding:12px 14px;font-size:13px;color:#C0504D;display:none}
+.err.show{display:block}
+.months{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin:18px 0 6px}
+.m{height:28px;border-radius:6px;background:var(--jac-soft)}.m.paid{background:var(--ok)}.m.next{border:2px solid var(--jac)}
+.big2{font-family:Figtree;font-size:40px;font-weight:800;line-height:1.1}
+.status{display:inline-block;font-size:12px;color:var(--jac);background:var(--jac-soft);border-radius:999px;padding:3px 12px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><button class="back" id="back" aria-label="戻る" onclick="history_back()">‹</button><div class="logo">Stay<span>Vault</span></div></div>
+  <div class="bar"><i id="bar"></i></div>
+
+  <section class="screen active" data-s="login">
+    <div class="hero"><div class="logo">Stay<span>Vault</span></div><p>入金した家賃は、寮に届くまで守られます。</p></div>
+    <label for="em">メールアドレス</label><input id="em" type="email" value="sugiyama@example.jp">
+    <label for="pw">パスワード</label><input id="pw" type="password" value="password">
+    <button class="btn" onclick="afterLogin()">ログイン</button>
+  </section>
+
+  <section class="screen" data-s="connect">
+    <h1>USDCを持っている口座を接続</h1>
+    <p class="lead">家賃はこの口座からエスクローへ送られます。接続は初回だけです。</p>
+    <div class="acct" aria-checked="true"><div><b>SBI VCトレード</b><small>USDC取扱い</small></div></div>
+    <div class="acct" aria-checked="false"><div><b>その他の取引所</b><small>準備中</small></div></div>
+    <button class="btn" onclick="connected=true;toast('SBI VCトレードを接続しました');afterLogin()">連携を許可する</button>
+  </section>
+
+  <section class="screen" data-s="register">
+    <h1>寮を登録</h1>
+    <p class="lead">お子さまが住む寮と、家賃の振込先を入力してください。振込先は寮の請求書や契約書に書かれています。</p>
+    <label for="dn">寮の名前</label><input id="dn" placeholder="例：Toowong Student House">
+    <label for="dm">週あたりの家賃（AUD）</label><input id="dm" type="number" inputmode="numeric" placeholder="例：320">
+    <label for="dw">支払い曜日</label><select id="dw" style="width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:11px;background:var(--bg);color:var(--ink);font:inherit"><option value="1">毎週月曜日</option><option value="2">毎週火曜日</option><option value="3">毎週水曜日</option><option value="4">毎週木曜日</option><option value="5">毎週金曜日</option><option value="6">毎週土曜日</option><option value="0">毎週日曜日</option></select>
+    <label for="dd">退去予定日</label><input id="dd" type="date" value="2027-03-31">
+    <p style="font-size:13px;font-weight:700;margin-top:22px">寮の振込先（オーストラリアの銀行）</p>
+    <label for="bn">銀行名</label><input id="bn" placeholder="例：Commonwealth Bank">
+    <label for="bb">支店コード（BSB・6桁）</label><input id="bb" inputmode="numeric" maxlength="7" placeholder="例：064-000">
+    <label for="ba">口座番号</label><input id="ba" inputmode="numeric" placeholder="例：12345678">
+    <button class="btn" onclick="addDorm()">登録する</button>
+  </section>
+
+  <section class="screen" data-s="select">
+    <h1>どの寮に支払いますか</h1>
+    <p class="lead">登録済みの寮から選んでください。</p>
+    <ul class="rcp" id="rcp"></ul>
+    <div class="add" style="cursor:pointer" onclick="go('register')">＋ 寮を登録</div>
+    <button class="btn" onclick="go('period')">次へ</button>
+  </section>
+
+  <section class="screen" data-s="period">
+    <h1>何か月分を入れますか</h1>
+    <p class="lead" id="pName"></p>
+    <ul class="rcp" id="mOpts"></ul>
+    <div class="conv">寮に届く合計<div class="big num" id="aud"></div><div class="sched" id="sched"></div></div>
+    <button class="btn" onclick="go('confirm')">確認へ</button>
+  </section>
+
+  <section class="screen" data-s="confirm">
+    <h1>内容の確認</h1>
+    <p class="lead">レートは契約時点で固定され、以後の為替変動は反映されません。</p>
+    <dl class="num">
+      <dt>寮</dt><dd id="cName"></dd>
+      <dt>期間</dt><dd id="cSch"></dd>
+      <dt>寮に届く合計</dt><dd id="cAud"></dd>
+      <dt>固定レート</dt><dd>1 USDC = 1.52 AUD</dd>
+      <dt>エスクロー入金額</dt><dd id="cUsdc"></dd>
+      <dt>手数料</dt><dd id="cFeeT"></dd>
+      <dd style="grid-column:1/-1;text-align:left;font-size:12px;color:var(--sub);background:var(--bg);border-radius:8px;padding:8px 10px">
+        StayVault利用料（入金額の0.5%）：<span id="cSvc"></span><br>
+        SBI VCトレードの送金手数料（1回ごと・固定）：1.00 USDC<br>
+        寮への毎週の支払いに追加の手数料はかかりません
+      </dd>
+      <dt class="total">お支払い額</dt><dd class="total" id="cTot"></dd>
+    </dl>
+    <dl style="margin-top:12px">
+      <dt>振込先</dt><dd id="cBank"></dd>
+      <dt>退去予定日</dt><dd class="num" id="cOut"></dd>
+      <dt>支払元</dt><dd>SBI VCトレード</dd>
+      <dt>入居確認の期限</dt><dd class="num">10/15</dd>
+      <dt>返金先</dt><dd>SBI VCトレード（変更不可）</dd>
+    </dl>
+    <p class="note">期限までに入居が確認されない場合は全額、途中退去した場合はまだ寮に払っていない週の分が返金先に戻ります。StayVaultはこの資金を動かす権限を持ちません。</p>
+        <button class="btn" onclick="pay()">SBI VCトレードから支払う</button>
+  </section>
+
+  <section class="screen" data-s="home">
+    <span class="status" id="st">入居確認待ち</span>
+    <h1 id="hName"></h1>
+    <p class="lead">エスクローで保全中</p>
+    <div class="big2 num" id="hBal"></div>
+    <div class="months" id="months"></div>
+    <p class="note" id="hNext"></p>
+    <dl style="margin-top:16px">
+      <dt>週額</dt><dd class="num" id="hMo"></dd>
+      <dt>返金先</dt><dd>SBI VCトレード</dd>
+    </dl>
+    <button class="btn ghost" onclick="demoPay()">（デモ）支払日を進める</button>
+    <button class="btn ghost" style="color:#B7791F;border-color:#B7791F" onclick="leave()">途中退去を申請</button>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const RATE=1.52;let connected=false,bal=5000,dorms=[],sel=0,months=3,paidM=0,stack=[];
+const $=id=>document.getElementById(id);
+const f=n=>n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+' USDC';
+const order=['login','connect','register','select','period','confirm','home'];
+function go(v,push=true){const cur=document.querySelector('.screen.active').dataset.s;if(push&&cur!==v)stack.push(cur);
+document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.dataset.s===v));
+$('back').classList.toggle('show',!['login','home'].includes(v)&&stack.length>0);
+$('bar').style.width=(order.indexOf(v)/6*100)+'%';
+if(v==='select')renderDorms();if(v==='period')renderMo();if(v==='period'||v==='confirm')calc();if(v==='home')renderHome();window.scrollTo(0,0)}
+function history_back(){const p=stack.pop();if(p)go(p,false)}
+function afterLogin(){if(!connected)return go('connect');if(!dorms.length)return go('register');go('select')}
+function addDorm(){const n=$('dn').value.trim(),m=+$('dm').value,w=+$('dw').value,d=$('dd').value,bn=$('bn').value.trim(),bb=$('bb').value.replace(/\D/g,''),ba=$('ba').value.trim();
+if(!n||!m||!d||!bn||!ba){toast('すべての項目を入力してください');return}if(bb.length!==6){toast('支店コード（BSB）は6桁です');return}
+dorms.push({n,m,w,d,bn,bb:bb.slice(0,3)+'-'+bb.slice(3),ba});sel=dorms.length-1;['dn','dm','bn','bb','ba'].forEach(i=>$(i).value='');toast('登録しました');go('select')}
+function renderDorms(){$('rcp').innerHTML=dorms.map((d,i)=>`<li aria-checked="${i===sel}" onclick="sel=${i};renderDorms()"><div><b>${d.n}</b><small>週 ${d.m.toLocaleString()} AUD・毎週${WD[d.w]}曜 ・ ${d.d.replaceAll('-','/')} 退去予定<br>${d.bn} ・ ****${d.ba.slice(-4)}</small></div></li>`).join('')}
+const WD=['日','月','火','水','木','金','土'];
+function firstPay(){const d=new Date('2026-10-01');while(d.getDay()!==dorms[sel].w)d.setDate(d.getDate()+1);return d}
+function weeksUntil(o){const d=firstPay();let n=0;while(d<o&&n<60){n++;d.setDate(d.getDate()+7)}return Math.max(1,n)}
+function outMonths(){const o=new Date(dorms[sel].d);return Math.max(1,(o.getFullYear()-2026)*12+o.getMonth()-9+(o.getDate()>1?1:0))}
+function weeksFor(mo){const e=new Date('2026-10-01');e.setMonth(e.getMonth()+mo);const o=new Date(dorms[sel].d);return weeksUntil(e<o?e:new Date(o.getTime()+864e5))}
+let selMo=3;
+function renderMo(){const om=outMonths();const opts=[1,3,6,12].filter(m=>m<om).map(m=>({m,l:m+'か月分'}));opts.push({m:om,l:'退去日まで（'+om+'か月）'});if(!opts.some(o=>o.m===selMo))selMo=opts[0].m;
+$('mOpts').innerHTML=opts.map(o=>`<li aria-checked="${o.m===selMo}" onclick="selMo=${o.m};renderMo();calc()"><div><b>${o.l}</b><small>${weeksFor(o.m)}週分の支払い</small></div></li>`).join('')}
+const md=d=>`${d.getMonth()+1}/${d.getDate()}`;
+
+function calc(){const d=dorms[sel];months=weeksFor(selMo);const aud=d.m*months,u=aud/RATE,svc=u*0.005,tot=u+svc+1;
+$('pName').textContent=`${d.n} ・ 週 ${d.m.toLocaleString()} AUD ・ ${d.d.replaceAll('-','/')} 退去予定`;$('aud').textContent=aud.toLocaleString()+' AUD';
+$('sched').textContent=`${md(firstPay())}（${WD[d.w]}）から毎週${WD[d.w]}曜日に${d.m.toLocaleString()} AUDずつ、${months}回に分けて寮へ支払われます`;
+$('cName').textContent=d.n;$('cBank').textContent=`${d.bn} ${d.bb} ****${d.ba.slice(-4)}`;$('cOut').textContent=d.d.replaceAll('-','/');$('cSch').textContent=`${selMo}か月分（${d.m.toLocaleString()} AUD × ${months}週・毎週${WD[d.w]}曜）`;$('cAud').textContent=aud.toLocaleString()+' AUD';
+$('cUsdc').textContent=f(u);$('cSvc').textContent=f(svc);$('cFeeT').textContent=f(svc+1);$('cTot').textContent=f(tot);return tot}
+let busy=false;
+async function pay(){if(busy)return;busy=true;calc();toast('エスクローへ送金しています…');
+try{await SV.create(dorms[sel].m/RATE,months);paidM=0;stack=[];toast('エスクローへ送金しました');go('home')}
+catch(e){console.error(e);toast('送金できませんでした。コンソールのエラーを確認してください')}finally{busy=false}}
+function renderHome(){const d=dorms[sel];const left=(months-paidM)*d.m/RATE;
+$('hName').textContent=d.n;$('hBal').textContent=f(left);$('hMo').textContent=d.m.toLocaleString()+` AUD（毎週${WD[d.w]}曜）`;
+$('st').textContent=paidM===0?'入居確認待ち':paidM>=months?'契約終了':'支払い中';
+$('months').style.gridTemplateColumns=`repeat(${Math.min(months,13)},1fr)`;
+$('months').innerHTML=Array.from({length:months},(_,i)=>`<div class="m${i<paidM?' paid':i===paidM?' next':''}"></div>`).join('');
+$('hNext').textContent=paidM<months?`支払い済み ${paidM} / ${months}週`:'すべての週が寮へ支払われました'}
+async function demoPay(){if(busy||paidM>=months)return;busy=true;
+try{if(paidM===0)await SV.confirmAndRelease();else await SV.release();
+paidM++;renderHome();toast(paidM===1?'入居が確認され、初週分を支払いました':'今週分を寮へ支払いました')}
+catch(e){console.error(e);toast('まだ支払日ではありません（デモは10秒で1週）')}finally{busy=false}}
+async function leave(){if(busy)return;busy=true;
+try{const back=(months-paidM)*dorms[sel].m/RATE;await SV.moveOut();months=paidM;renderHome();$('st').textContent='途中退去';toast(f(back)+' を返金しました')}
+catch(e){console.error(e);toast('返金できませんでした。コンソールのエラーを確認してください')}finally{busy=false}}
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}
+go('login',false);
+</script>
+<script type="module">
+// === StayVault エスクロー接続（devnet）===
+// ログイン・口座接続・オフランプはモックのまま。署名は wallet-demo.json のデモ財布で行う
+import { Buffer } from "https://esm.sh/buffer@6.0.3";
+import { Connection, Keypair, PublicKey, Transaction, TransactionInstruction, SystemProgram } from "https://esm.sh/@solana/web3.js@1.98.0";
+
+const TOKEN = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+const ATA = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+const DEMO_INTERVAL = 10n;      // デモでは10秒を1週として扱う
+const DEMO_DEADLINE = 600n;     // 入居確認の期限：作成から10分
+
+const cfg = await (await fetch("./wallet-demo.json")).json();
+const conn = new Connection(cfg.rpc, "confirmed");
+const PID = new PublicKey(cfg.programId), MINT = new PublicKey(cfg.mint);
+const parent = Keypair.fromSecretKey(Uint8Array.from(cfg.parent));
+const operator = Keypair.fromSecretKey(Uint8Array.from(cfg.operator));
+let vault, vaultToken;
+
+const ata = o => PublicKey.findProgramAddressSync([o.toBuffer(), TOKEN.toBuffer(), MINT.toBuffer()], ATA)[0];
+const acc = (pubkey, isWritable = false, isSigner = false) => ({ pubkey, isWritable, isSigner });
+async function ix(name, keys, args = new Uint8Array()) {
+  // Anchorの命令識別子 = sha256("global:<命令名>") の先頭8バイト
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("global:" + name)));
+  return new TransactionInstruction({ programId: PID, keys, data: Buffer.concat([Buffer.from(h.slice(0, 8)), Buffer.from(args)]) });
+}
+async function send(ixs, signers) {
+  const tx = new Transaction().add(...ixs);
+  tx.feePayer = parent.publicKey;
+  const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash();
+  tx.recentBlockhash = blockhash;
+  tx.sign(...signers);
+  const sig = await conn.sendRawTransaction(tx.serialize());
+  await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
+  console.log("tx:", `https://explorer.solana.com/tx/${sig}?cluster=devnet`);
+  return sig;
+}
+const releaseIx = () => ix("release", [acc(vault, true), acc(vaultToken, true), acc(ata(operator.publicKey), true), acc(TOKEN)]);
+
+window.SV = {
+  async create(weeklyUsdc, weeks) {
+    const id = BigInt(Date.now()), now = BigInt(Math.floor(Date.now() / 1000));
+    const buf = new ArrayBuffer(42), dv = new DataView(buf);
+    dv.setBigUint64(0, id, true);                                        // vault_id
+    dv.setBigUint64(8, BigInt(Math.round(weeklyUsdc * 1e6)), true);      // weekly_amount（小数6桁）
+    dv.setUint16(16, weeks, true);                                       // total_weeks
+    dv.setBigInt64(18, now - 15n, true);                                 // first_pay_ts（devnetの時計が数秒遅れても初週を払えるよう15秒前にする）
+    dv.setBigInt64(26, DEMO_INTERVAL, true);                             // interval_secs
+    dv.setBigInt64(34, now + DEMO_DEADLINE, true);                       // confirm_deadline
+    const idLe = new Uint8Array(buf, 0, 8);
+    vault = PublicKey.findProgramAddressSync([Buffer.from("vault"), parent.publicKey.toBuffer(), Buffer.from(idLe)], PID)[0];
+    vaultToken = PublicKey.findProgramAddressSync([Buffer.from("vault_token"), vault.toBuffer()], PID)[0];
+    return send([await ix("create_vault", [
+      acc(parent.publicKey, true, true), acc(operator.publicKey), acc(MINT), acc(ata(parent.publicKey), true),
+      acc(vault, true), acc(vaultToken, true), acc(TOKEN), acc(SystemProgram.programId),
+    ], new Uint8Array(buf))], [parent]);
+  },
+  // 初回：運営者の入居確認と初週の払い出しを1トランザクションで
+  async confirmAndRelease() {
+    return send([await ix("confirm_move_in", [acc(operator.publicKey, false, true), acc(vault, true)]), await releaseIx()], [parent, operator]);
+  },
+  async release() { return send([await releaseIx()], [parent]); },
+  async moveOut() {
+    return send([await ix("move_out", [
+      acc(parent.publicKey, false, true), acc(operator.publicKey, false, true), acc(vault, true),
+      acc(vaultToken, true), acc(ata(parent.publicKey), true), acc(TOKEN),
+    ])], [parent, operator]);
+  },
+};
+console.log("StayVault escrow ready:", PID.toBase58());
+</script>
+</body>
+</html>
