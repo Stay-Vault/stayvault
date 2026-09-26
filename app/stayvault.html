@@ -33,6 +33,9 @@ input:focus,button:focus-visible{outline:2px solid var(--jac);outline-offset:1px
 .hero{text-align:center;padding:30px 0 10px}
 .hero .logo{font-size:34px}
 .hero p{color:var(--sub);margin-top:8px}
+.tabs{display:flex;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px;margin-top:18px}
+.tabs button{flex:1;border:0;background:none;border-radius:9px;padding:9px;font:inherit;font-size:14px;color:var(--sub);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--panel);color:var(--ink);font-weight:700}
 .rcp{list-style:none;padding:0}
 .rcp li{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .rcp li[aria-checked="true"]{border:2px solid var(--jac);background:var(--jac-soft)}
@@ -80,9 +83,23 @@ dt{color:var(--sub)}dd{text-align:right}
 
   <section class="screen active" data-s="login">
     <div class="hero"><div class="logo">Stay<span>Vault</span></div><p>入金した家賃は、寮に届くまで守られます。</p></div>
-    <label for="em">メールアドレス</label><input id="em" type="email" value="sugiyama@example.jp">
-    <label for="pw">パスワード</label><input id="pw" type="password" value="password">
-    <button class="btn" onclick="afterLogin()">ログイン</button>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-in" aria-selected="true" aria-controls="auth-in" onclick="authTab('in')">ログイン</button>
+      <button role="tab" id="tab-up" aria-selected="false" aria-controls="auth-up" onclick="authTab('up')">新規登録</button>
+    </div>
+    <div id="auth-in" role="tabpanel" aria-labelledby="tab-in">
+      <label for="em">メールアドレス</label><input id="em" type="email" autocomplete="off" value="demo@stayvault.app">
+      <label for="pw">パスワード</label><input id="pw" type="password" autocomplete="off" value="stayvault-demo-2026">
+      <p class="note">デモ用のアカウント情報を入力済みです</p>
+      <button class="btn" onclick="afterLogin()">ログイン</button>
+    </div>
+    <div id="auth-up" role="tabpanel" aria-labelledby="tab-up" hidden>
+      <label for="em2">メールアドレス</label><input id="em2" type="email" autocomplete="off" value="demo@stayvault.app">
+      <label for="pw2">パスワード</label><input id="pw2" type="password" autocomplete="off" value="stayvault-demo-2026">
+      <label for="pw3">パスワード（確認用）</label><input id="pw3" type="password" autocomplete="off" value="stayvault-demo-2026">
+      <p class="note">デモ用のアカウント情報を入力済みです</p>
+      <button class="btn" onclick="afterLogin()">登録する</button>
+    </div>
   </section>
 
   <section class="screen" data-s="connect">
@@ -179,6 +196,7 @@ $('bar').style.width=(order.indexOf(v)/6*100)+'%';
 if(v==='select')renderDorms();if(v==='period')renderMo();if(v==='period'||v==='confirm')calc();if(v==='home')renderHome();window.scrollTo(0,0)}
 function history_back(){const p=stack.pop();if(p)go(p,false)}
 function afterLogin(){if(!connected)return go('connect');if(!dorms.length)return go('register');go('select')}
+function authTab(t){['in','up'].forEach(k=>{$('tab-'+k).setAttribute('aria-selected',k===t);$('auth-'+k).hidden=k!==t})}
 function addDorm(){const n=$('dn').value.trim(),m=+$('dm').value,w=+$('dw').value,d=$('dd').value,bn=$('bn').value.trim(),bb=$('bb').value.replace(/\D/g,''),ba=$('ba').value.trim();
 if(!n||!m||!d||!bn||!ba){toast('すべての項目を入力してください');return}if(bb.length!==6){toast('支店コード（BSB）は6桁です');return}
 dorms.push({n,m,w,d,bn,bb:bb.slice(0,3)+'-'+bb.slice(3),ba});sel=dorms.length-1;['dn','dm','bn','bb','ba'].forEach(i=>$(i).value='');toast('登録しました');go('select')}
