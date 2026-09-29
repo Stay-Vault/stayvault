@@ -1,4 +1,5 @@
 # stayvault
+<img src="app/brand/stayvault-logo-horizontal.svg" width="280" alt="StayVault logo: a padlock with a roof-shaped shackle holding a home">
 ## Live demo
 
 **Try it:** [https://Stay-Vault.github.io/stayvault/](https://Stay-Vault.github.io/stayvault/)

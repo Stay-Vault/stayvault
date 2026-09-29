@@ -27,6 +27,8 @@ Solana上の家賃エスクロー。親が全週分を入金し、入居確認�
 - 見た目は Basecoat 1.0.2 の CDN（basecoat.cdn.min.css）で整える。Tailwind やビルドは入れない。色は :root と html.dark の変数で変える
 - 画面の DEMO_WEEK_MS（ミリ秒）と、module 内の DEMO_INTERVAL（秒）は同じ長さにそろえる
 - 模擬の画面には sim-note（Simulated）を付ける。本物の取引は logTx で On-chain activity に記録し、Explorer リンクを出す
+- ロゴは app/brand/ の SVG を使う（最終版 1b：屋根の形の輪の南京錠に、アーチ扉の家。紫1色、Claude Design で調整済み）。48px 以上は stayvault-mark.svg、40px 以下は stayvault-mark-small.svg、文字つきは stayvault-logo-horizontal.svg。形や色を作り直さない。ロゴに緑を使わない
+- アプリ内の文字は Bricolage Grotesque（800）で「Stay」を --ink、「Vault」を --jac。favicon は stayvault.html の <link rel="icon"> に埋め込み済み
 
 ## 2台で作業するときの決まり（1人で Mac と Windows を切り替える）
 - 作業ブランチは feat/escrow の1本。端末を替える前に必ず commit と push、着いたら git pull
