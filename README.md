@@ -13,7 +13,7 @@ the three payment buttons send real devnet transactions.
 4. **(Demo) Advance payment day** – the operator confirms move-in and one week is released (about 10 seconds = 1 week)
 5. **Request move-out** – the parent and operator both sign, and unpaid weeks return to the parent
 
-Open the browser console to see a Solana Explorer link for every transaction.
+Every transaction shows a "View on Solana Explorer" link in the app.
 
 Demo video: <link>
 

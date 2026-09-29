@@ -23,6 +23,10 @@ Solana上の家賃エスクロー。親が全週分を入金し、入居確認�
 - MVPの対象外: 親子2-of-2、自動実行（クランカー）、手数料の徴収、AUDオフランプ、ログインと口座接続（画面はモックのまま）
 - 命令の引数・アカウントの順番を変えたら、app/stayvault.html と scripts/e2e-devnet.mjs の命令組み立て部分も必ず合わせる
 - 動作確認は scripts/e2e-devnet.mjs（devnet 上で5命令を通しで試す）で行う。anchor init が作った LiteSVM のテスト雛形は使っていない
+- 画面の文言は英語（公式ルール第12条）。日本語に戻さない
+- 見た目は Basecoat 1.0.2 の CDN（basecoat.cdn.min.css）で整える。Tailwind やビルドは入れない。色は :root と html.dark の変数で変える
+- 画面の DEMO_WEEK_MS（ミリ秒）と、module 内の DEMO_INTERVAL（秒）は同じ長さにそろえる
+- 模擬の画面には sim-note（Simulated）を付ける。本物の取引は logTx で On-chain activity に記録し、Explorer リンクを出す
 
 ## 2台で作業するときの決まり（1人で Mac と Windows を切り替える）
 - 作業ブランチは feat/escrow の1本。端末を替える前に必ず commit と push、着いたら git pull
