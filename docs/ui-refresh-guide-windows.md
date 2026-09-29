@@ -1,6 +1,6 @@
 # StayVault 画面改修 手順書（Windows・Gemini版）
 
-最終更新: 2026年9月29日（登録済みの寮「Stay-Dorm」を追加、支払元の表示を MetaMask に変更）
+最終更新: 2026年9月29日（登録済みの寮「Stay-Dorm」を追加、支払元の表示を MetaMask に変更、ホーム画面を自動再生つきに作り直し）
 
 **対象読者**: 公開デモ手順書（`public-demo-guide-windows.md`）まで終え、GitHub Pages でデモを公開済みの人。Windows（WSL2 の Ubuntu）で作業する。
 
@@ -9,8 +9,9 @@
 | 変更 | 内容 | 審査との関係 |
 | --- | --- | --- |
 | 英語化 | 画面の文言をすべて英語にする | 公式ルール第12条(a)(i)「全コンテンツは英語」 |
-| Explorer リンク | 取引ごとに「View on Solana Explorer」を画面に出す。ホームに取引履歴（On-chain activity）を置く | UX（ブロックチェーンを活かしたUX）、透明性 |
-| 処理中の表示 | 送金中はボタンにスピナーを出し、他のボタンを押せなくする。次の支払日までの秒数を出す | devnet の待ち時間で固まって見えるのを防ぐ |
+| Explorer リンク | 取引ごとに「View on Solana Explorer」を画面に出す。ホームの取引履歴（History）の各行にも出す | UX（ブロックチェーンを活かしたUX）、透明性 |
+| 処理中の表示 | 送金中はボタンにスピナーを出し、他のボタンを押せなくする | devnet の待ち時間で固まって見えるのを防ぐ |
+| ホーム画面の作り直し | 入居確認と毎週の支払いが自動で進む。段階表示、残高と「寮に支払い済み／今退去したら戻る額」、1年分の帯、次の支払日（実際の日付）、履歴を1画面にまとめる。進めるボタンは「Demo controls」に移して目立たなくする | 「期日に自動で払われ、残りは守られている」という価値を、説明なしで見てわかるようにする |
 | 模擬の明示 | ログイン、MetaMask の接続、AUD 着金に「Simulated」の表示を付ける。本物の取引には「Live on Solana devnet」 | 本物と模擬の境界を審査員が一目でわかる |
 
 見た目は Basecoat 1.0.2（shadcn/ui の見た目を React なしで使えるライブラリ）で整える。CDN のファイルを1行読み込むだけで、ビルドも Tailwind も要らない。単一 HTML・ビルドなしの構成はそのまま。
@@ -118,12 +119,13 @@ Windows 側の Chrome か Edge で `http://localhost:8000/` を開き、`F12` �
 | 3 | 「+ Add another dorm」→ 何も入れずに「Add dorm」 | 未入力の欄が赤くなり、赤い通知が出る。左上の戻るボタンで選択画面に戻る |
 | 4 | 「Continue」を押す | 期間の画面の選択肢が 1 month／3 months／6 months／1 year の4つで、「1 year」（52 weekly payments）が選ばれている。合計 15,600 AUD |
 | 5 | 「Review」を押す | 確認画面に「1 year (52 weeks, every Monday)」、エスクロー入金額 10,263.16 USDC、手数料 51.32 USDC、支払額 10,314.47 USDC と出る。支払元と返金先は MetaMask |
-| 6 | 「Pay from MetaMask」を押す | ボタンにスピナーが出て、下に「Waiting for Solana devnet to confirm…」。数秒でホームに移る |
+| 6 | 「Pay from MetaMask」を押す | ボタンにスピナーと「Locking rent in escrow…」、続いて「Confirming move-in…」。devnet に取引が2回送られるので10秒ほどかかる。ホームに移ると、段階表示は「Deposited」「Moved in」に緑のチェック、「Paying weekly」が現在地。帯の1マス目が緑で、History に「Moved in · week 1 paid」と「Deposited」の2行 |
 | 7 | 画面下の通知の「View on Explorer」を押す | Solana Explorer の devnet で取引が開く |
-| 8 | 「Advance to next rent day (demo)」を押す | 1マス目が緑になる。On-chain activity に「Move-in confirmed, week 1 paid」が増える |
-| 9 | もう1〜2回押す | 押すたびに次のマスが緑になる。「Next rent day in ○s」が出ている間はボタンが押せず、0になると押せる |
-| 10 | 「Request early move-out」を押す | 52週のうち残りのマスが斜線になり、状態が「Moved out」に。ボタンが消える |
-| 11 | On-chain activity の各「View on Solana Explorer」を開く | 4件とも Explorer に表示される |
+| 8 | ホームで何もせず10秒ほど待つ | 2週目が自動で支払われる。「Next payment」が「Mon, Oct 19 · 300 AUD to Stay-Dorm」に進み、History の上に「Week 2 paid」が増える |
+| 9 | さらに30秒ほど待つ | 約10秒ごとに1週分が自動で支払われる。残高が減り、マスが緑になり、History の上に行が増える（表示は新しい2件。古いものは「Show ○ earlier」で開く）。8週分進むと自動で止まり、Demo controls に案内が出る |
+| 9b | Demo controls の「Pause」→「Next week」→「Resume」 | 止めている間は自動で進まない。「Next week」を押すと1週分だけ進む（支払日が来るまで数秒待つことがある）。「Resume」で自動に戻る |
+| 10 | 「Move out early」→ 確認の枠で「Confirm move-out」 | 確認の枠に「寮に残る額」と「MetaMask に戻る額」が出る。確定すると残りのマスが斜線になり、段階表示の最後が「Ended」に変わる。Demo controls は消える |
+| 11 | History の各「Explorer」を開く | すべて Explorer に表示される |
 
 11 まで通ったら、サーバーの窓で `Ctrl + C` を押して止め、`wallet-demo.json` を元に戻す。
 
@@ -176,7 +178,7 @@ code README.md
 | Wallet connection (MetaMask) | Simulated | MetaMask does not open. A devnet demo wallet signs in its place, so judges need no wallet or test tokens |
 | AUD payout to the dorm | Simulated | The operator receives test USDC on devnet. The AUD amount is displayed only. Production needs a licensed Australian off-ramp partner |
 | Sample dorm | Pre-filled | "Stay-Dorm" (300 AUD a week, 1 year, bank C-Bank) is registered so judges can go straight to payment. Bank details are fictional |
-| Timing | Shortened for the demo | One week = 10 seconds, so judges can see several payments in a minute |
+| Timing | Shortened for the demo | One week = 10 seconds. The demo assumes the child has already moved in, so the dorm's move-in confirmation (with week 1) is sent right after the deposit. Payments then run by themselves (up to 8 weeks per run), just as they would on real rent days. "Demo controls" (Pause, Next week) only exist for this demo |
 ```
 
 README の「Open the browser console to see a Solana Explorer link for every transaction.」の1文は、画面に出るようになったので次に書き換える。
@@ -197,7 +199,8 @@ Every transaction shows a "View on Solana Explorer" link in the app.
 - 画面の文言は英語（公式ルール第12条）。日本語に戻さない
 - 見た目は Basecoat 1.0.2 の CDN（basecoat.cdn.min.css）で整える。Tailwind やビルドは入れない。色は :root と html.dark の変数で変える
 - 画面の DEMO_WEEK_MS（ミリ秒）と、module 内の DEMO_INTERVAL（秒）は同じ長さにそろえる
-- 模擬の画面には sim-note（Simulated）を付ける。本物の取引は logTx で On-chain activity に記録し、Explorer リンクを出す
+- ホーム画面の毎週の支払いは自動で進む。1回の自動再生は AUTO_BATCH（8週）で止める。公開用デモ財布の devnet SOL を守るためなので、増やさない
+- 模擬の画面には sim-note（Simulated）を付ける。本物の取引は logTx で History に記録し、Explorer リンクを出す
 ```
 
 `GEMINI.md` の「とくに次の4点」の一覧の最後に、次の1行を足す。
@@ -258,7 +261,9 @@ app/stayvault.html の <script type="module"> の中（window.SV の部分）は
 
 **右上が「Devnet unavailable」になる** → `esm.sh` からの読み込みか、`demo-public.json` の読み込みに失敗している。Console の赤いエラーを見る。`Neither wallet-demo.json nor demo-public.json was found` と出ていれば、`app/demo-public.json` がない（公開デモ手順書の P6）。前の日本語版では同じエラーが「wallet-demo.json も demo-public.json も見つかりません」と出ていた。
 
-**「Advance to next rent day」が押せないまま** → 次の支払日までの待ち時間。画面の「Next rent day in ○s」が0になると押せるようになる。10秒以上たっても押せないときは、ページを再読み込みして最初からやり直す。
+**毎週の支払いが自動で進まない** → Demo controls のボタンが「Resume」になっていないか見る。8週分進むと自動で止まる仕様で、ブラウザのタブを切り替えたときも止まる（戻ると再開する）。赤い通知「A weekly payment didn’t go through」が出たときは止まっているので、「Next week」か「Resume」で再開する。直らなければ、ページを再読み込みして最初からやり直す。
+
+**動きが出ない（残高が一気に切り替わる、マスが弾まない）** → Windows の「設定」→「アクセシビリティ」→「視覚効果」→「アニメーション効果」がオフになっていると、画面の動きをすべて止める作りにしてある。数字と帯の色は変わるので、機能には影響しない。
 
 **支払うと赤い通知「The deposit did not go through」が出る** → 手元で `wallet-demo.json` を使っていると、1年分（約 10,300 USDC）に対して残高 10,000 USDC で足りない。U3 のとおり `wallet-demo.json` を外して動かす。公開版で出るときは、デモ財布の残高切れが多い。公開デモ手順書の P9 のとおり `node scripts/check-demo.mjs` で残高を確かめる。
 
