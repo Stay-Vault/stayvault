@@ -3,322 +3,316 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>StayVault — Rent escrow for international students</title>
+<title>StayVault</title>
 <script>
 // Basecoat switches to dark mode with a .dark class on <html>. Follow the OS setting.
 (function(){try{const m=matchMedia('(prefers-color-scheme: dark)');const s=()=>document.documentElement.classList.toggle('dark',m.matches);s();m.addEventListener('change',s)}catch(e){}})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- Basecoat 1.0.2 (shadcn/ui look, no React, no build). Standalone CDN bundle: Tailwind is not needed -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.2/dist/basecoat.cdn.min.css">
 <style>
-/* ---- Theme: override Basecoat (shadcn) tokens with the StayVault palette ---- */
+/* ================= Brand (palette A1 "Refined") =================
+   Jacaranda  = the colour Brisbane turns every Oct-Nov, when rent starts. Used for actions and "where you are".
+   Eucalyptus = paid. Warm paper instead of cold grey. One display face (Bricolage Grotesque) for names and numbers. */
 :root{
-  --background:#F3F5F8; --foreground:#16213A;
-  --card:#FFFFFF; --card-foreground:#16213A;
-  --popover:#FFFFFF; --popover-foreground:#16213A;
-  --primary:#6D4FA3; --primary-foreground:#FFFFFF;
-  --secondary:#EDE7F7; --secondary-foreground:#3E2A66;
-  --muted:#EEF1F5; --muted-foreground:#5B6478;
-  --accent:#EDE7F7; --accent-foreground:#3E2A66;
-  --destructive:#B42318;
-  --border:#DDE2EA; --input:#DDE2EA; --ring:#6D4FA3;
-  --radius:0.75rem;
-  --ok:#2E8A68; --ok-soft:#E2F2EB; --sim:#9A5B00; --sim-soft:#FFF3DC;
+  --page:#F1EEE8; --paper:#FAF8F5; --ink:#1C1826; --sub:#6E6879; --faint:#9D97A6; --line:#E9E4DC;
+  --jac:#6E56CF; --jac-ink:#45368F; --jac-soft:#F0ECFB; --jac-mist:#E6E0F8;
+  --euc:#2E7D5B; --euc-soft:#E3F0E9; --demo:#8A5A0B; --err:#B42318;
+  --display:"Bricolage Grotesque","Figtree",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+  /* Basecoat (shadcn) tokens mapped onto the brand */
+  --background:var(--paper); --foreground:var(--ink); --card:var(--paper); --card-foreground:var(--ink);
+  --popover:var(--paper); --popover-foreground:var(--ink);
+  --primary:var(--jac); --primary-foreground:#FFFFFF; --secondary:var(--jac-soft); --secondary-foreground:var(--jac-ink);
+  --muted:#F3F0EA; --muted-foreground:var(--sub); --accent:var(--jac-soft); --accent-foreground:var(--jac-ink);
+  --destructive:var(--err); --border:var(--line); --input:#DDD7CD; --ring:var(--jac); --radius:0.8rem;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
 }
 html.dark{
-  --background:#0F1524; --foreground:#E8ECF4;
-  --card:#172035; --card-foreground:#E8ECF4;
-  --popover:#172035; --popover-foreground:#E8ECF4;
-  --primary:#A98BE0; --primary-foreground:#150F24;
-  --secondary:#2A2344; --secondary-foreground:#E3D9F7;
-  --muted:#1D2740; --muted-foreground:#9AA3B8;
-  --accent:#2A2344; --accent-foreground:#E3D9F7;
-  --destructive:#F97066;
-  --border:#2A3550; --input:#2A3550; --ring:#A98BE0;
-  --ok:#5BC39A; --ok-soft:#173A30; --sim:#F5B94A; --sim-soft:#3A2C12;
+  --page:#0E0C14; --paper:#16131E; --ink:#F3F0F9; --sub:#A29CB0; --faint:#7E7890; --line:#2B2736;
+  --jac:#A898F0; --jac-ink:#E3DDFA; --jac-soft:#25203A; --jac-mist:#2C2742;
+  --euc:#5BC39A; --euc-soft:#173A2D; --demo:#F2B55A; --err:#F97066;
+  --primary-foreground:#16131E; --muted:#1F1B29; --input:#3A3547;
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
-html,body{min-height:100%;background:var(--background)}
-body{font-family:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--foreground);font-size:15px;line-height:1.6;margin:0}
+html,body{min-height:100%}
+body{margin:0;background:var(--page);color:var(--ink);font-family:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
 .num{font-variant-numeric:tabular-nums}
+.disp{font-family:var(--display)}
+[hidden]{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
 
-/* ---- App shell ---- */
-.app{max-width:440px;margin:0 auto;min-height:100vh;background:var(--card);display:flex;flex-direction:column}
-@media(min-width:480px){.app{margin:24px auto;min-height:auto;border:1px solid var(--border);border-radius:22px;overflow:hidden}}
-.top{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border)}
+/* ================= Stage: phone on desktop, full screen on mobile ================= */
+.stage{min-height:100vh}
+.app{position:relative;max-width:440px;margin:0 auto;min-height:100vh;background:var(--paper);display:flex;flex-direction:column}
+@media(min-width:480px){.app{margin:28px auto;min-height:auto;border:1px solid var(--line);border-radius:28px;overflow:hidden}}
+.aside{display:none}
+@media(min-width:960px){
+  .stage{display:grid;grid-template-columns:400px 340px;gap:56px;justify-content:center;align-items:center;padding:32px 24px;box-sizing:border-box}
+  .app{margin:0;width:400px;height:820px;max-height:calc(100vh - 64px);border:10px solid #1C1826;border-radius:48px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+  .app::-webkit-scrollbar{display:none}
+  html.dark .app{border-color:#2B2736}
+  .aside{display:block}
+}
+
+/* ================= Top bar ================= */
+.top{display:flex;align-items:center;gap:6px;padding:14px 16px 10px;position:sticky;top:0;background:var(--paper);z-index:5}
 .top .btn{visibility:hidden}.top .btn.show{visibility:visible}
-.logo{font-weight:800;font-size:18px;letter-spacing:-.02em}.logo span{color:var(--primary)}
-.net{margin-left:auto}
-.bar{height:3px;background:var(--border)}.bar i{display:block;height:100%;background:var(--primary);width:0;transition:width .3s}
-.screen{display:none;padding:22px 20px 28px;flex:1}.screen.active{display:block}
-h1{font-size:23px;font-weight:700;line-height:1.3;margin:0 0 6px;letter-spacing:-.01em}
-.lead{color:var(--muted-foreground);font-size:14px;margin:0 0 18px}
-.stack{display:flex;flex-direction:column;gap:14px}
-.actions{display:flex;flex-direction:column;gap:10px;margin-top:22px}
-.actions .btn{width:100%}
-.btn[aria-busy="true"]{pointer-events:none}
-.hint{font-size:12px;color:var(--muted-foreground);margin:0}
-.sub-h{font-size:13px;font-weight:700;margin:8px 0 0}
+.logo{font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:-.02em}.logo span{color:var(--jac)}
+.net{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--faint)}
+.net i{width:6px;height:6px;border-radius:50%;background:var(--faint)}
+.net.live{color:var(--euc)}.net.live i{background:var(--euc)}
+.net.bad{color:var(--err)}.net.bad i{background:var(--err)}
+.bar{height:2px;margin:0 16px;background:var(--line);border-radius:2px;overflow:hidden}.bar i{display:block;height:100%;background:var(--jac);width:0;transition:width .35s}
 
-/* ---- Simulated (mock) marking ---- */
-.badge.sim{background:var(--sim-soft);color:var(--sim);border:1px dashed var(--sim)}
-.badge.live{background:var(--ok-soft);color:var(--ok)}
-.sim-note{border:1px dashed var(--sim);background:var(--sim-soft);color:var(--sim);border-radius:10px;padding:9px 12px;font-size:12.5px;margin-top:14px}
+/* ================= Screens ================= */
+.screen{display:none;padding:22px 22px 30px;flex:1}.screen.active{display:block}
+h1{font-family:var(--display);font-size:26px;font-weight:700;line-height:1.2;letter-spacing:-.02em;margin:0 0 8px}
+.lead{color:var(--sub);font-size:14.5px;margin:0 0 22px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.actions{display:flex;flex-direction:column;gap:10px;margin-top:26px}
+.actions .btn{width:100%}
+.btn[data-size="lg"]{height:50px;border-radius:14px;font-size:15.5px;font-weight:600}
+.btn[aria-busy="true"]{pointer-events:none}
+.hint{font-size:12.5px;color:var(--sub);margin:0}
+.sub-h{font-size:12px;font-weight:600;color:var(--faint);letter-spacing:.04em;text-transform:uppercase;margin:10px 0 0}
+.acc{color:var(--jac)}
+
+/* Simulated marks: a quiet line, not a box */
+.sim-note{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--demo);margin:18px 0 0}
+.sim-note::before{content:"";flex:none;width:6px;height:6px;margin-top:6px;border-radius:50%;border:1.5px dashed var(--demo)}
 .sim-note b{font-weight:700}
 
-/* ---- Sign-in ---- */
-.hero{padding:26px 0 8px}
-.hero .logo{font-size:36px}
-.hero p{color:var(--muted-foreground);margin:8px 0 0;font-size:16px}
-.tabs-lite{display:flex;gap:4px;background:var(--muted);border-radius:12px;padding:4px;margin:18px 0 16px}
-.tabs-lite button{flex:1;border:0;background:none;border-radius:9px;padding:8px;font:inherit;font-size:14px;color:var(--muted-foreground);cursor:pointer}
-.tabs-lite button[aria-selected="true"]{background:var(--card);color:var(--foreground);font-weight:600}
+/* Sign-in */
+.hero{padding:34px 0 6px}
+.hero .kicker{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--jac);font-weight:600}
+.hero h1{font-size:32px;margin-top:6px}
+.hero p{color:var(--sub);margin:10px 0 0;font-size:15px}
+.tabs-lite{display:flex;gap:18px;margin:26px 0 16px;border-bottom:1px solid var(--line)}
+.tabs-lite button{border:0;background:none;padding:0 0 10px;font:inherit;font-size:14px;color:var(--faint);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs-lite button[aria-selected="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--jac)}
 
-/* ---- Choice lists (wallet, dorm, period) built on Basecoat's choice card ---- */
+/* Choice lists built on Basecoat's choice card */
 .choices{display:flex;flex-direction:column;gap:10px}
-.choices label{display:block;border:1px solid var(--border);border-radius:14px;padding:13px 15px;cursor:pointer}
-.choices label:has(input:checked){border-color:var(--primary);box-shadow:0 0 0 1px var(--primary);background:var(--accent)}
-.choices label:has(input:disabled){opacity:.55;cursor:not-allowed}
-.choices h3{font-size:15px;font-weight:600;margin:0}
-.choices p{font-size:12.5px;color:var(--muted-foreground);margin:2px 0 0}
-.add{border:1px dashed var(--border);border-radius:14px;padding:12px;text-align:center;color:var(--muted-foreground);font-size:14px;background:none;width:100%;font:inherit;cursor:pointer;margin-top:10px}
+.choices label{display:block;border:1px solid var(--line);border-radius:16px;padding:14px 16px;cursor:pointer;background:var(--paper);transition:border-color .2s,background .2s}
+.choices label:has(input:checked){border-color:var(--jac);background:var(--jac-soft)}
+.choices label:has(input:disabled){opacity:.5;cursor:not-allowed}
+.choices h3{font-size:15.5px;font-weight:600;margin:0}
+.choices p{font-size:12.5px;color:var(--sub);margin:2px 0 0}
+.add{border:0;background:none;color:var(--jac);font:inherit;font-size:14px;font-weight:600;padding:14px 0 0;cursor:pointer}
 
-/* ---- Amount summary ---- */
-.sum{margin-top:18px;background:var(--muted);border-radius:14px;padding:14px 16px}
-.sum .k{font-size:13px;color:var(--muted-foreground)}
-.sum .v{font-size:28px;font-weight:800;letter-spacing:-.02em}
-.sum .s{font-size:13px;color:var(--muted-foreground);margin-top:4px}
+/* Totals and receipts: lines, not boxes */
+.sum{margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+.sum .k{font-size:12.5px;color:var(--sub)}
+.sum .v{font-family:var(--display);font-size:32px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+.sum .e{font-size:13px;color:var(--faint)}
+.sum .s{font-size:13px;color:var(--sub);margin-top:8px}
+.rows{margin:0}
+.rows>div{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid var(--line);font-size:14px}
+.rows>div:last-child{border-bottom:1px solid var(--line)}
+.rows dt{color:var(--sub)}.rows dd{margin:0;text-align:right}
+.rows .total{font-weight:700}
+.rows .total dd{font-family:var(--display);font-size:18px}
+.rows small{display:block;font-size:12px;color:var(--faint);font-weight:400;font-family:"Figtree",sans-serif}
+.fee-note{font-size:12px;color:var(--faint);margin:10px 0 0}
+.rgap{margin-top:18px}
 
-/* ---- Receipt-style definition lists ---- */
-dl.rows{display:grid;grid-template-columns:auto 1fr;gap:9px 14px;font-size:14px;margin:0}
-dl.rows dt{color:var(--muted-foreground)}dl.rows dd{text-align:right;margin:0}
-dl.rows .total{border-top:1px solid var(--border);padding-top:10px;font-weight:700}
-.fee-note{grid-column:1/-1;text-align:left!important;font-size:12px;color:var(--muted-foreground);background:var(--muted);border-radius:8px;padding:8px 10px}
+/* ================= Home: the vault dial ================= */
+.who{text-align:center;font-size:13px;color:var(--sub);margin-top:4px}
+.dialbox{position:relative;width:290px;height:290px;margin:4px auto 0;max-width:100%}
+.dialbox svg{display:block;width:100%;height:100%}
+.seg{fill:var(--jac-mist);transition:fill .5s ease}
+.seg.paid{fill:var(--euc)}
+.seg.refunded{fill:var(--line)}
+.seg.next{fill:var(--jac);opacity:.55}
+.ring-line{fill:none;stroke:var(--line)}
+.mon{font-size:9px;fill:var(--faint);font-family:"Figtree",sans-serif}
+.needle{transform-origin:150px 150px;transition:transform .7s cubic-bezier(.34,1.56,.64,1)}
+.needle path{fill:var(--jac)}
+.center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+.center .lbl{font-size:10.5px;letter-spacing:.12em;color:var(--jac);font-weight:600}
+.center .bal{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:-.03em;line-height:1.05;margin-top:4px}
+.center .cur{font-size:12px;color:var(--sub)}
+.center .eq{font-size:12px;color:var(--faint);margin-top:6px}
+.stat{text-align:center;font-size:12.5px;color:var(--sub);margin:4px 0 20px}
+.home-rows>div{display:flex;justify-content:space-between;gap:12px;padding:13px 0;border-top:1px solid var(--line);font-size:14px}
+.home-rows>div:last-child{border-bottom:1px solid var(--line)}
+.home-rows span:first-child{color:var(--sub)}
 
-/* ---- Home: the vault (layout follows the agreed mockup) ---- */
-.home-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
-.home-top h1{margin:0;font-size:20px}
-/* Stepper: Deposited -> Moved in -> Paying weekly -> Ends */
-.steps{list-style:none;padding:0;margin:0 0 18px;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted-foreground)}
-.steps li{display:flex;align-items:center;gap:4px;white-space:nowrap}
-.steps li svg{width:14px;height:14px;flex:none}
-.steps li.done{color:var(--ok)}
-.steps li.now{color:var(--primary);font-weight:700}
-.steps .sep{flex:1;min-width:8px;max-width:22px;height:1.5px;background:var(--border)}
-.steps .sep.done{background:var(--ok)}
-@media(max-width:400px){.steps{font-size:11px;gap:4px}.steps .sep{min-width:4px}}
-@media(max-width:380px){.steps .wide{display:none}}
-/* Balance and the two numbers that explain it */
-.bal-k{font-size:13px;color:var(--muted-foreground)}
-.bal{font-size:42px;font-weight:800;line-height:1.1;letter-spacing:-.03em;margin:0}
-.bal small{font-size:17px;font-weight:700;color:var(--muted-foreground);margin-left:6px;letter-spacing:0}
-.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-.metric{background:var(--muted);border-radius:12px;padding:10px 12px}
-.metric span{display:block;font-size:12px;color:var(--muted-foreground)}
-.metric b{display:block;font-size:17px;font-weight:700;letter-spacing:-.01em}
-.metric small{display:block;font-size:11.5px;color:var(--muted-foreground)}
-/* One year at a glance: one cell per week */
-.year{margin-top:18px}
-.weeks{display:flex;gap:2px;height:22px}
-.wk{flex:1;border-radius:3px;background:var(--accent);transition:background .4s}
-.wk.paid{background:var(--ok)}
-.wk.next{background:var(--accent);box-shadow:inset 0 0 0 1.5px var(--primary)}
-.wk.pop{animation:pop .6s ease-out}
-@keyframes pop{0%{transform:scaleY(.4)}60%{transform:scaleY(1.25)}100%{transform:scaleY(1)}}
-.wk.refunded{background:repeating-linear-gradient(135deg,var(--muted) 0 3px,var(--border) 3px 6px)}
-.mlbl{position:relative;height:16px;font-size:11.5px;color:var(--muted-foreground);margin-top:5px}
-.mlbl span{position:absolute;top:0;white-space:nowrap}
-.mlbl span.end{right:0}
-/* Next payment */
-.ncard{margin-top:18px;border:1px solid var(--primary);background:var(--accent);border-radius:14px;padding:12px 14px}
-.ncard .k{font-size:12.5px;color:var(--primary)}
-.ncard .v{font-size:17px;color:var(--accent-foreground);margin-top:1px}
-.ncard .v b{font-weight:700}
-.ncard .s{font-size:12.5px;color:var(--primary);margin-top:1px}
-.ncard.done{border-color:var(--ok);background:var(--ok-soft)}.ncard.done .k,.ncard.done .s{color:var(--ok)}
-.ncard.ended{border-color:var(--border);background:var(--muted)}.ncard.ended .k,.ncard.ended .s{color:var(--muted-foreground)}
-/* Early move-out confirmation */
-.mo{margin-top:14px;border:1px solid var(--border);border-radius:14px;padding:14px}
-.mo h3{font-size:15px;margin:0 0 8px}
-.mo .split{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.mo .split div{border-radius:10px;padding:8px 10px;background:var(--muted);font-size:12px;color:var(--muted-foreground)}
-.mo .split b{display:block;font-size:16px;color:var(--foreground)}
-.mo .row{display:flex;gap:8px;margin-top:12px}.mo .row .btn{flex:1}
-/* History: every row is a devnet transaction */
-.hist-h{font-size:13px;color:var(--muted-foreground);margin:22px 0 0;padding-bottom:6px;border-bottom:1px solid var(--border)}
+/* Move-out confirmation */
+.mo{margin-top:16px;border:1px solid var(--line);border-radius:18px;padding:16px}
+.mo h3{font-family:var(--display);font-size:17px;margin:0 0 10px}
+.mo .split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.mo .split div{font-size:12px;color:var(--sub)}
+.mo .split b{display:block;font-family:var(--display);font-size:18px;color:var(--ink)}
+.mo .row{display:flex;gap:8px;margin-top:14px}.mo .row .btn{flex:1}
+
+/* History */
+.hist-h{font-size:12px;color:var(--faint);letter-spacing:.04em;text-transform:uppercase;font-weight:600;margin:26px 0 2px}
 .hist{list-style:none;padding:0;margin:0}
-.hist li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.hist li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0}
 .hist li.new{animation:slidein .5s ease-out}
 @keyframes slidein{from{opacity:0;transform:translateY(-6px)}}
 .hist .t{font-size:14.5px}
-.hist .m{font-size:12.5px;color:var(--muted-foreground)}
-.hist a{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--primary);text-decoration:none;white-space:nowrap}
-.hist a svg{width:14px;height:14px}
-.hist a:hover{text-decoration:underline}
-.linkish{border:0;background:none;color:var(--muted-foreground);font:inherit;font-size:13px;padding:10px 0;cursor:pointer}
-.center{display:flex;justify-content:center;margin-top:14px}
-/* Demo controls: deliberately quiet, marked like the other simulated parts */
-.demo{margin-top:16px;border:1px dashed var(--sim);border-radius:12px;padding:9px 12px}
-.demo-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.demo-h b{font-size:12.5px;font-weight:500;color:var(--sim)}
-.demo-b{display:flex;gap:6px}
-.demo .btn{font-size:12px;color:var(--sim);border-color:var(--sim);background:transparent;height:28px;padding:0 10px;gap:4px}
-.demo .btn svg{width:13px;height:13px}
-.demo p{font-size:11.5px;color:var(--sim);margin:6px 0 0}
+.hist .m{font-size:12px;color:var(--faint)}
+.hash{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:12px;color:var(--jac);text-decoration:none;white-space:nowrap}
+.hash svg{width:13px;height:13px}
+.hash:hover{text-decoration:underline}
+.linkish{border:0;background:none;color:var(--sub);font:inherit;font-size:13px;padding:6px 0;cursor:pointer}
+.quiet{display:flex;justify-content:center;margin-top:18px}
+.quiet .btn{color:var(--sub)}
 
-/* ---- Status line while waiting for devnet ---- */
-.status-line{display:none;align-items:center;gap:8px;font-size:13px;color:var(--muted-foreground);margin-top:12px}
+/* Demo controls: a single dashed line of text links */
+.demo{margin-top:22px;text-align:center}
+.demo-b{display:flex;justify-content:center;align-items:center;gap:16px;font-size:12px;color:var(--demo)}
+.demo-b b{font-weight:600}
+.demo-b button{border:0;background:none;font:inherit;color:var(--demo);padding:2px 0;border-bottom:1px dashed var(--demo);cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.demo-b button:disabled{opacity:.45;cursor:default}
+.demo-b svg{width:12px;height:12px}
+.demo p{font-size:11px;color:var(--demo);opacity:.85;margin:8px 0 0}
+
+/* Busy line and spinner */
+.status-line{display:none;align-items:center;gap:8px;font-size:13px;color:var(--sub);margin-top:12px}
 .status-line.show{display:flex}
 .spin{width:16px;height:16px;flex:none;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ---- Toast (with optional Explorer link) ---- */
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,8px);opacity:0;pointer-events:none;
-  background:var(--foreground);color:var(--background);padding:10px 16px;border-radius:12px;font-size:13.5px;transition:opacity .2s,transform .2s;width:max-content;max-width:calc(100vw - 32px);display:flex;gap:12px;align-items:center}
+/* Toast lives inside the phone */
+.toast-wrap{position:sticky;bottom:0;height:0;z-index:10}
+.toast{position:absolute;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,8px);opacity:0;pointer-events:none;
+  background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:14px;font-size:13.5px;transition:opacity .2s,transform .2s;width:max-content;max-width:calc(100% - 32px);display:flex;gap:12px;align-items:center}
 .toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 .toast a{color:inherit;font-weight:700;white-space:nowrap}
-.toast.err{background:var(--destructive);color:#fff}
+.toast.err{background:var(--err);color:#fff}
 
-:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
-[hidden]{display:none!important}
-.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* ================= Desktop side panel for judges ================= */
+.aside h2{font-family:var(--display);font-size:24px;letter-spacing:-.02em;line-height:1.2;margin:0 0 10px}
+.aside p{color:var(--sub);font-size:14px;margin:0 0 18px}
+.aside .k{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:0 0 8px}
+.event{border:1px solid var(--line);background:var(--paper);border-radius:18px;padding:16px 18px;margin-bottom:22px}
+.event .t{font-family:var(--display);font-size:17px;font-weight:700}
+.event .d{font-size:13.5px;color:var(--sub);margin:6px 0 10px}
+.event.flash{animation:flash .9s ease-out}
+@keyframes flash{0%{border-color:var(--jac);box-shadow:0 0 0 4px var(--jac-soft)}100%{border-color:var(--line);box-shadow:none}}
+.legend{list-style:none;padding:0;margin:0;font-size:13px;color:var(--sub)}
+.legend li{display:flex;gap:8px;padding:4px 0}
+.legend i{flex:none;width:8px;height:8px;border-radius:50%;margin-top:6px}
+.legend .l i{background:var(--euc)}
+.legend .s i{border:1.5px dashed var(--demo)}
+
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
-<div class="app">
+<div class="stage">
+<div class="app" id="app">
   <div class="top">
     <button type="button" class="btn" data-variant="ghost" data-size="icon-sm" id="back" aria-label="Back" onclick="history_back()">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
     </button>
     <div class="logo">Stay<span>Vault</span></div>
-    <span class="badge net" data-variant="outline" id="net">Connecting to devnet…</span>
+    <span class="net" id="net"><i></i><span id="netT">Connecting to devnet…</span></span>
   </div>
-  <div class="bar"><i id="bar"></i></div>
+  <div class="bar" id="barW"><i id="bar"></i></div>
 
   <!-- 1. Sign in (simulated) -->
   <section class="screen active" data-s="login">
-    <div class="hero"><div class="logo">Stay<span>Vault</span></div><p>Prepay your child's rent. It stays protected until the dorm is paid.</p></div>
-    <div class="tabs-lite" role="tablist">
-      <button type="button" role="tab" id="tab-in" aria-selected="true" aria-controls="auth-in" onclick="authTab('in')">Sign in</button>
-      <button type="button" role="tab" id="tab-up" aria-selected="false" aria-controls="auth-up" onclick="authTab('up')">Create account</button>
-    </div>
-    <div id="auth-in" role="tabpanel" aria-labelledby="tab-in" class="stack">
+    <div class="hero"><h1>Prepay rent.<br>Keep control.</h1></div>
+    <div class="stack">
       <div role="group" class="field"><label for="em">Email</label><input class="input" id="em" type="email" autocomplete="off" value="demo@stayvault.app"></div>
       <div role="group" class="field"><label for="pw">Password</label><input class="input" id="pw" type="password" autocomplete="off" value="stayvault-demo-2026"></div>
-      <div class="actions"><button type="button" class="btn" data-size="lg" onclick="afterLogin()">Sign in</button></div>
     </div>
-    <div id="auth-up" role="tabpanel" aria-labelledby="tab-up" class="stack" hidden>
-      <div role="group" class="field"><label for="em2">Email</label><input class="input" id="em2" type="email" autocomplete="off" value="demo@stayvault.app"></div>
-      <div role="group" class="field"><label for="pw2">Password</label><input class="input" id="pw2" type="password" autocomplete="off" value="stayvault-demo-2026"></div>
-      <div role="group" class="field"><label for="pw3">Confirm password</label><input class="input" id="pw3" type="password" autocomplete="off" value="stayvault-demo-2026"></div>
-      <div class="actions"><button type="button" class="btn" data-size="lg" onclick="afterLogin()">Create account</button></div>
-    </div>
-    <p class="sim-note"><b>Simulated.</b> Accounts are not created in this demo. The demo account is filled in for you.</p>
+    <div class="actions"><button type="button" class="btn" data-size="lg" onclick="afterLogin()">Sign in</button></div>
+    <p class="sim-note"><span>Simulated sign-in</span></p>
   </section>
 
   <!-- 2. Connect wallet (simulated) -->
   <section class="screen" data-s="connect">
-    <h1>Connect the wallet that holds your USDC</h1>
-    <p class="lead">Rent is sent from this wallet into the escrow, and any refund comes back to it. You only connect once.</p>
+    <h1>Connect wallet</h1>
     <div class="choices" role="radiogroup" aria-label="Wallet">
-      <label for="wl-mm"><div role="group" class="field" data-orientation="horizontal"><section><h3>MetaMask</h3><p>Uses the Solana account in your MetaMask wallet</p></section><input id="wl-mm" type="radio" name="wl" checked></div></label>
-      <label for="wl-other"><div role="group" class="field" data-orientation="horizontal"><section><h3>Other wallets</h3><p>Coming later</p></section><input id="wl-other" type="radio" name="wl" disabled></div></label>
+      <label for="wl-mm"><div role="group" class="field" data-orientation="horizontal"><section><h3>MetaMask</h3></section><input id="wl-mm" type="radio" name="wl" checked></div></label>
+      <label for="wl-other"><div role="group" class="field" data-orientation="horizontal"><section><h3>Other wallets</h3><p>Soon</p></section><input id="wl-other" type="radio" name="wl" disabled></div></label>
     </div>
-    <p class="sim-note"><b>Simulated.</b> MetaMask does not open in this demo. A devnet demo wallet signs in its place, so you don't need to install anything.</p>
-    <div class="actions"><button type="button" class="btn" data-size="lg" onclick="connected=true;toast('MetaMask connected');afterLogin()">Allow connection</button></div>
+    <p class="sim-note"><span>Simulated. A demo wallet signs for you.</span></p>
+    <div class="actions"><button type="button" class="btn" data-size="lg" onclick="connected=true;toast('MetaMask connected');afterLogin()">Connect</button></div>
   </section>
 
   <!-- 3. Register dorm -->
   <section class="screen" data-s="register">
-    <h1>Add the dorm</h1>
-    <p class="lead">Enter where your child will live and the dorm's bank details. You'll find them on the invoice or lease.</p>
-    <button type="button" class="btn" data-variant="secondary" data-size="sm" onclick="fillSample()">Fill with a sample dorm</button>
-    <div class="stack" style="margin-top:14px">
+    <h1>Add a dorm</h1>
+    <button type="button" class="btn" data-variant="secondary" data-size="sm" onclick="fillSample()">Use sample</button>
+    <div class="stack" style="margin-top:16px">
       <div role="group" class="field"><label for="dn">Dorm name</label><input class="input" id="dn" placeholder="Toowong Student House"></div>
       <div role="group" class="field"><label for="dm">Weekly rent (AUD)</label><input class="input" id="dm" type="number" inputmode="numeric" min="1" placeholder="320"></div>
       <div role="group" class="field"><label for="dw">Rent day</label>
         <select class="select" id="dw"><option value="1">Every Monday</option><option value="2">Every Tuesday</option><option value="3">Every Wednesday</option><option value="4">Every Thursday</option><option value="5">Every Friday</option><option value="6">Every Saturday</option><option value="0">Every Sunday</option></select></div>
       <div role="group" class="field"><label for="dd">Move-out date</label><input class="input" id="dd" type="date" value="2027-03-31"></div>
-      <p class="sub-h">Dorm's bank account in Australia</p>
+      <p class="sub-h">Bank account</p>
       <div role="group" class="field"><label for="bn">Bank</label><input class="input" id="bn" placeholder="Commonwealth Bank"></div>
       <div role="group" class="field"><label for="bb">BSB (6 digits)</label><input class="input" id="bb" inputmode="numeric" maxlength="7" placeholder="064-000"></div>
       <div role="group" class="field"><label for="ba">Account number</label><input class="input" id="ba" inputmode="numeric" placeholder="12345678"></div>
     </div>
-    <div class="actions"><button type="button" class="btn" data-size="lg" onclick="addDorm()">Add dorm</button></div>
+    <div class="actions"><button type="button" class="btn" data-size="lg" onclick="addDorm()">Add</button></div>
   </section>
 
   <!-- 4. Select dorm -->
   <section class="screen" data-s="select">
-    <h1>Which dorm are you paying?</h1>
-    <p class="lead">Choose one of your saved dorms.</p>
+    <h1>Choose a dorm</h1>
     <div class="choices" role="radiogroup" aria-label="Dorm" id="rcp"></div>
-    <button type="button" class="add" onclick="go('register')">+ Add another dorm</button>
+    <button type="button" class="add" onclick="go('register')">+ Add dorm</button>
     <div class="actions"><button type="button" class="btn" data-size="lg" onclick="go('period')">Continue</button></div>
   </section>
 
   <!-- 5. Period -->
   <section class="screen" data-s="period">
-    <h1>How far ahead do you want to pay?</h1>
-    <p class="lead" id="pName"></p>
+    <h1>How long?</h1>
+    <p class="lead" id="pName" hidden></p>
     <div class="choices" role="radiogroup" aria-label="Period" id="mOpts"></div>
-    <div class="sum"><div class="k">Total the dorm will receive</div><div class="v num" id="aud"></div><div class="s" id="sched"></div></div>
+    <div class="sum"><div class="k">Dorm receives</div><div class="v num" id="aud"></div><div class="e num" id="audJ"></div><div class="s" id="sched"></div></div>
     <div class="actions"><button type="button" class="btn" data-size="lg" onclick="go('confirm')">Review</button></div>
   </section>
 
-  <!-- 6. Confirm & pay (real devnet transaction) -->
+  <!-- 6. Confirm & pay (real devnet transactions) -->
   <section class="screen" data-s="confirm">
-    <h1>Review and pay</h1>
-    <p class="lead">The rate is locked when you pay. Later exchange-rate moves don't change it.</p>
-    <div class="card"><section>
-      <dl class="rows num">
-        <dt>Dorm</dt><dd id="cName"></dd>
-        <dt>Period</dt><dd id="cSch"></dd>
-        <dt>Dorm receives</dt><dd id="cAud"></dd>
-        <dt>Locked rate</dt><dd>1 USDC = 1.52 AUD</dd>
-        <dt>Into escrow</dt><dd id="cUsdc"></dd>
-        <dt>Fees</dt><dd id="cFeeT"></dd>
-        <dd class="fee-note">StayVault fee (0.5% of the deposit): <span id="cSvc"></span><br>Solana network fees are paid in SOL and cost less than $0.01 per transaction<br>No extra fee on each weekly payment to the dorm</dd>
-        <dt class="total">You pay</dt><dd class="total" id="cTot"></dd>
-      </dl>
-    </section></div>
-    <div class="card" style="margin-top:12px"><section>
-      <dl class="rows">
-        <dt>Pays to</dt><dd id="cBank"></dd>
-        <dt>Move-out</dt><dd class="num" id="cOut"></dd>
-        <dt>Paid from</dt><dd>MetaMask</dd>
-        <dt>Move-in check by</dt><dd class="num">Oct 15</dd>
-        <dt>Refunds go to</dt><dd>This MetaMask wallet (fixed)</dd>
-      </dl>
-    </section></div>
-    <p class="hint" style="margin-top:12px">If move-in isn't confirmed by the deadline, everything is refunded. If your child moves out early, the weeks not yet paid to the dorm are refunded. StayVault cannot move this money.</p>
-    <div class="actions"><button type="button" class="btn" data-size="lg" id="payBtn" onclick="pay()">Pay from MetaMask</button></div>
+    <h1>Review</h1>
+    <dl class="rows num">
+      <div><dt>Dorm</dt><dd id="cName"></dd></div>
+      <div><dt>Period</dt><dd id="cSch"></dd></div>
+      <div><dt>Dorm receives</dt><dd id="cAud"></dd></div>
+      <div><dt>Rate</dt><dd>1 USDC = 1.52 AUD</dd></div>
+      <div><dt>Fee (0.5%)</dt><dd id="cFeeT"></dd></div>
+      <div class="total"><dt>You pay</dt><dd><span id="cTot"></span><small id="cJpy"></small></dd></div>
+      <div><dt>Refunds to</dt><dd>MetaMask</dd></div>
+    </dl>
+    <p class="fee-note">Unpaid weeks always come back to you. Yen at ¥158 per USDC.<span class="sr-only" id="cSvc"></span><span class="sr-only" id="cUsdc"></span><span class="sr-only" id="cBank"></span><span class="sr-only" id="cOut"></span></p>
+    <div class="actions"><button type="button" class="btn" data-size="lg" id="payBtn" onclick="pay()">Pay</button></div>
     <div class="status-line" id="payStatus" role="status" aria-live="polite"></div>
   </section>
 
-  <!-- 7. Home: the vault -->
+  <!-- 7. Home: the vault dial -->
   <section class="screen" data-s="home">
-    <div class="home-top"><h1 id="hName"></h1><span class="badge live">Live on devnet</span></div>
-    <ol class="steps" id="steps" aria-label="Escrow progress"></ol>
-
-    <div class="bal-k">Protected in escrow</div>
-    <div class="bal num" id="hBal"></div>
-    <div class="metrics">
-      <div class="metric"><span>Paid to dorm</span><b class="num" id="mPaid"></b><small id="mPaidW"></small></div>
-      <div class="metric"><span>Refundable now</span><b class="num" id="mRef"></b><small id="mRefS">If you move out</small></div>
+    <div class="who" id="hWho"></div>
+    <div class="dialbox">
+      <svg id="dial" viewBox="0 0 300 300" role="img" aria-labelledby="dialT"><title id="dialT">Weekly payments</title></svg>
+      <div class="center" aria-live="polite">
+        <div class="lbl" id="dLbl">PROTECTED</div>
+        <div class="bal num" id="hBal"></div>
+        <div class="cur">USDC</div>
+        <div class="eq num" id="hEq"></div>
+      </div>
     </div>
+    <div class="stat" id="hStat"></div>
 
-    <div class="year">
-      <div class="weeks" id="weeks" aria-label="Weekly payments"></div>
-      <div class="mlbl" id="mlbl" aria-hidden="true"></div>
+    <div class="home-rows num">
+      <div><span>Next payment</span><span id="rNext"></span></div>
+      <div><span id="rPaidK">Paid to the dorm</span><span id="mPaid"></span></div>
+      <div><span id="rRefK">Refundable now</span><span id="mRef"></span></div>
     </div>
-
-    <div class="ncard" id="nextCard" role="status" aria-live="polite"><div class="k" id="nK"></div><div class="v num" id="nV"></div><div class="s" id="nS"></div></div>
 
     <div class="mo" id="moBox" hidden>
       <h3>Move out early?</h3>
@@ -331,41 +325,60 @@ dl.rows .total{border-top:1px solid var(--border);padding-top:10px;font-weight:7
     <ul class="hist" id="hist"></ul>
     <button type="button" class="linkish" id="histMore" hidden onclick="histAll=!histAll;renderHist()"></button>
 
-    <div class="center" id="leaveWrap"><button type="button" class="btn" data-variant="outline" id="leaveBtn" onclick="askLeave()">Move out early</button></div>
+    <div class="quiet" id="leaveWrap"><button type="button" class="btn" data-variant="ghost" data-size="sm" id="leaveBtn" onclick="askLeave()">Move out early</button></div>
 
     <div class="demo" id="demo">
-      <div class="demo-h"><b>Demo controls</b>
-        <div class="demo-b">
-          <button type="button" class="btn" data-variant="outline" id="dPause" onclick="togglePause()"></button>
-          <button type="button" class="btn" data-variant="outline" id="dNext" onclick="nextWeek()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5v14l12-7z"/><path d="M20 5v14"/></svg>Next week</button>
-        </div>
+      <div class="demo-b"><b>Demo</b>
+        <button type="button" id="dPause" onclick="togglePause()"></button>
+        <button type="button" id="dNext" onclick="nextWeek()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5v14l12-7z"/><path d="M20 5v14"/></svg>Next week</button>
       </div>
       <p id="demoNote"></p>
     </div>
   </section>
+  <div class="toast-wrap"><div class="toast" id="toast" role="status" aria-live="polite"></div></div>
 </div>
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Desktop only: what is happening on-chain, in plain words -->
+<aside class="aside" aria-label="About this demo">
+  <div class="k">Live demo on Solana devnet</div>
+  <h2>A parent in Japan prepays a year of rent in Brisbane.</h2>
+  <p>The escrow is a real Solana program. Each week's rent is released only when it's due, and nobody at StayVault can move the money.</p>
+  <div class="k">Last on-chain event</div>
+  <div class="event" id="ev"><div class="t" id="evT">Nothing yet</div><div class="d" id="evD">Pay on the left. Every step after that is a real devnet transaction.</div><div id="evL"></div></div>
+  <div class="k">In this demo</div>
+  <ul class="legend">
+    <li class="l"><i></i><span>Live on devnet: deposit, move-in confirmation, weekly release, refund</span></li>
+    <li class="s"><i></i><span>Simulated: sign-in, MetaMask, the AUD payout to the dorm's bank</span></li>
+    <li class="s"><i></i><span>Sped up: one week passes every 10 seconds</span></li>
+  </ul>
+</aside>
+</div>
 
 <script>
-const RATE=1.52;// Demo: one dorm is already registered (1-year stay, 300 AUD a week)
-let connected=false,dorms=[{n:'Stay-Dorm',m:300,w:1,d:'2027-09-30',bn:'C-Bank',bb:'482-731',ba:'60517294'}],sel=0,months=3,paidM=0,stack=[],ended=false,createdAt=0,acts=[];
+const RATE=1.52, JPY=158, CHILD='Yuri';   // JPY per USDC is a display estimate only
+// Demo: one dorm is already registered (1-year stay, 300 AUD a week)
+let connected=false,dorms=[{n:'Stay-Dorm',c:'Brisbane',m:300,w:1,d:'2027-09-30',bn:'C-Bank',bb:'482-731',ba:'60517294'}],sel=0,months=3,paidM=0,stack=[],ended=false,createdAt=0,acts=[];
 const $=id=>document.getElementById(id);
 const f=n=>n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDC';
-const aud=n=>n.toLocaleString('en-US')+' AUD';
+const aud=n=>Math.round(n).toLocaleString('en-US')+' AUD';
+const yen=v=>v>=1e6?'¥'+(v/1e6).toFixed(2)+'M':'¥'+Math.round(v).toLocaleString('en-US');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const WD=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const md=d=>`${MON[d.getMonth()]} ${d.getDate()}`;
 const ymd=s=>{const [y,mo,da]=s.split('-').map(Number),d=new Date(y,mo-1,da);return `${MON[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`};
 const EXPLORER=sig=>`https://explorer.solana.com/tx/${sig}?cluster=devnet`;
 const DEMO_WEEK_MS=10000;   // must match DEMO_INTERVAL in the module below
 const order=['login','connect','register','select','period','confirm','home'];
+const RM=matchMedia('(prefers-reduced-motion: reduce)');
 
 function go(v,push=true){const cur=document.querySelector('.screen.active').dataset.s;if(push&&cur!==v)stack.push(cur);
 document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.dataset.s===v));
 $('back').classList.toggle('show',!['login','home'].includes(v)&&stack.length>0);
-$('bar').style.width=(order.indexOf(v)/6*100)+'%';
-if(v==='select')renderDorms();if(v==='period')renderMo();if(v==='period'||v==='confirm')calc();if(v==='home')renderHome();window.scrollTo(0,0)}
+$('barW').hidden=v==='home';$('bar').style.width=(order.indexOf(v)/6*100)+'%';
+if(v==='select')renderDorms();if(v==='period')renderMo();if(v==='period'||v==='confirm')calc();if(v==='home')renderHome();
+window.scrollTo(0,0);$('app').scrollTop=0}
 function history_back(){const p=stack.pop();if(p)go(p,false)}
 function afterLogin(){if(!connected)return go('connect');if(!dorms.length)return go('register');go('select')}
 function authTab(t){['in','up'].forEach(k=>{$('tab-'+k).setAttribute('aria-selected',k===t);$('auth-'+k).hidden=k!==t})}
@@ -380,7 +393,7 @@ const miss=[['dn',!n],['dm',!(m>0)],['bn',!bn],['ba',!ba]].filter(x=>x[1]).map(x
 if(miss.length||!d){miss.forEach(markInvalid);toast('Fill in the highlighted fields.',{err:true});return}
 if(bb.length!==6){markInvalid('bb');toast('BSB must be 6 digits, like 064-000.',{err:true});return}
 dorms.push({n,m,w,d,bn,bb:bb.slice(0,3)+'-'+bb.slice(3),ba});sel=dorms.length-1;['dn','dm','bn','bb','ba'].forEach(i=>$(i).value='');toast('Dorm added');go('select')}
-function renderDorms(){$('rcp').innerHTML=dorms.map((d,i)=>`<label for="dorm-${i}"><div role="group" class="field" data-orientation="horizontal"><section><h3>${esc(d.n)}</h3><p>${aud(d.m)} a week, paid every ${WD[d.w]}. Moving out ${ymd(d.d)}.<br>${esc(d.bn)}, account ending ${esc(d.ba.slice(-4))}</p></section><input id="dorm-${i}" type="radio" name="dorm" ${i===sel?'checked':''} onchange="sel=${i}"></div></label>`).join('')}
+function renderDorms(){$('rcp').innerHTML=dorms.map((d,i)=>`<label for="dorm-${i}"><div role="group" class="field" data-orientation="horizontal"><section><h3>${esc(d.n)}</h3><p>${aud(d.m)} / week \u00b7 until ${ymd(d.d)}</p></section><input id="dorm-${i}" type="radio" name="dorm" ${i===sel?'checked':''} onchange="sel=${i}"></div></label>`).join('')}
 
 function firstPay(){const d=new Date('2026-10-01');while(d.getDay()!==dorms[sel].w)d.setDate(d.getDate()+1);return d}
 function weeksUntil(o){const d=firstPay();let n=0;while(d<o&&n<60){n++;d.setDate(d.getDate()+7)}return Math.max(1,n)}
@@ -388,14 +401,14 @@ function outMonths(){const o=new Date(dorms[sel].d+'T00:00');return Math.max(1,(
 function weeksFor(mo){const e=new Date('2026-10-01');e.setMonth(e.getMonth()+mo);const o=new Date(dorms[sel].d+'T00:00');return weeksUntil(e<o?e:new Date(o.getTime()+864e5))}
 let selMo=12;
 function renderMo(){const om=outMonths();const opts=[1,3,6,12].filter(m=>m<=om).map(m=>({m,l:m===1?'1 month':m===12?'1 year':m+' months'}));if(!opts.some(o=>o.m===selMo))selMo=opts[0].m;
-$('mOpts').innerHTML=opts.map(o=>`<label for="mo-${o.m}"><div role="group" class="field" data-orientation="horizontal"><section><h3>${o.l}</h3><p>${weeksFor(o.m)} weekly payments</p></section><input id="mo-${o.m}" type="radio" name="mo" ${o.m===selMo?'checked':''} onchange="selMo=${o.m};calc()"></div></label>`).join('')}
+$('mOpts').innerHTML=opts.map(o=>`<label for="mo-${o.m}"><div role="group" class="field" data-orientation="horizontal"><section><h3>${o.l}</h3><p>${weeksFor(o.m)} payments</p></section><input id="mo-${o.m}" type="radio" name="mo" ${o.m===selMo?'checked':''} onchange="selMo=${o.m};calc()"></div></label>`).join('')}
 
 function calc(){const d=dorms[sel];months=weeksFor(selMo);const a=d.m*months,u=a/RATE,svc=u*0.005,tot=u+svc;
-$('pName').textContent=`${d.n}. ${aud(d.m)} a week, moving out ${ymd(d.d)}.`;$('aud').textContent=aud(a);
-$('sched').textContent=`From ${WD[d.w]} ${md(firstPay())}, the escrow pays the dorm ${aud(d.m)} every ${WD[d.w]}, ${months} times.`;
+$('pName').textContent=`${d.n}. ${aud(d.m)} a week, moving out ${ymd(d.d)}.`;$('aud').textContent=aud(a);$('audJ').textContent='≈ '+yen(u*JPY);
+$('sched').textContent=`Weekly from ${DW[d.w]}, ${md(firstPay())}`;
 $('cName').textContent=d.n;$('cBank').textContent=`${d.bn} ${d.bb} ****${d.ba.slice(-4)}`;$('cOut').textContent=ymd(d.d);
-$('cSch').textContent=`${selMo===1?'1 month':selMo===12?'1 year':selMo+' months'} (${months} weeks, every ${WD[d.w]})`;$('cAud').textContent=aud(a);
-$('cUsdc').textContent=f(u);$('cSvc').textContent=f(svc);$('cFeeT').textContent=f(svc);$('cTot').textContent=f(tot);return tot}
+$('cSch').textContent=`${selMo===1?'1 month':selMo===12?'1 year':selMo+' months'}`;$('cAud').textContent=aud(a);
+$('cUsdc').textContent=f(u);$('cSvc').textContent=f(svc);$('cFeeT').textContent=f(svc);$('cTot').textContent=f(tot);$('payBtn').textContent='Pay '+f(tot);$('cJpy').textContent='≈ '+yen(tot*JPY);return tot}
 
 /* ---- Busy state: spinner in the button, other actions disabled, status line ---- */
 const SPIN='<svg class="spin" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
@@ -408,66 +421,76 @@ try{return await fn()}finally{btn.innerHTML=old;btn.removeAttribute('aria-busy')
 document.querySelectorAll('.actions .btn').forEach(b=>b.disabled=false);if(document.querySelector('.screen.active').dataset.s==='home')renderHome()}}
 function svReady(){if(window.SV)return true;toast(svErr?'Could not reach the demo wallet. Reload the page.':'Still connecting to Solana devnet. Try again in a moment.',{err:true});return false}
 
-/* ================= Home: escrow that runs by itself ================= */
+/* ================= Home: the vault dial ================= */
 const AUTO_BATCH=8;        // auto-play pays at most 8 weeks, then pauses (saves the shared demo wallet's devnet SOL)
 let autoOn=false,autoLeft=0,nextAt=0,forceOne=false,fails=0,histAll=false,hidPaused=false,pausedLeft=0,justPaid=false,busyHome=false,depositedOn=null;
-const RM=matchMedia('(prefers-reduced-motion: reduce)');
-const DW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 function weekDate(k){const d=firstPay();d.setDate(d.getDate()+7*k);return d}
 const dlabel=d=>`${DW[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}`;
 const onchainDue=k=>createdAt-15000+k*DEMO_WEEK_MS+2500;   // mirrors first_pay_ts = now-15s and interval = 10s in the program
 const weekly=()=>dorms[sel].m/RATE;
 const phase=()=>ended?'ended':paidM>=months?'complete':paidM===0?'deposited':'paying';
 const IC={
-  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>',
-  dot:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></svg>',
-  ring:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/></svg>',
   ext:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/><path d="M11 13l9-9"/><path d="M15 4h5v5"/></svg>',
   pause:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 5v14"/><path d="M16 5v14"/></svg>',
   play:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>'};
+const short=sig=>sig.length>10?sig.slice(0,4)+'\u2026'+sig.slice(-4):sig;
 
-function logTx(title,meta,sig){acts.unshift({title,meta,sig,fresh:true});renderHist()}
+/* Plain-language explanations for the desktop side panel */
+const EXPLAIN={
+  deposit:'Your USDC moved into an escrow account owned by the StayVault program. The dorm can\u2019t touch it yet.',
+  movein:'The dorm signed the move-in confirmation. In the same transaction, the program released week 1 to the dorm.',
+  release:'The program released one week of rent because its due date passed. Anyone can trigger this, and the destination is fixed.',
+  refund:'You and the dorm both signed. The weeks not yet paid went straight back to your wallet.'};
+function logTx(title,meta,sig,kind){acts.unshift({title,meta,sig,fresh:true});renderHist();
+$('evT').textContent=title;$('evD').textContent=EXPLAIN[kind]||'';$('evL').innerHTML=`<a class="hash" href="${EXPLORER(sig)}" target="_blank" rel="noopener">${esc(short(sig))} ${IC.ext}<span class="sr-only"> (opens Solana Explorer)</span></a>`;
+const ev=$('ev');ev.classList.remove('flash');void ev.offsetWidth;ev.classList.add('flash')}
 function renderHist(){const SHOW=2,list=histAll?acts:acts.slice(0,SHOW);
-$('hist').innerHTML=list.map(a=>`<li class="${a.fresh?'new':''}"><div><div class="t">${esc(a.title)}</div><div class="m">${esc(a.meta)}</div></div><a href="${EXPLORER(a.sig)}" target="_blank" rel="noopener">Explorer ${IC.ext}<span class="sr-only"> (opens Solana Explorer)</span></a></li>`).join('');
+$('hist').innerHTML=list.map(a=>`<li class="${a.fresh?'new':''}"><div><div class="t">${esc(a.title)}</div><div class="m">${esc(a.meta)}</div></div><a class="hash" href="${EXPLORER(a.sig)}" target="_blank" rel="noopener">${esc(short(a.sig))} ${IC.ext}<span class="sr-only"> (opens Solana Explorer)</span></a></li>`).join('');
 acts.forEach(a=>a.fresh=false);
 const more=acts.length-SHOW;$('histMore').hidden=more<=0;$('histMore').textContent=histAll?'Show fewer':`Show ${more} earlier`}
 
-function tweenNum(el,from,to,fmt){if(RM.matches||from===to){el.innerHTML=fmt(to);return}
-const t0=performance.now(),dur=700;const step=t=>{const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);el.innerHTML=fmt(from+(to-from)*e);if(p<1)requestAnimationFrame(step)};requestAnimationFrame(step)}
-const balFmt=v=>v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'<small>USDC</small>';
-let shownBal=0;
+let tweenId=0;   // a newer tween cancels an older one, so overlapping renders never fight
+function tweenNum(el,from,to,fmt){const id=++tweenId;if(RM.matches||from===to){el.textContent=fmt(to);return}
+const t0=performance.now(),dur=700;const step=t=>{if(id!==tweenId)return;const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);el.textContent=fmt(from+(to-from)*e);if(p<1)requestAnimationFrame(step)};requestAnimationFrame(step)}
+const balFmt=v=>v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+let shownBal=0,dialN=0;
+
+/* The dial: one segment per week, clockwise from the top. The needle steps one notch per payment. */
+function buildDial(n){const C=150,R1=104,R2=120,g=0.035,step=2*Math.PI/n;let h='<title id="dialT">Weekly payments</title>';
+const pt=(r,t)=>`${(C+r*Math.cos(t)).toFixed(2)} ${(C+r*Math.sin(t)).toFixed(2)}`;
+for(let i=0;i<n;i++){const a=i*step-Math.PI/2+g/2,b=a+step-g;
+  h+=`<path class="seg" id="sg${i}" d="M${pt(R2,a)} A${R2} ${R2} 0 0 1 ${pt(R2,b)} L${pt(R1,b)} A${R1} ${R1} 0 0 0 ${pt(R1,a)}Z"><title>Week ${i+1}: ${dlabel(weekDate(i))}</title></path>`}
+h+=`<circle class="ring-line" cx="${C}" cy="${C}" r="96"/>`;
+for(let i=0;i<n;i++){const a=weekDate(i),b=i?weekDate(i-1):null;if(i===0||(a.getMonth()!==b.getMonth()&&a.getMonth()%3===0)){const t=i*step-Math.PI/2+step/2;
+  h+=`<text class="mon" text-anchor="middle" x="${(C+134*Math.cos(t)).toFixed(1)}" y="${(C+134*Math.sin(t)+3).toFixed(1)}">${MON[a.getMonth()]}</text>`}}
+h+=`<g class="needle" id="needle"><path d="M${C} ${C-R1+2} l-5 9 h10 z"/></g>`;   // points out at the next week
+$('dial').innerHTML=h;dialN=n}
+function renderDial(ph){const n=months;if(dialN!==n)buildDial(n);
+for(let i=0;i<n;i++){const s=$('sg'+i);s.setAttribute('class','seg'+(i<paidM?' paid':ph==='ended'?' refunded':(i===paidM&&ph!=='complete')?' next':''))}
+const k=ph==='complete'?n:Math.min(paidM,n);const step=360/n;
+$('needle').style.transform=`rotate(${(k+.5)*step}deg)`;
+$('needle').style.opacity=ph==='ended'?'0':'1';
+$('dial').setAttribute('aria-label',`${paidM} of ${n} weekly payments made`)}
 
 function renderHome(){const d=dorms[sel],ph=phase(),n=months;
 const left=ph==='ended'?0:(months-paidM)*weekly();
-$('hName').textContent=d.n;
-tweenNum($('hBal'),shownBal,left,balFmt);shownBal=left;
-$('mPaid').textContent=aud(paidM*d.m);$('mPaidW').textContent=`${paidM} of ${n} weeks`;
-$('mRef').textContent=f(left);$('mRefS').textContent=ph==='deposited'?'If move-in isn\u2019t confirmed':ph==='ended'?'Already refunded':'If you move out';
-/* stepper */
-const at={deposited:1,paying:2,complete:4,ended:4}[ph];
-const names=['Deposited','Moved in','Paying<span class="wide"> weekly</span>',at===4?'Ended':'Ends'];
-$('steps').innerHTML=names.map((nm,i)=>{const c=i<at?'done':i===at?'now':'';return (i?`<li class="sep${i<=at?' done':''}" aria-hidden="true"></li>`:'')+`<li class="${c}"${i===at?' aria-current="step"':''}>${i<at?IC.check:i===at?IC.dot:''}${nm}</li>`}).join('');
-/* year strip */
-$('weeks').innerHTML=Array.from({length:n},(_,i)=>{const c=i<paidM?'paid':ph==='ended'?'refunded':i===paidM&&ph!=='complete'?'next':'';return `<div class="wk ${c}${i===paidM-1&&justPaid?' pop':''}" title="Week ${i+1}: ${dlabel(weekDate(i))}"></div>`}).join('');
-justPaid=false;
-const last=weekDate(n-1);let lbl=`<span style="left:0">${MON[weekDate(0).getMonth()]} ${weekDate(0).getFullYear()}</span>`;
-for(let i=1;i<n;i++){const a=weekDate(i),b=weekDate(i-1);const pos=i/n*100;if(a.getMonth()!==b.getMonth()&&a.getMonth()%3===0&&pos>15&&pos<70)lbl+=`<span style="left:${pos}%">${MON[a.getMonth()]}</span>`}
-if(n>=8)lbl+=`<span class="end">${MON[last.getMonth()]} ${last.getFullYear()}</span>`;
-$('mlbl').innerHTML=lbl;
-/* next card */
-const card=$('nextCard');card.className='ncard';
-if(ph==='deposited'){$('nK').textContent='Waiting for move-in';$('nV').innerHTML=`<b>${esc(d.n)}</b> confirms when your child arrives`;$('nS').textContent='Week 1 is paid at that moment.'}
-else if(ph==='paying'){$('nK').textContent='Next payment';$('nV').innerHTML=`<b>${dlabel(weekDate(paidM))}</b> \u00b7 ${aud(d.m)} to ${esc(d.n)}`;$('nS').textContent=forceOne||autoOn?'Paid automatically. Nothing to do.':'Paused in this demo.'}
-else if(ph==='complete'){card.classList.add('done');$('nK').textContent='All rent paid';$('nV').innerHTML=`<b>${aud(n*d.m)}</b> reached ${esc(d.n)}`;$('nS').textContent='Every week was paid on time, straight from the escrow.'}
-else{card.classList.add('ended');$('nK').textContent='Moved out';$('nV').innerHTML=`<b>${f((months-paidM)*weekly())}</b> back in your MetaMask`;$('nS').textContent=`${d.n} kept ${aud(paidM*d.m)} for ${paidM} week${paidM===1?'':'s'}.`}
-/* controls */
+$('hWho').textContent=`${CHILD}'s rent \u00b7 ${d.n}${d.c?', '+d.c:''}`;
+if(left!==shownBal||!$('hBal').textContent){tweenNum($('hBal'),shownBal,left,balFmt);shownBal=left}
+$('hEq').textContent=ph==='ended'?'Refunded to MetaMask':`\u2248 ${yen(left*JPY)} \u00b7 ${aud(left*RATE)}`;
+$('dLbl').textContent={deposited:'PROTECTED',paying:'PROTECTED',complete:'ALL PAID',ended:'CLOSED'}[ph];
+$('hStat').textContent={deposited:`Waiting for ${d.n} to confirm move-in`,paying:`Week ${paidM} of ${n} \u00b7 ${CHILD} moved in ${md(weekDate(0))}`,
+  complete:`All ${n} weeks paid to ${d.n}`,ended:`${CHILD} moved out after ${paidM} of ${n} weeks`}[ph];
+renderDial(ph);
+$('rNext').innerHTML=ph==='paying'?`<span class="acc">${dlabel(weekDate(paidM))}</span> \u00b7 ${aud(d.m)}`:ph==='deposited'?'After move-in':'None';
+$('rPaidK').textContent=`Paid to ${d.n}`;$('mPaid').textContent=aud(paidM*d.m);
+$('rRefK').textContent=ph==='ended'?'Refunded':'Refundable now';$('mRef').textContent=f(ph==='ended'?(months-paidM)*weekly():left);
 const live=ph==='paying'||ph==='deposited';
 $('leaveWrap').hidden=ph!=='paying';$('demo').hidden=!live;if(!live)$('moBox').hidden=true;
 $('dPause').innerHTML=(autoOn?IC.pause+'Pause':IC.play+'Resume');
-$('dNext').disabled=busyHome||forceOne;$('dPause').disabled=busyHome&&ph==='deposited';$('leaveBtn').disabled=busyHome;
+$('dNext').disabled=busyHome||forceOne;$('leaveBtn').disabled=busyHome;
 $('demoNote').textContent=ph==='paying'&&!autoOn&&autoLeft<=0&&!forceOne
   ?`Paused after ${AUTO_BATCH} weeks to save devnet fees. Resume or use Next week.`
-  :'Not part of the real app. One week passes every 10 seconds. The dorm\u2019s AUD payout is simulated.';
+  :(autoOn||forceOne)?'Not part of the real app. One week passes every 10 seconds.':'Paused. Payments wait until you resume.';
 renderHist()}
 
 /* the auto-play loop */
@@ -478,13 +501,13 @@ if((autoOn||forceOne)&&Date.now()>=nextAt)ph==='deposited'?moveIn():autoRelease(
 function schedule(){nextAt=Math.max(onchainDue(paidM),Date.now()+DEMO_WEEK_MS)}
 async function moveIn(){if(!window.SV)return;busyHome=true;forceOne=false;renderHome();
 try{const sig=await SV.confirmAndRelease();paidM=1;justPaid=true;fails=0;
-  logTx(`Moved in \u00b7 week 1 paid \u00b7 ${aud(dorms[sel].m)}`,`${dlabel(weekDate(0))} \u00b7 confirmed by ${dorms[sel].n}`,sig);
-  toast('Move-in confirmed. Week 1 paid.',{sig});autoLeft=AUTO_BATCH-1;schedule()}
+  logTx('Week 1 paid',`${dlabel(weekDate(0))} \u00b7 move-in confirmed`,sig,'movein');
+  toast('Move-in confirmed. Week 1 paid.',{sig});autoOn=true;autoLeft=AUTO_BATCH-1;schedule()}
 catch(e){console.error(e);autoOn=false;toast('Move-in confirmation didn\u2019t go through. Try Next week.',{err:true})}
 finally{busyHome=false;renderHome()}}
 async function autoRelease(){if(!window.SV)return;busyHome=true;const manual=forceOne;forceOne=false;renderHome();
 try{const sig=await SV.release();fails=0;paidM++;justPaid=true;if(!manual)autoLeft--;
-  logTx(`Week ${paidM} paid \u00b7 ${aud(dorms[sel].m)}`,dlabel(weekDate(paidM-1)),sig);
+  logTx(`Week ${paidM} paid`,`${dlabel(weekDate(paidM-1))} \u00b7 ${aud(dorms[sel].m)}`,sig,'release');
   if(paidM>=months){autoOn=false;toast('All rent paid',{sig})}
   else if(autoOn&&autoLeft<=0)autoOn=false;
   schedule()}
@@ -504,7 +527,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&autoOn){hi
 function askLeave(){const d=dorms[sel];$('moKeep').textContent=aud(paidM*d.m);$('moBack').textContent=f((months-paidM)*weekly());$('moBox').hidden=false;$('moBox').scrollIntoView({behavior:RM.matches?'auto':'smooth',block:'center'})}
 async function leave(){if(!svReady()||busyHome)return;const b=$('moGo'),old=b.innerHTML;busyHome=true;autoOn=false;forceOne=false;b.disabled=true;b.innerHTML=SPIN+'Refunding\u2026';
 try{const back=(months-paidM)*weekly();const sig=await SV.moveOut();ended=true;
-  logTx(`Refunded ${f(back)}`,`Moved out after ${paidM} of ${months} weeks \u00b7 back to MetaMask`,sig);
+  logTx('Refunded',`${f(back)} back to MetaMask \u00b7 after ${paidM} of ${months} weeks`,sig,'refund');
   toast(`Refunded ${f(back)}`,{sig})}
 catch(e){console.error(e);toast('The refund didn\u2019t go through. The escrow is unchanged. Try again.',{err:true})}
 finally{b.innerHTML=old;b.disabled=false;busyHome=false;renderHome()}}
@@ -512,14 +535,14 @@ finally{b.innerHTML=old;b.disabled=false;busyHome=false;renderHome()}}
 async function pay(){if(!svReady())return;calc();const d=dorms[sel];const btn=$('payBtn');
 await run(btn,'payStatus','Locking rent in escrow\u2026',async()=>{
   let sig;
-  try{sig=await SV.create(d.m/RATE,months);createdAt=Date.now();depositedOn=new Date();paidM=0;ended=false;stack=[];acts=[];shownBal=0;
+  try{sig=await SV.create(d.m/RATE,months);createdAt=Date.now();depositedOn=new Date();paidM=0;ended=false;stack=[];acts=[];shownBal=0;dialN=0;
     autoOn=false;autoLeft=AUTO_BATCH;forceOne=false;
-    logTx(`Deposited ${f(months*d.m/RATE)}`,`${MON[depositedOn.getMonth()]} ${depositedOn.getDate()} \u00b7 ${months} weeks, from MetaMask`,sig)}
+    logTx('Deposited',`${md(depositedOn)} \u00b7 ${f(months*d.m/RATE)} from MetaMask`,sig,'deposit')}
   catch(e){console.error(e);toast('The deposit didn\u2019t go through. Nothing left your wallet. Try again.',{err:true});return}
-  // Demo: the child has already moved in, so the dorm's confirmation (and week 1) goes through right away
+  // Demo: Yuri has already moved in, so the dorm's confirmation (and week 1) goes through right away
   btn.innerHTML=SPIN+'Confirming move-in\u2026';
   try{const sig2=await SV.confirmAndRelease();paidM=1;justPaid=true;
-    logTx(`Moved in \u00b7 week 1 paid \u00b7 ${aud(d.m)}`,`${dlabel(weekDate(0))} \u00b7 confirmed by ${d.n}`,sig2);
+    logTx('Week 1 paid',`${dlabel(weekDate(0))} \u00b7 move-in confirmed`,sig2,'movein');
     autoOn=true;autoLeft=AUTO_BATCH-1;schedule();toast('Rent locked in escrow. Week 1 paid.',{sig:sig2})}
   catch(e){console.error(e);toast('Rent is in escrow, but move-in confirmation didn\u2019t go through. Use Next week to retry.',{err:true})}
   go('home')})}
@@ -529,12 +552,13 @@ function toast(t,o={}){const e=$('toast');e.className='toast'+(o.err?' err':'');
 requestAnimationFrame(()=>e.classList.add('show'));clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),o.sig||o.err?5000:2200)}
 
 let svErr=false;
-window.addEventListener('sv-ready',()=>{const b=$('net');b.textContent='Solana devnet';b.className='badge live net'});
+window.addEventListener('sv-ready',()=>{$('net').className='net live';$('netT').textContent='Solana devnet'});
 // If the CDN imports fail, the module never runs. Treat 20 s without "ready" as an error.
 setTimeout(()=>{if(!window.SV&&!svErr)window.dispatchEvent(new Event('sv-error'))},20000);
-window.addEventListener('sv-error',()=>{svErr=true;const b=$('net');b.textContent='Devnet unavailable';b.className='badge net';b.setAttribute('data-variant','destructive')});
+window.addEventListener('sv-error',()=>{svErr=true;$('net').className='net bad';$('netT').textContent='Devnet unavailable'});
 go('login',false);
 </script>
+
 <script type="module">
 // === StayVault escrow on devnet ===
 // Sign-in, the MetaMask connection and the AUD payout stay simulated. Transactions are signed with the demo wallets.

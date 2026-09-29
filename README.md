@@ -26,3 +26,5 @@ In production, the parent signs with their own wallet and the operator signs fro
 If the demo stops because the balance ran out, please watch the demo video above.
 
 StayVault is a Solana-based escrow solution for international student rent. Parents deposit USDC, funds are released automatically for rent, and accommodation providers receive AUD—reducing payment risk for everyone.
+
+Yen amounts in the app are display estimates at ¥158 per USDC. The child's name ("Yuri") and the dorm ("Stay-Dorm", Brisbane) are fictional sample data.
