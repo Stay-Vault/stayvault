@@ -1,194 +1,307 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>StayVault — 家賃の送金</title>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Figtree:wght@500;700;800&display=swap" rel="stylesheet">
+<title>StayVault — Rent escrow for international students</title>
+<script>
+// Basecoat switches to dark mode with a .dark class on <html>. Follow the OS setting.
+(function(){try{const m=matchMedia('(prefers-color-scheme: dark)');const s=()=>document.documentElement.classList.toggle('dark',m.matches);s();m.addEventListener('change',s)}catch(e){}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Basecoat 1.0.2 (shadcn/ui look, no React, no build). Standalone CDN bundle: Tailwind is not needed -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.2/dist/basecoat.cdn.min.css">
 <style>
-:root{--bg:#F3F5F8;--panel:#FFF;--ink:#16213A;--sub:#5B6478;--line:#DDE2EA;--jac:#6D4FA3;--jac-soft:#EDE7F7;--ok:#2E8A68;--ok-soft:#E2F2EB;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1524;--panel:#172035;--ink:#E8ECF4;--sub:#9AA3B8;--line:#2A3550;--jac:#A98BE0;--jac-soft:#2A2344;--ok:#5BC39A;--ok-soft:#173A30}}
-:root[data-theme="dark"]{--bg:#0F1524;--panel:#172035;--ink:#E8ECF4;--sub:#9AA3B8;--line:#2A3550;--jac:#A98BE0;--jac-soft:#2A2344;--ok:#5BC39A;--ok-soft:#173A30}
-*{box-sizing:border-box;margin:0}
-html,body{height:100%;background:var(--bg)}
-body{font-family:"Zen Kaku Gothic New",system-ui,sans-serif;color:var(--ink);line-height:1.7;font-size:15px}
-.num{font-family:"Figtree","Zen Kaku Gothic New",sans-serif;font-feature-settings:"tnum"}
-.app{max-width:440px;margin:0 auto;min-height:100%;background:var(--panel);display:flex;flex-direction:column}
-@media(min-width:480px){.app{margin:24px auto;min-height:auto;border:1px solid var(--line);border-radius:22px;overflow:hidden}}
-.top{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
-.back{border:0;background:none;color:var(--ink);font-size:22px;width:32px;cursor:pointer;visibility:hidden}
-.back.show{visibility:visible}
-.logo{font-family:Figtree;font-weight:800;font-size:18px;letter-spacing:-.02em}.logo span{color:var(--jac)}
-.bar{height:3px;background:var(--line)}.bar i{display:block;height:100%;background:var(--jac);transition:width .3s}
-.screen{display:none;padding:24px 20px 28px;flex:1}.screen.active{display:block}
-h1{font-size:22px;font-weight:700;line-height:1.4;margin-bottom:6px}
-.lead{color:var(--sub);font-size:14px;margin-bottom:20px}
-label{display:block;font-size:13px;color:var(--sub);margin:14px 0 5px}
-input{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:11px;background:var(--bg);color:var(--ink);font:inherit}
-input:focus,button:focus-visible{outline:2px solid var(--jac);outline-offset:1px}
-.btn{display:block;width:100%;border:0;border-radius:12px;padding:14px;font:inherit;font-weight:700;cursor:pointer;margin-top:22px;background:var(--jac);color:#fff}
-.btn:disabled{opacity:.4;cursor:not-allowed}
-.btn.ghost{background:none;border:1px solid var(--line);color:var(--ink);margin-top:10px}
-.hero{text-align:center;padding:30px 0 10px}
-.hero .logo{font-size:34px}
-.hero p{color:var(--sub);margin-top:8px}
-.tabs{display:flex;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px;margin-top:18px}
-.tabs button{flex:1;border:0;background:none;border-radius:9px;padding:9px;font:inherit;font-size:14px;color:var(--sub);cursor:pointer}
-.tabs button[aria-selected="true"]{background:var(--panel);color:var(--ink);font-weight:700}
-.rcp{list-style:none;padding:0}
-.rcp li{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px}
-.rcp li[aria-checked="true"]{border:2px solid var(--jac);background:var(--jac-soft)}
-.rcp b{display:block;font-size:15px}.rcp small{color:var(--sub);font-size:12px}
-.tag{font-size:12px;color:var(--ok);background:var(--ok-soft);border-radius:999px;padding:2px 10px;white-space:nowrap}
-.add{border:1px dashed var(--line);border-radius:14px;padding:12px;text-align:center;color:var(--sub);font-size:14px}
-.amt{display:flex;align-items:baseline;gap:8px;border-bottom:2px solid var(--jac);padding:6px 0}
-.amt input{border:0;background:none;padding:0;font-family:Figtree;font-size:40px;font-weight:800;outline:none}
-.amt span{font-weight:700;color:var(--sub)}
-.chips{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
-.chips button{border:1px solid var(--line);background:none;color:var(--ink);border-radius:999px;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer}
-.conv{margin-top:18px;background:var(--bg);border-radius:12px;padding:14px;font-size:14px}
-.conv .big{font-size:24px;font-weight:800}
-.sched{font-size:13px;color:var(--sub);margin-top:8px}
-dl{display:grid;grid-template-columns:auto 1fr;gap:9px 14px;font-size:14px;padding:16px;border:1px solid var(--line);border-radius:14px}
-dt{color:var(--sub)}dd{text-align:right}
-.total{border-top:1px solid var(--line);padding-top:9px;font-weight:700}
-.note{font-size:12px;color:var(--sub);margin-top:12px}
-.bank{border:2px solid var(--jac);border-radius:16px;padding:18px;margin-top:6px}
-.bank .row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;gap:10px}
-.bank .row:last-child{border:0}
-.bank .row span{color:var(--sub)}
-.copy{border:1px solid var(--line);background:none;color:var(--jac);border-radius:8px;padding:2px 10px;font:inherit;font-size:12px;cursor:pointer;margin-left:8px}
-.warn{margin-top:14px;background:var(--jac-soft);border-radius:12px;padding:12px 14px;font-size:13px}
-.deadline{text-align:center;margin:4px 0 16px;font-size:14px;color:var(--sub)}
-.deadline b{color:var(--ink);font-size:18px}
-.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);opacity:0;background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:13px;transition:opacity .2s;pointer-events:none}
-.toast.show{opacity:1}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
-.acct{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
-.acct[aria-checked="true"]{border:2px solid var(--jac);background:var(--jac-soft)}
-.acct small{display:block;color:var(--sub);font-size:12px}
-.err{margin-top:14px;border:1px solid #C0504D;border-radius:12px;padding:12px 14px;font-size:13px;color:#C0504D;display:none}
-.err.show{display:block}
-.months{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin:18px 0 6px}
-.m{height:28px;border-radius:6px;background:var(--jac-soft)}.m.paid{background:var(--ok)}.m.next{border:2px solid var(--jac)}
-.big2{font-family:Figtree;font-size:40px;font-weight:800;line-height:1.1}
-.status{display:inline-block;font-size:12px;color:var(--jac);background:var(--jac-soft);border-radius:999px;padding:3px 12px;margin-bottom:10px}
+/* ---- Theme: override Basecoat (shadcn) tokens with the StayVault palette ---- */
+:root{
+  --background:#F3F5F8; --foreground:#16213A;
+  --card:#FFFFFF; --card-foreground:#16213A;
+  --popover:#FFFFFF; --popover-foreground:#16213A;
+  --primary:#6D4FA3; --primary-foreground:#FFFFFF;
+  --secondary:#EDE7F7; --secondary-foreground:#3E2A66;
+  --muted:#EEF1F5; --muted-foreground:#5B6478;
+  --accent:#EDE7F7; --accent-foreground:#3E2A66;
+  --destructive:#B42318;
+  --border:#DDE2EA; --input:#DDE2EA; --ring:#6D4FA3;
+  --radius:0.75rem;
+  --ok:#2E8A68; --ok-soft:#E2F2EB; --sim:#9A5B00; --sim-soft:#FFF3DC;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html.dark{
+  --background:#0F1524; --foreground:#E8ECF4;
+  --card:#172035; --card-foreground:#E8ECF4;
+  --popover:#172035; --popover-foreground:#E8ECF4;
+  --primary:#A98BE0; --primary-foreground:#150F24;
+  --secondary:#2A2344; --secondary-foreground:#E3D9F7;
+  --muted:#1D2740; --muted-foreground:#9AA3B8;
+  --accent:#2A2344; --accent-foreground:#E3D9F7;
+  --destructive:#F97066;
+  --border:#2A3550; --input:#2A3550; --ring:#A98BE0;
+  --ok:#5BC39A; --ok-soft:#173A30; --sim:#F5B94A; --sim-soft:#3A2C12;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{min-height:100%;background:var(--background)}
+body{font-family:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--foreground);font-size:15px;line-height:1.6;margin:0}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---- App shell ---- */
+.app{max-width:440px;margin:0 auto;min-height:100vh;background:var(--card);display:flex;flex-direction:column}
+@media(min-width:480px){.app{margin:24px auto;min-height:auto;border:1px solid var(--border);border-radius:22px;overflow:hidden}}
+.top{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border)}
+.top .btn{visibility:hidden}.top .btn.show{visibility:visible}
+.logo{font-weight:800;font-size:18px;letter-spacing:-.02em}.logo span{color:var(--primary)}
+.net{margin-left:auto}
+.bar{height:3px;background:var(--border)}.bar i{display:block;height:100%;background:var(--primary);width:0;transition:width .3s}
+.screen{display:none;padding:22px 20px 28px;flex:1}.screen.active{display:block}
+h1{font-size:23px;font-weight:700;line-height:1.3;margin:0 0 6px;letter-spacing:-.01em}
+.lead{color:var(--muted-foreground);font-size:14px;margin:0 0 18px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.actions{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+.actions .btn{width:100%}
+.btn[aria-busy="true"]{pointer-events:none}
+.hint{font-size:12px;color:var(--muted-foreground);margin:0}
+.sub-h{font-size:13px;font-weight:700;margin:8px 0 0}
+
+/* ---- Simulated (mock) marking ---- */
+.badge.sim{background:var(--sim-soft);color:var(--sim);border:1px dashed var(--sim)}
+.badge.live{background:var(--ok-soft);color:var(--ok)}
+.sim-note{border:1px dashed var(--sim);background:var(--sim-soft);color:var(--sim);border-radius:10px;padding:9px 12px;font-size:12.5px;margin-top:14px}
+.sim-note b{font-weight:700}
+
+/* ---- Sign-in ---- */
+.hero{padding:26px 0 8px}
+.hero .logo{font-size:36px}
+.hero p{color:var(--muted-foreground);margin:8px 0 0;font-size:16px}
+.tabs-lite{display:flex;gap:4px;background:var(--muted);border-radius:12px;padding:4px;margin:18px 0 16px}
+.tabs-lite button{flex:1;border:0;background:none;border-radius:9px;padding:8px;font:inherit;font-size:14px;color:var(--muted-foreground);cursor:pointer}
+.tabs-lite button[aria-selected="true"]{background:var(--card);color:var(--foreground);font-weight:600}
+
+/* ---- Choice lists (wallet, dorm, period) built on Basecoat's choice card ---- */
+.choices{display:flex;flex-direction:column;gap:10px}
+.choices label{display:block;border:1px solid var(--border);border-radius:14px;padding:13px 15px;cursor:pointer}
+.choices label:has(input:checked){border-color:var(--primary);box-shadow:0 0 0 1px var(--primary);background:var(--accent)}
+.choices label:has(input:disabled){opacity:.55;cursor:not-allowed}
+.choices h3{font-size:15px;font-weight:600;margin:0}
+.choices p{font-size:12.5px;color:var(--muted-foreground);margin:2px 0 0}
+.add{border:1px dashed var(--border);border-radius:14px;padding:12px;text-align:center;color:var(--muted-foreground);font-size:14px;background:none;width:100%;font:inherit;cursor:pointer;margin-top:10px}
+
+/* ---- Amount summary ---- */
+.sum{margin-top:18px;background:var(--muted);border-radius:14px;padding:14px 16px}
+.sum .k{font-size:13px;color:var(--muted-foreground)}
+.sum .v{font-size:28px;font-weight:800;letter-spacing:-.02em}
+.sum .s{font-size:13px;color:var(--muted-foreground);margin-top:4px}
+
+/* ---- Receipt-style definition lists ---- */
+dl.rows{display:grid;grid-template-columns:auto 1fr;gap:9px 14px;font-size:14px;margin:0}
+dl.rows dt{color:var(--muted-foreground)}dl.rows dd{text-align:right;margin:0}
+dl.rows .total{border-top:1px solid var(--border);padding-top:10px;font-weight:700}
+.fee-note{grid-column:1/-1;text-align:left!important;font-size:12px;color:var(--muted-foreground);background:var(--muted);border-radius:8px;padding:8px 10px}
+
+/* ---- Home: the vault ---- */
+.vault-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.bal{font-size:44px;font-weight:800;line-height:1.05;letter-spacing:-.03em;margin:4px 0 2px}
+.bal small{font-size:18px;font-weight:700;color:var(--muted-foreground);margin-left:4px}
+.weeks{display:grid;gap:3px;margin:18px 0 6px}
+.wk{height:30px;border-radius:5px;background:var(--accent);transition:background .4s}
+.wk.paid{background:var(--ok)}
+.wk.next{box-shadow:inset 0 0 0 2px var(--primary)}
+.wk.refunded{background:repeating-linear-gradient(135deg,var(--muted) 0 4px,var(--border) 4px 8px)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted-foreground);flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* ---- On-chain activity ---- */
+.activity{list-style:none;padding:0;margin:0}
+.activity li{display:flex;gap:12px;padding:11px 0;border-top:1px solid var(--border)}
+.activity li:first-child{border-top:0}
+.activity .dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-top:8px}
+.activity .t{font-size:14px;font-weight:600}
+.activity .m{font-size:12px;color:var(--muted-foreground)}
+.activity a{font-size:12.5px;color:var(--primary);font-weight:600;text-decoration:none}
+.activity a:hover{text-decoration:underline}
+.empty-act{font-size:13px;color:var(--muted-foreground);padding:6px 0}
+
+/* ---- Status line while waiting for devnet ---- */
+.status-line{display:none;align-items:center;gap:8px;font-size:13px;color:var(--muted-foreground);margin-top:12px}
+.status-line.show{display:flex}
+.spin{width:16px;height:16px;flex:none;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---- Toast (with optional Explorer link) ---- */
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,8px);opacity:0;pointer-events:none;
+  background:var(--foreground);color:var(--background);padding:10px 16px;border-radius:12px;font-size:13.5px;transition:opacity .2s,transform .2s;width:max-content;max-width:calc(100vw - 32px);display:flex;gap:12px;align-items:center}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast a{color:inherit;font-weight:700;white-space:nowrap}
+.toast.err{background:var(--destructive);color:#fff}
+
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><button class="back" id="back" aria-label="戻る" onclick="history_back()">‹</button><div class="logo">Stay<span>Vault</span></div></div>
+  <div class="top">
+    <button type="button" class="btn" data-variant="ghost" data-size="icon-sm" id="back" aria-label="Back" onclick="history_back()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <div class="logo">Stay<span>Vault</span></div>
+    <span class="badge net" data-variant="outline" id="net">Connecting to devnet…</span>
+  </div>
   <div class="bar"><i id="bar"></i></div>
 
+  <!-- 1. Sign in (simulated) -->
   <section class="screen active" data-s="login">
-    <div class="hero"><div class="logo">Stay<span>Vault</span></div><p>入金した家賃は、寮に届くまで守られます。</p></div>
-    <div class="tabs" role="tablist">
-      <button role="tab" id="tab-in" aria-selected="true" aria-controls="auth-in" onclick="authTab('in')">ログイン</button>
-      <button role="tab" id="tab-up" aria-selected="false" aria-controls="auth-up" onclick="authTab('up')">新規登録</button>
+    <div class="hero"><div class="logo">Stay<span>Vault</span></div><p>Prepay your child's rent. It stays protected until the dorm is paid.</p></div>
+    <div class="tabs-lite" role="tablist">
+      <button type="button" role="tab" id="tab-in" aria-selected="true" aria-controls="auth-in" onclick="authTab('in')">Sign in</button>
+      <button type="button" role="tab" id="tab-up" aria-selected="false" aria-controls="auth-up" onclick="authTab('up')">Create account</button>
     </div>
-    <div id="auth-in" role="tabpanel" aria-labelledby="tab-in">
-      <label for="em">メールアドレス</label><input id="em" type="email" autocomplete="off" value="demo@stayvault.app">
-      <label for="pw">パスワード</label><input id="pw" type="password" autocomplete="off" value="stayvault-demo-2026">
-      <p class="note">デモ用のアカウント情報を入力済みです</p>
-      <button class="btn" onclick="afterLogin()">ログイン</button>
+    <div id="auth-in" role="tabpanel" aria-labelledby="tab-in" class="stack">
+      <div role="group" class="field"><label for="em">Email</label><input class="input" id="em" type="email" autocomplete="off" value="demo@stayvault.app"></div>
+      <div role="group" class="field"><label for="pw">Password</label><input class="input" id="pw" type="password" autocomplete="off" value="stayvault-demo-2026"></div>
+      <div class="actions"><button type="button" class="btn" data-size="lg" onclick="afterLogin()">Sign in</button></div>
     </div>
-    <div id="auth-up" role="tabpanel" aria-labelledby="tab-up" hidden>
-      <label for="em2">メールアドレス</label><input id="em2" type="email" autocomplete="off" value="demo@stayvault.app">
-      <label for="pw2">パスワード</label><input id="pw2" type="password" autocomplete="off" value="stayvault-demo-2026">
-      <label for="pw3">パスワード（確認用）</label><input id="pw3" type="password" autocomplete="off" value="stayvault-demo-2026">
-      <p class="note">デモ用のアカウント情報を入力済みです</p>
-      <button class="btn" onclick="afterLogin()">登録する</button>
+    <div id="auth-up" role="tabpanel" aria-labelledby="tab-up" class="stack" hidden>
+      <div role="group" class="field"><label for="em2">Email</label><input class="input" id="em2" type="email" autocomplete="off" value="demo@stayvault.app"></div>
+      <div role="group" class="field"><label for="pw2">Password</label><input class="input" id="pw2" type="password" autocomplete="off" value="stayvault-demo-2026"></div>
+      <div role="group" class="field"><label for="pw3">Confirm password</label><input class="input" id="pw3" type="password" autocomplete="off" value="stayvault-demo-2026"></div>
+      <div class="actions"><button type="button" class="btn" data-size="lg" onclick="afterLogin()">Create account</button></div>
     </div>
+    <p class="sim-note"><b>Simulated.</b> Accounts are not created in this demo. The demo account is filled in for you.</p>
   </section>
 
+  <!-- 2. Connect wallet (simulated) -->
   <section class="screen" data-s="connect">
-    <h1>USDCを持っている口座を接続</h1>
-    <p class="lead">家賃はこの口座からエスクローへ送られます。接続は初回だけです。</p>
-    <div class="acct" aria-checked="true"><div><b>SBI VCトレード</b><small>USDC取扱い</small></div></div>
-    <div class="acct" aria-checked="false"><div><b>その他の取引所</b><small>準備中</small></div></div>
-    <button class="btn" onclick="connected=true;toast('SBI VCトレードを接続しました');afterLogin()">連携を許可する</button>
+    <h1>Connect the wallet that holds your USDC</h1>
+    <p class="lead">Rent is sent from this wallet into the escrow, and any refund comes back to it. You only connect once.</p>
+    <div class="choices" role="radiogroup" aria-label="Wallet">
+      <label for="wl-mm"><div role="group" class="field" data-orientation="horizontal"><section><h3>MetaMask</h3><p>Uses the Solana account in your MetaMask wallet</p></section><input id="wl-mm" type="radio" name="wl" checked></div></label>
+      <label for="wl-other"><div role="group" class="field" data-orientation="horizontal"><section><h3>Other wallets</h3><p>Coming later</p></section><input id="wl-other" type="radio" name="wl" disabled></div></label>
+    </div>
+    <p class="sim-note"><b>Simulated.</b> MetaMask does not open in this demo. A devnet demo wallet signs in its place, so you don't need to install anything.</p>
+    <div class="actions"><button type="button" class="btn" data-size="lg" onclick="connected=true;toast('MetaMask connected');afterLogin()">Allow connection</button></div>
   </section>
 
+  <!-- 3. Register dorm -->
   <section class="screen" data-s="register">
-    <h1>寮を登録</h1>
-    <p class="lead">お子さまが住む寮と、家賃の振込先を入力してください。振込先は寮の請求書や契約書に書かれています。</p>
-    <label for="dn">寮の名前</label><input id="dn" placeholder="例：Toowong Student House">
-    <label for="dm">週あたりの家賃（AUD）</label><input id="dm" type="number" inputmode="numeric" placeholder="例：320">
-    <label for="dw">支払い曜日</label><select id="dw" style="width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:11px;background:var(--bg);color:var(--ink);font:inherit"><option value="1">毎週月曜日</option><option value="2">毎週火曜日</option><option value="3">毎週水曜日</option><option value="4">毎週木曜日</option><option value="5">毎週金曜日</option><option value="6">毎週土曜日</option><option value="0">毎週日曜日</option></select>
-    <label for="dd">退去予定日</label><input id="dd" type="date" value="2027-03-31">
-    <p style="font-size:13px;font-weight:700;margin-top:22px">寮の振込先（オーストラリアの銀行）</p>
-    <label for="bn">銀行名</label><input id="bn" placeholder="例：Commonwealth Bank">
-    <label for="bb">支店コード（BSB・6桁）</label><input id="bb" inputmode="numeric" maxlength="7" placeholder="例：064-000">
-    <label for="ba">口座番号</label><input id="ba" inputmode="numeric" placeholder="例：12345678">
-    <button class="btn" onclick="addDorm()">登録する</button>
+    <h1>Add the dorm</h1>
+    <p class="lead">Enter where your child will live and the dorm's bank details. You'll find them on the invoice or lease.</p>
+    <button type="button" class="btn" data-variant="secondary" data-size="sm" onclick="fillSample()">Fill with a sample dorm</button>
+    <div class="stack" style="margin-top:14px">
+      <div role="group" class="field"><label for="dn">Dorm name</label><input class="input" id="dn" placeholder="Toowong Student House"></div>
+      <div role="group" class="field"><label for="dm">Weekly rent (AUD)</label><input class="input" id="dm" type="number" inputmode="numeric" min="1" placeholder="320"></div>
+      <div role="group" class="field"><label for="dw">Rent day</label>
+        <select class="select" id="dw"><option value="1">Every Monday</option><option value="2">Every Tuesday</option><option value="3">Every Wednesday</option><option value="4">Every Thursday</option><option value="5">Every Friday</option><option value="6">Every Saturday</option><option value="0">Every Sunday</option></select></div>
+      <div role="group" class="field"><label for="dd">Move-out date</label><input class="input" id="dd" type="date" value="2027-03-31"></div>
+      <p class="sub-h">Dorm's bank account in Australia</p>
+      <div role="group" class="field"><label for="bn">Bank</label><input class="input" id="bn" placeholder="Commonwealth Bank"></div>
+      <div role="group" class="field"><label for="bb">BSB (6 digits)</label><input class="input" id="bb" inputmode="numeric" maxlength="7" placeholder="064-000"></div>
+      <div role="group" class="field"><label for="ba">Account number</label><input class="input" id="ba" inputmode="numeric" placeholder="12345678"></div>
+    </div>
+    <div class="actions"><button type="button" class="btn" data-size="lg" onclick="addDorm()">Add dorm</button></div>
   </section>
 
+  <!-- 4. Select dorm -->
   <section class="screen" data-s="select">
-    <h1>どの寮に支払いますか</h1>
-    <p class="lead">登録済みの寮から選んでください。</p>
-    <ul class="rcp" id="rcp"></ul>
-    <div class="add" style="cursor:pointer" onclick="go('register')">＋ 寮を登録</div>
-    <button class="btn" onclick="go('period')">次へ</button>
+    <h1>Which dorm are you paying?</h1>
+    <p class="lead">Choose one of your saved dorms.</p>
+    <div class="choices" role="radiogroup" aria-label="Dorm" id="rcp"></div>
+    <button type="button" class="add" onclick="go('register')">+ Add another dorm</button>
+    <div class="actions"><button type="button" class="btn" data-size="lg" onclick="go('period')">Continue</button></div>
   </section>
 
+  <!-- 5. Period -->
   <section class="screen" data-s="period">
-    <h1>何か月分を入れますか</h1>
+    <h1>How far ahead do you want to pay?</h1>
     <p class="lead" id="pName"></p>
-    <ul class="rcp" id="mOpts"></ul>
-    <div class="conv">寮に届く合計<div class="big num" id="aud"></div><div class="sched" id="sched"></div></div>
-    <button class="btn" onclick="go('confirm')">確認へ</button>
+    <div class="choices" role="radiogroup" aria-label="Period" id="mOpts"></div>
+    <div class="sum"><div class="k">Total the dorm will receive</div><div class="v num" id="aud"></div><div class="s" id="sched"></div></div>
+    <div class="actions"><button type="button" class="btn" data-size="lg" onclick="go('confirm')">Review</button></div>
   </section>
 
+  <!-- 6. Confirm & pay (real devnet transaction) -->
   <section class="screen" data-s="confirm">
-    <h1>内容の確認</h1>
-    <p class="lead">レートは契約時点で固定され、以後の為替変動は反映されません。</p>
-    <dl class="num">
-      <dt>寮</dt><dd id="cName"></dd>
-      <dt>期間</dt><dd id="cSch"></dd>
-      <dt>寮に届く合計</dt><dd id="cAud"></dd>
-      <dt>固定レート</dt><dd>1 USDC = 1.52 AUD</dd>
-      <dt>エスクロー入金額</dt><dd id="cUsdc"></dd>
-      <dt>手数料</dt><dd id="cFeeT"></dd>
-      <dd style="grid-column:1/-1;text-align:left;font-size:12px;color:var(--sub);background:var(--bg);border-radius:8px;padding:8px 10px">
-        StayVault利用料（入金額の0.5%）：<span id="cSvc"></span><br>
-        SBI VCトレードの送金手数料（1回ごと・固定）：1.00 USDC<br>
-        寮への毎週の支払いに追加の手数料はかかりません
-      </dd>
-      <dt class="total">お支払い額</dt><dd class="total" id="cTot"></dd>
-    </dl>
-    <dl style="margin-top:12px">
-      <dt>振込先</dt><dd id="cBank"></dd>
-      <dt>退去予定日</dt><dd class="num" id="cOut"></dd>
-      <dt>支払元</dt><dd>SBI VCトレード</dd>
-      <dt>入居確認の期限</dt><dd class="num">10/15</dd>
-      <dt>返金先</dt><dd>SBI VCトレード（変更不可）</dd>
-    </dl>
-    <p class="note">期限までに入居が確認されない場合は全額、途中退去した場合はまだ寮に払っていない週の分が返金先に戻ります。StayVaultはこの資金を動かす権限を持ちません。</p>
-        <button class="btn" onclick="pay()">SBI VCトレードから支払う</button>
+    <h1>Review and pay</h1>
+    <p class="lead">The rate is locked when you pay. Later exchange-rate moves don't change it.</p>
+    <div class="card"><section>
+      <dl class="rows num">
+        <dt>Dorm</dt><dd id="cName"></dd>
+        <dt>Period</dt><dd id="cSch"></dd>
+        <dt>Dorm receives</dt><dd id="cAud"></dd>
+        <dt>Locked rate</dt><dd>1 USDC = 1.52 AUD</dd>
+        <dt>Into escrow</dt><dd id="cUsdc"></dd>
+        <dt>Fees</dt><dd id="cFeeT"></dd>
+        <dd class="fee-note">StayVault fee (0.5% of the deposit): <span id="cSvc"></span><br>Solana network fees are paid in SOL and cost less than $0.01 per transaction<br>No extra fee on each weekly payment to the dorm</dd>
+        <dt class="total">You pay</dt><dd class="total" id="cTot"></dd>
+      </dl>
+    </section></div>
+    <div class="card" style="margin-top:12px"><section>
+      <dl class="rows">
+        <dt>Pays to</dt><dd id="cBank"></dd>
+        <dt>Move-out</dt><dd class="num" id="cOut"></dd>
+        <dt>Paid from</dt><dd>MetaMask</dd>
+        <dt>Move-in check by</dt><dd class="num">Oct 15</dd>
+        <dt>Refunds go to</dt><dd>This MetaMask wallet (fixed)</dd>
+      </dl>
+    </section></div>
+    <p class="hint" style="margin-top:12px">If move-in isn't confirmed by the deadline, everything is refunded. If your child moves out early, the weeks not yet paid to the dorm are refunded. StayVault cannot move this money.</p>
+    <div class="actions"><button type="button" class="btn" data-size="lg" id="payBtn" onclick="pay()">Pay from MetaMask</button></div>
+    <div class="status-line" id="payStatus" role="status" aria-live="polite"></div>
   </section>
 
+  <!-- 7. Home: the vault -->
   <section class="screen" data-s="home">
-    <span class="status" id="st">入居確認待ち</span>
+    <div class="vault-top">
+      <span class="badge" data-variant="secondary" id="st">Waiting for move-in</span>
+      <span class="badge live">Live on Solana devnet</span>
+    </div>
     <h1 id="hName"></h1>
-    <p class="lead">エスクローで保全中</p>
-    <div class="big2 num" id="hBal"></div>
-    <div class="months" id="months"></div>
-    <p class="note" id="hNext"></p>
-    <dl style="margin-top:16px">
-      <dt>週額</dt><dd class="num" id="hMo"></dd>
-      <dt>返金先</dt><dd>SBI VCトレード</dd>
-    </dl>
-    <button class="btn ghost" onclick="demoPay()">（デモ）支払日を進める</button>
-    <button class="btn ghost" style="color:#B7791F;border-color:#B7791F" onclick="leave()">途中退去を申請</button>
+    <p class="lead" style="margin:0">Held in escrow</p>
+    <div class="bal num" id="hBal"></div>
+    <div class="weeks" id="weeks" aria-label="Weekly payments"></div>
+    <div class="legend"><span><i style="background:var(--ok)"></i>Paid to dorm</span><span><i style="background:var(--accent);box-shadow:inset 0 0 0 1px var(--border)"></i>Still in escrow</span><span id="lgRef" hidden><i style="background:var(--border)"></i>Refunded</span></div>
+    <p class="hint num" id="hNext" style="margin-top:8px"></p>
+
+    <div class="card" style="margin-top:16px"><section>
+      <dl class="rows">
+        <dt>Weekly rent</dt><dd class="num" id="hMo"></dd>
+        <dt>Refunds go to</dt><dd>MetaMask</dd>
+      </dl>
+    </section></div>
+
+    <div class="actions" id="homeActions">
+      <button type="button" class="btn" id="advBtn" onclick="demoPay()">Advance to next rent day (demo)</button>
+      <button type="button" class="btn" data-variant="outline" id="leaveBtn" onclick="leave()">Request early move-out</button>
+    </div>
+    <div class="status-line" id="homeStatus" role="status" aria-live="polite"></div>
+    <p class="hint" style="margin-top:10px">In this demo, one week passes every 10 seconds. The first payment also records the operator's move-in confirmation.</p>
+
+    <h2 style="font-size:16px;margin:24px 0 4px">On-chain activity</h2>
+    <p class="hint">Every step below is a real Solana devnet transaction you can inspect.</p>
+    <ul class="activity" id="act"><li class="empty-act">No transactions yet.</li></ul>
+    <p class="sim-note"><b>Simulated.</b> The dorm's AUD payout is shown as a converted amount only. On devnet, the operator receives test USDC.</p>
   </section>
 </div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
 <script>
-const RATE=1.52;let connected=false,bal=5000,dorms=[],sel=0,months=3,paidM=0,stack=[];
+const RATE=1.52;// Demo: one dorm is already registered (1-year stay, 300 AUD a week)
+let connected=false,dorms=[{n:'Stay-Dorm',m:300,w:1,d:'2027-09-30',bn:'C-Bank',bb:'482-731',ba:'60517294'}],sel=0,months=3,paidM=0,stack=[],ended=false,createdAt=0,acts=[];
 const $=id=>document.getElementById(id);
-const f=n=>n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+' USDC';
+const f=n=>n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDC';
+const aud=n=>n.toLocaleString('en-US')+' AUD';
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const WD=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const md=d=>`${MON[d.getMonth()]} ${d.getDate()}`;
+const ymd=s=>{const [y,mo,da]=s.split('-').map(Number),d=new Date(y,mo-1,da);return `${MON[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`};
+const EXPLORER=sig=>`https://explorer.solana.com/tx/${sig}?cluster=devnet`;
+const DEMO_WEEK_MS=10000;   // must match DEMO_INTERVAL in the module below
 const order=['login','connect','register','select','period','confirm','home'];
+
 function go(v,push=true){const cur=document.querySelector('.screen.active').dataset.s;if(push&&cur!==v)stack.push(cur);
 document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.dataset.s===v));
 $('back').classList.toggle('show',!['login','home'].includes(v)&&stack.length>0);
@@ -197,63 +310,116 @@ if(v==='select')renderDorms();if(v==='period')renderMo();if(v==='period'||v==='c
 function history_back(){const p=stack.pop();if(p)go(p,false)}
 function afterLogin(){if(!connected)return go('connect');if(!dorms.length)return go('register');go('select')}
 function authTab(t){['in','up'].forEach(k=>{$('tab-'+k).setAttribute('aria-selected',k===t);$('auth-'+k).hidden=k!==t})}
+
+function fillSample(){$('dn').value='Toowong Student House';$('dm').value=320;$('dw').value='1';$('dd').value='2027-03-31';$('bn').value='Commonwealth Bank';$('bb').value='064-000';$('ba').value='12345678';
+['dn','dm','bn','bb','ba'].forEach(clearInvalid)}
+function markInvalid(id){const i=$(id);i.setAttribute('aria-invalid','true');i.closest('.field').setAttribute('data-invalid','')}
+function clearInvalid(id){const i=$(id);i.removeAttribute('aria-invalid');i.closest('.field').removeAttribute('data-invalid')}
 function addDorm(){const n=$('dn').value.trim(),m=+$('dm').value,w=+$('dw').value,d=$('dd').value,bn=$('bn').value.trim(),bb=$('bb').value.replace(/\D/g,''),ba=$('ba').value.trim();
-if(!n||!m||!d||!bn||!ba){toast('すべての項目を入力してください');return}if(bb.length!==6){toast('支店コード（BSB）は6桁です');return}
-dorms.push({n,m,w,d,bn,bb:bb.slice(0,3)+'-'+bb.slice(3),ba});sel=dorms.length-1;['dn','dm','bn','bb','ba'].forEach(i=>$(i).value='');toast('登録しました');go('select')}
-function renderDorms(){$('rcp').innerHTML=dorms.map((d,i)=>`<li aria-checked="${i===sel}" onclick="sel=${i};renderDorms()"><div><b>${d.n}</b><small>週 ${d.m.toLocaleString()} AUD・毎週${WD[d.w]}曜 ・ ${d.d.replaceAll('-','/')} 退去予定<br>${d.bn} ・ ****${d.ba.slice(-4)}</small></div></li>`).join('')}
-const WD=['日','月','火','水','木','金','土'];
+['dn','dm','bn','bb','ba'].forEach(clearInvalid);
+const miss=[['dn',!n],['dm',!(m>0)],['bn',!bn],['ba',!ba]].filter(x=>x[1]).map(x=>x[0]);
+if(miss.length||!d){miss.forEach(markInvalid);toast('Fill in the highlighted fields.',{err:true});return}
+if(bb.length!==6){markInvalid('bb');toast('BSB must be 6 digits, like 064-000.',{err:true});return}
+dorms.push({n,m,w,d,bn,bb:bb.slice(0,3)+'-'+bb.slice(3),ba});sel=dorms.length-1;['dn','dm','bn','bb','ba'].forEach(i=>$(i).value='');toast('Dorm added');go('select')}
+function renderDorms(){$('rcp').innerHTML=dorms.map((d,i)=>`<label for="dorm-${i}"><div role="group" class="field" data-orientation="horizontal"><section><h3>${esc(d.n)}</h3><p>${aud(d.m)} a week, paid every ${WD[d.w]}. Moving out ${ymd(d.d)}.<br>${esc(d.bn)}, account ending ${esc(d.ba.slice(-4))}</p></section><input id="dorm-${i}" type="radio" name="dorm" ${i===sel?'checked':''} onchange="sel=${i}"></div></label>`).join('')}
+
 function firstPay(){const d=new Date('2026-10-01');while(d.getDay()!==dorms[sel].w)d.setDate(d.getDate()+1);return d}
 function weeksUntil(o){const d=firstPay();let n=0;while(d<o&&n<60){n++;d.setDate(d.getDate()+7)}return Math.max(1,n)}
-function outMonths(){const o=new Date(dorms[sel].d);return Math.max(1,(o.getFullYear()-2026)*12+o.getMonth()-9+(o.getDate()>1?1:0))}
-function weeksFor(mo){const e=new Date('2026-10-01');e.setMonth(e.getMonth()+mo);const o=new Date(dorms[sel].d);return weeksUntil(e<o?e:new Date(o.getTime()+864e5))}
-let selMo=3;
-function renderMo(){const om=outMonths();const opts=[1,3,6,12].filter(m=>m<om).map(m=>({m,l:m+'か月分'}));opts.push({m:om,l:'退去日まで（'+om+'か月）'});if(!opts.some(o=>o.m===selMo))selMo=opts[0].m;
-$('mOpts').innerHTML=opts.map(o=>`<li aria-checked="${o.m===selMo}" onclick="selMo=${o.m};renderMo();calc()"><div><b>${o.l}</b><small>${weeksFor(o.m)}週分の支払い</small></div></li>`).join('')}
-const md=d=>`${d.getMonth()+1}/${d.getDate()}`;
+function outMonths(){const o=new Date(dorms[sel].d+'T00:00');return Math.max(1,(o.getFullYear()-2026)*12+o.getMonth()-9+(o.getDate()>1?1:0))}
+function weeksFor(mo){const e=new Date('2026-10-01');e.setMonth(e.getMonth()+mo);const o=new Date(dorms[sel].d+'T00:00');return weeksUntil(e<o?e:new Date(o.getTime()+864e5))}
+let selMo=12;
+function renderMo(){const om=outMonths();const opts=[1,3,6,12].filter(m=>m<=om).map(m=>({m,l:m===1?'1 month':m===12?'1 year':m+' months'}));if(!opts.some(o=>o.m===selMo))selMo=opts[0].m;
+$('mOpts').innerHTML=opts.map(o=>`<label for="mo-${o.m}"><div role="group" class="field" data-orientation="horizontal"><section><h3>${o.l}</h3><p>${weeksFor(o.m)} weekly payments</p></section><input id="mo-${o.m}" type="radio" name="mo" ${o.m===selMo?'checked':''} onchange="selMo=${o.m};calc()"></div></label>`).join('')}
 
-function calc(){const d=dorms[sel];months=weeksFor(selMo);const aud=d.m*months,u=aud/RATE,svc=u*0.005,tot=u+svc+1;
-$('pName').textContent=`${d.n} ・ 週 ${d.m.toLocaleString()} AUD ・ ${d.d.replaceAll('-','/')} 退去予定`;$('aud').textContent=aud.toLocaleString()+' AUD';
-$('sched').textContent=`${md(firstPay())}（${WD[d.w]}）から毎週${WD[d.w]}曜日に${d.m.toLocaleString()} AUDずつ、${months}回に分けて寮へ支払われます`;
-$('cName').textContent=d.n;$('cBank').textContent=`${d.bn} ${d.bb} ****${d.ba.slice(-4)}`;$('cOut').textContent=d.d.replaceAll('-','/');$('cSch').textContent=`${selMo}か月分（${d.m.toLocaleString()} AUD × ${months}週・毎週${WD[d.w]}曜）`;$('cAud').textContent=aud.toLocaleString()+' AUD';
-$('cUsdc').textContent=f(u);$('cSvc').textContent=f(svc);$('cFeeT').textContent=f(svc+1);$('cTot').textContent=f(tot);return tot}
+function calc(){const d=dorms[sel];months=weeksFor(selMo);const a=d.m*months,u=a/RATE,svc=u*0.005,tot=u+svc;
+$('pName').textContent=`${d.n}. ${aud(d.m)} a week, moving out ${ymd(d.d)}.`;$('aud').textContent=aud(a);
+$('sched').textContent=`From ${WD[d.w]} ${md(firstPay())}, the escrow pays the dorm ${aud(d.m)} every ${WD[d.w]}, ${months} times.`;
+$('cName').textContent=d.n;$('cBank').textContent=`${d.bn} ${d.bb} ****${d.ba.slice(-4)}`;$('cOut').textContent=ymd(d.d);
+$('cSch').textContent=`${selMo===1?'1 month':selMo===12?'1 year':selMo+' months'} (${months} weeks, every ${WD[d.w]})`;$('cAud').textContent=aud(a);
+$('cUsdc').textContent=f(u);$('cSvc').textContent=f(svc);$('cFeeT').textContent=f(svc);$('cTot').textContent=f(tot);return tot}
+
+/* ---- Busy state: spinner in the button, other actions disabled, status line ---- */
+const SPIN='<svg class="spin" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
 let busy=false;
-async function pay(){if(busy)return;busy=true;calc();toast('エスクローへ送金しています…');
-try{await SV.create(dorms[sel].m/RATE,months);paidM=0;stack=[];toast('エスクローへ送金しました');go('home')}
-catch(e){console.error(e);toast('送金できませんでした。コンソールのエラーを確認してください')}finally{busy=false}}
-function renderHome(){const d=dorms[sel];const left=(months-paidM)*d.m/RATE;
-$('hName').textContent=d.n;$('hBal').textContent=f(left);$('hMo').textContent=d.m.toLocaleString()+` AUD（毎週${WD[d.w]}曜）`;
-$('st').textContent=paidM===0?'入居確認待ち':paidM>=months?'契約終了':'支払い中';
-$('months').style.gridTemplateColumns=`repeat(${Math.min(months,13)},1fr)`;
-$('months').innerHTML=Array.from({length:months},(_,i)=>`<div class="m${i<paidM?' paid':i===paidM?' next':''}"></div>`).join('');
-$('hNext').textContent=paidM<months?`支払い済み ${paidM} / ${months}週`:'すべての週が寮へ支払われました'}
-async function demoPay(){if(busy||paidM>=months)return;busy=true;
-try{if(paidM===0)await SV.confirmAndRelease();else await SV.release();
-paidM++;renderHome();toast(paidM===1?'入居が確認され、初週分を支払いました':'今週分を寮へ支払いました')}
-catch(e){console.error(e);toast('まだ支払日ではありません（デモは10秒で1週）')}finally{busy=false}}
-async function leave(){if(busy)return;busy=true;
-try{const back=(months-paidM)*dorms[sel].m/RATE;await SV.moveOut();months=paidM;renderHome();$('st').textContent='途中退去';toast(f(back)+' を返金しました')}
-catch(e){console.error(e);toast('返金できませんでした。コンソールのエラーを確認してください')}finally{busy=false}}
-function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}
+async function run(btn,statusId,label,fn){if(busy)return;busy=true;
+const old=btn.innerHTML;btn.innerHTML=SPIN+label;btn.setAttribute('aria-busy','true');btn.disabled=true;
+document.querySelectorAll('.actions .btn').forEach(b=>{if(b!==btn)b.disabled=true});
+const st=$(statusId);st.innerHTML=SPIN+'<span>Waiting for Solana devnet to confirm. This usually takes a few seconds.</span>';st.classList.add('show');
+try{return await fn()}finally{btn.innerHTML=old;btn.removeAttribute('aria-busy');st.classList.remove('show');busy=false;
+document.querySelectorAll('.actions .btn').forEach(b=>b.disabled=false);if(document.querySelector('.screen.active').dataset.s==='home')renderHome()}}
+function svReady(){if(window.SV)return true;toast(svErr?'Could not reach the demo wallet. Reload the page.':'Still connecting to Solana devnet. Try again in a moment.',{err:true});return false}
+
+function logTx(title,meta,sig){acts.unshift({title,meta,sig,at:new Date()});renderAct()}
+function renderAct(){$('act').innerHTML=acts.length?acts.map(a=>`<li><span class="dot" aria-hidden="true"></span><div><div class="t">${esc(a.title)}</div><div class="m">${esc(a.meta)} ${a.at.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'})}</div><a href="${EXPLORER(a.sig)}" target="_blank" rel="noopener">View on Solana Explorer</a></div></li>`).join(''):'<li class="empty-act">No transactions yet.</li>'}
+
+async function pay(){if(!svReady())return;calc();const d=dorms[sel];
+await run($('payBtn'),'payStatus','Sending to escrow…',async()=>{
+  try{const sig=await SV.create(d.m/RATE,months);createdAt=Date.now();paidM=0;ended=false;stack=[];acts=[];
+    logTx(`Deposited ${f(months*d.m/RATE)} into escrow`,`${months} weeks for ${d.n}.`,sig);
+    toast('Deposited into escrow',{sig});go('home')}
+  catch(e){console.error(e);toast('The deposit did not go through. Nothing left your wallet. Try again.',{err:true})}})}
+
+function nextDueIn(){if(paidM===0)return 0;const due=createdAt-15000+paidM*DEMO_WEEK_MS+3000;return Math.max(0,due-Date.now())}
+let tick=null;
+function renderHome(){const d=dorms[sel];const left=ended?0:(months-paidM)*d.m/RATE;
+$('hName').textContent=d.n;$('hBal').innerHTML=left.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'<small>USDC</small>';
+$('hMo').textContent=`${aud(d.m)} every ${WD[d.w]}`;
+$('st').textContent=ended?'Moved out':paidM===0?'Waiting for move-in':paidM>=months?'All rent paid':'Paying weekly';
+const n=ended?Math.max(totalW,1):months;
+$('weeks').style.gridTemplateColumns=`repeat(${Math.min(n,13)},1fr)`;
+$('weeks').innerHTML=Array.from({length:n},(_,i)=>{const c=i<paidM?'paid':ended?'refunded':i===paidM?'next':'';return `<div class="wk ${c}" title="Week ${i+1}"></div>`}).join('');
+$('lgRef').hidden=!ended;
+const done=ended||paidM>=months;$('homeActions').hidden=done;
+if(ended)$('hNext').textContent=`${paidM} of ${totalW} weeks paid to the dorm. The rest was refunded.`;
+else if(paidM>=months)$('hNext').textContent='Every week has been paid to the dorm.';
+else{const ms=nextDueIn();$('hNext').textContent=`${paidM} of ${months} weeks paid.`+(ms>0?` Next rent day in ${Math.ceil(ms/1000)}s.`:'');
+  if(!busy)$('advBtn').disabled=ms>0;
+  clearTimeout(tick);if(ms>0)tick=setTimeout(()=>{if(document.querySelector('.screen.active').dataset.s==='home')renderHome()},Math.min(ms,1000))}}
+let totalW=0;
+async function demoPay(){if(ended||paidM>=months||!svReady())return;const d=dorms[sel];
+await run($('advBtn'),'homeStatus',paidM===0?'Confirming move-in…':'Paying this week…',async()=>{
+  try{const first=paidM===0;const sig=first?await SV.confirmAndRelease():await SV.release();paidM++;
+    const usdc=f(d.m/RATE);
+    logTx(first?'Move-in confirmed, week 1 paid':`Week ${paidM} paid to the dorm`,`${usdc} released. Dorm receives ${aud(d.m)} (simulated conversion).`,sig);
+    toast(first?'Move-in confirmed. Week 1 paid.':`Week ${paidM} paid`,{sig})}
+  catch(e){console.error(e);toast('This week is not due yet. In the demo, one week passes every 10 seconds.',{err:true})}})}
+async function leave(){if(ended||!svReady())return;const d=dorms[sel];
+await run($('leaveBtn'),'homeStatus','Refunding unpaid weeks…',async()=>{
+  try{const back=(months-paidM)*d.m/RATE;const sig=await SV.moveOut();totalW=months;ended=true;
+    logTx(`Refunded ${f(back)} to MetaMask`,`Early move-out after ${paidM} of ${months} weeks. Parent and operator both signed.`,sig);
+    toast(`Refunded ${f(back)}`,{sig})}
+  catch(e){console.error(e);toast('The refund did not go through. The escrow is unchanged. Try again.',{err:true})}})}
+
+let tt=null;
+function toast(t,o={}){const e=$('toast');e.className='toast'+(o.err?' err':'');e.innerHTML=`<span>${esc(t)}</span>`+(o.sig?`<a href="${EXPLORER(o.sig)}" target="_blank" rel="noopener">View on Explorer</a>`:'');
+requestAnimationFrame(()=>e.classList.add('show'));clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),o.sig||o.err?5000:2200)}
+
+let svErr=false;
+window.addEventListener('sv-ready',()=>{const b=$('net');b.textContent='Solana devnet';b.className='badge live net'});
+// If the CDN imports fail, the module never runs. Treat 20 s without "ready" as an error.
+setTimeout(()=>{if(!window.SV&&!svErr)window.dispatchEvent(new Event('sv-error'))},20000);
+window.addEventListener('sv-error',()=>{svErr=true;const b=$('net');b.textContent='Devnet unavailable';b.className='badge net';b.setAttribute('data-variant','destructive')});
 go('login',false);
 </script>
 <script type="module">
-// === StayVault エスクロー接続（devnet）===
-// ログイン・口座接続・オフランプはモックのまま。署名は wallet-demo.json のデモ財布で行う
+// === StayVault escrow on devnet ===
+// Sign-in, the MetaMask connection and the AUD payout stay simulated. Transactions are signed with the demo wallets.
 import { Buffer } from "https://esm.sh/buffer@6.0.3";
 import { Connection, Keypair, PublicKey, Transaction, TransactionInstruction, SystemProgram } from "https://esm.sh/@solana/web3.js@1.98.0";
 
+try {
 const TOKEN = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 const ATA = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
-const DEMO_INTERVAL = 10n;      // デモでは10秒を1週として扱う
-const DEMO_DEADLINE = 600n;     // 入居確認の期限：作成から10分
+const DEMO_INTERVAL = 10n;      // one demo week = 10 seconds (keep DEMO_WEEK_MS above in sync)
+const DEMO_DEADLINE = 600n;     // move-in confirmation deadline: 10 minutes after creation
 
-// 手元の開発では wallet-demo.json、公開版（GitHub Pages）では demo-public.json を使う
+// Local development uses wallet-demo.json; the public build (GitHub Pages) uses demo-public.json
 async function loadCfg() {
   for (const f of ["./wallet-demo.json", "./demo-public.json"]) {
     const r = await fetch(f, { cache: "no-store" });
     if (r.ok) { console.log("demo config:", f); return r.json(); }
   }
-  throw new Error("wallet-demo.json も demo-public.json も見つかりません");
+  throw new Error("Neither wallet-demo.json nor demo-public.json was found");
 }
 const cfg = await loadCfg();
 const conn = new Connection(cfg.rpc, "confirmed");
@@ -265,7 +431,7 @@ let vault, vaultToken;
 const ata = o => PublicKey.findProgramAddressSync([o.toBuffer(), TOKEN.toBuffer(), MINT.toBuffer()], ATA)[0];
 const acc = (pubkey, isWritable = false, isSigner = false) => ({ pubkey, isWritable, isSigner });
 async function ix(name, keys, args = new Uint8Array()) {
-  // Anchorの命令識別子 = sha256("global:<命令名>") の先頭8バイト
+  // Anchor instruction discriminator = first 8 bytes of sha256("global:<name>")
   const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("global:" + name)));
   return new TransactionInstruction({ programId: PID, keys, data: Buffer.concat([Buffer.from(h.slice(0, 8)), Buffer.from(args)]) });
 }
@@ -287,9 +453,9 @@ window.SV = {
     const id = BigInt(Date.now()), now = BigInt(Math.floor(Date.now() / 1000));
     const buf = new ArrayBuffer(42), dv = new DataView(buf);
     dv.setBigUint64(0, id, true);                                        // vault_id
-    dv.setBigUint64(8, BigInt(Math.round(weeklyUsdc * 1e6)), true);      // weekly_amount（小数6桁）
+    dv.setBigUint64(8, BigInt(Math.round(weeklyUsdc * 1e6)), true);      // weekly_amount (6 decimals)
     dv.setUint16(16, weeks, true);                                       // total_weeks
-    dv.setBigInt64(18, now - 15n, true);                                 // first_pay_ts（devnetの時計が数秒遅れても初週を払えるよう15秒前にする）
+    dv.setBigInt64(18, now - 15n, true);                                 // first_pay_ts (15 s early so week 1 is payable even if the devnet clock lags)
     dv.setBigInt64(26, DEMO_INTERVAL, true);                             // interval_secs
     dv.setBigInt64(34, now + DEMO_DEADLINE, true);                       // confirm_deadline
     const idLe = new Uint8Array(buf, 0, 8);
@@ -300,7 +466,7 @@ window.SV = {
       acc(vault, true), acc(vaultToken, true), acc(TOKEN), acc(SystemProgram.programId),
     ], new Uint8Array(buf))], [parent]);
   },
-  // 初回：運営者の入居確認と初週の払い出しを1トランザクションで
+  // First payment: operator's move-in confirmation and week 1 release in one transaction
   async confirmAndRelease() {
     return send([await ix("confirm_move_in", [acc(operator.publicKey, false, true), acc(vault, true)]), await releaseIx()], [parent, operator]);
   },
@@ -313,6 +479,11 @@ window.SV = {
   },
 };
 console.log("StayVault escrow ready:", PID.toBase58());
+window.dispatchEvent(new Event("sv-ready"));
+} catch (e) {
+  console.error(e);
+  window.dispatchEvent(new Event("sv-error"));
+}
 </script>
 </body>
 </html>
