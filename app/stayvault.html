@@ -88,6 +88,14 @@ h1{font-family:var(--display);font-size:26px;font-weight:700;line-height:1.2;let
 /* Logo mark "1b Roof shackle": a padlock whose shackle is a gabled roof, holding a home with an arched door. One colour. Full mark from 48px up, heavier small mark below that */
 .lm{color:var(--jac);flex:none}
 .lm-big{display:block;margin-bottom:22px}
+/* Partner wallet logo: the official MetaMask file, placed by hand in app/brand/partners/ (not drawn here). Hidden if the file is missing */
+/* Basecoat lays a field's section out as a column, so force the logo and name into one row */
+.choices .field .wl-row{display:flex!important;flex-direction:row!important;align-items:center;gap:12px}
+.choices .field .wl-row h3{margin:0}
+.wl-logo{flex:none;display:block;width:auto;max-width:none;object-fit:contain}
+.choices .field .wl-row .wl-logo{width:28px;height:28px}
+dd.wl-inline .wl-logo{width:16px;height:16px}
+.wl-inline{display:inline-flex;align-items:center;gap:6px;justify-content:flex-end}
 /* Simulated marks: a quiet line, not a box */
 .sim-note{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--demo);margin:18px 0 0}
 .sim-note::before{content:"";flex:none;width:6px;height:6px;margin-top:6px;border-radius:50%;border:1.5px dashed var(--demo)}
@@ -240,7 +248,7 @@ h1{font-family:var(--display);font-size:26px;font-weight:700;line-height:1.2;let
   <section class="screen" data-s="connect">
     <h1>Connect wallet</h1>
     <div class="choices" role="radiogroup" aria-label="Wallet">
-      <label for="wl-mm"><div role="group" class="field" data-orientation="horizontal"><section><h3>MetaMask</h3></section><input id="wl-mm" type="radio" name="wl" checked></div></label>
+      <label for="wl-mm"><div role="group" class="field" data-orientation="horizontal"><section><div class="wl-row"><img class="wl-logo" src="brand/partners/metamask-fox.svg" width="28" height="28" alt="" onerror="this.remove()"><h3>MetaMask</h3></div></section><input id="wl-mm" type="radio" name="wl" checked></div></label>
       <label for="wl-other"><div role="group" class="field" data-orientation="horizontal"><section><h3>Other wallets</h3><p>Soon</p></section><input id="wl-other" type="radio" name="wl" disabled></div></label>
     </div>
     <p class="sim-note"><span>Simulated. A demo wallet signs for you.</span></p>
@@ -292,7 +300,7 @@ h1{font-family:var(--display);font-size:26px;font-weight:700;line-height:1.2;let
       <div><dt>Rate</dt><dd>1 USDC = 1.52 AUD</dd></div>
       <div><dt>Fee (0.5%)</dt><dd id="cFeeT"></dd></div>
       <div class="total"><dt>You pay</dt><dd><span id="cTot"></span><small id="cJpy"></small></dd></div>
-      <div><dt>Refunds to</dt><dd>MetaMask</dd></div>
+      <div><dt>Refunds to</dt><dd class="wl-inline"><img class="wl-logo" src="brand/partners/metamask-fox.svg" width="16" height="16" alt="" onerror="this.remove()">MetaMask</dd></div>
     </dl>
     <p class="fee-note">Unpaid weeks always come back to you. Yen at ¥158 per USDC.<span class="sr-only" id="cSvc"></span><span class="sr-only" id="cUsdc"></span><span class="sr-only" id="cBank"></span><span class="sr-only" id="cOut"></span></p>
     <div class="actions"><button type="button" class="btn" data-size="lg" id="payBtn" onclick="pay()">Pay</button></div>
