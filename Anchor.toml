@@ -12,6 +12,9 @@ skip-lint = false
 [programs.localnet]
 stayvault = "GJet47eJPYYAxHz5RFvxqVKv3n6d6uWZWPsRUSzjB5ZG"
 
+[programs.devnet]
+stayvault = "GJet47eJPYYAxHz5RFvxqVKv3n6d6uWZWPsRUSzjB5ZG"
+
 [provider]
 cluster = "localnet"
 wallet = "~/.config/solana/id.json"

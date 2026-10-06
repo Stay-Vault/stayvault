@@ -1,5 +1,5 @@
 # StayVault
-Solana上の家賃エスクロー。親が全週分を入金し、入居確認のあと週ごとに寮の運営者へ解放する。
+Solana上の家賃エスクローと、物件の投資家への家賃分配。親が全週分をUSDCで入金し、入居確認のあと週ごとに物件のSPV金庫へ解放する。金庫に集まった家賃は、物件の権限者（ST業者）の署名で、料率どおりに管理会社・StayVault・投資家へ分配する。
 
 ## 固定バージョン（変更しない）
 - Rust 1.90.0
@@ -13,20 +13,31 @@ Solana上の家賃エスクロー。親が全週分を入金し、入居確認�
 - #[instruction(..)] には命令の引数をすべて、同じ順番で並べる
 - TypeScript のパッケージは @anchor-lang/core（@coral-xyz/anchor ではない）
 
-## ハッカソンMVPの範囲（2026-09-25 確定）
-- 命令は5つだけ: create_vault / confirm_move_in / release / refund_unconfirmed / move_out
-- 署名者: create_vault=親、confirm_move_in=運営者、release=不要（誰が実行してもよい）、refund_unconfirmed=親、move_out=親と運営者の両方
-- Vaultは秘密鍵を持たないPDA。StayVault自身はどの命令でも署名者にならず、資金を動かせない
+## ハッカソンMVPの範囲（2026-10-01 改訂。ST分配モデル）
+- 命令は7つだけ: init_property / create_vault / confirm_move_in / release / refund_unconfirmed / move_out / distribute
+- 署名者: init_property=物件の権限者（ST業者役）、create_vault=親、confirm_move_in=親と運営者の両方、release=不要（誰が実行してもよい）、refund_unconfirmed=親、move_out=親と運営者の両方、distribute=物件の権限者
+- operator は「物件の管理会社」の意味で使う。名前は変えない
+- 家賃の送り先は物件のSPV金庫（Property PDA が管理するトークン口座）。release は送り先をこの金庫に固定する
+- distribute は、金庫の残高から修繕積立の残高を除いた額を総額とし、管理費・StayVaultの手数料を送り、修繕積立は金庫に残し、残りを名簿の口数比で投資家へ送る。端数は修繕積立に足す
+- デモの料率は管理費 9%・修繕積立 3%・手数料 1%（bps で Property に保存）。scripts/demo-common.mjs と app/stayvault.html の DORMS をそろえる
+- 投資家名簿は init_property で登録し、デモ中は変えない。上限は10人（MAX_HOLDERS）。distribute には投資家の口座を名簿の順で remaining_accounts に渡す
+- 分配の記録はイベント（Distributed、RentReleased）で残す。記録用のアカウントは作らない
+- 親は手数料を払わない。トランザクション手数料はデモでは親役の財布がすべて払う
+- Vault と Property は秘密鍵を持たないPDA。StayVault自身はどの命令でも署名者にならず、資金を動かせない
+- MVPの対象外: 14日待機の終了申請、名簿の更新、修繕積立の引き出し、親子2-of-2、自動実行（クランカー）、AUDオフランプ、ログインとウォレット接続（画面はモックのまま）
 - 条件判定に外部オラクルを使わない。Clockとアカウント内の値だけで判定する
 - デモはdevnetのテスト用USDC（自前のmint、小数6桁）。mintはVaultアカウントに保存する
 - デモでは10秒を1週として扱う（app/stayvault.html の DEMO_INTERVAL）
 - MVPの対象外: 親子2-of-2、自動実行（クランカー）、手数料の徴収、AUDオフランプ、ログインと口座接続（画面はモックのまま）
-- 命令の引数・アカウントの順番を変えたら、app/stayvault.html と scripts/e2e-devnet.mjs の命令組み立て部分も必ず合わせる
-- 動作確認は scripts/e2e-devnet.mjs（devnet 上で5命令を通しで試す）で行う。anchor init が作った LiteSVM のテスト雛形は使っていない
+- 命令の引数・アカウントの順番を変えたら、app/stayvault.html と scripts/e2e-devnet.mjs、scripts/demo-common.mjs の命令組み立て部分も必ず合わせる
+- Property のフィールドの順番を変えない（e2e-devnet.mjs が reserve_balance を 186 バイト目から読んでいる）
+- 動作確認は scripts/e2e-devnet.mjs（devnet 上で7命令を通しで試す）で行う。anchor init が作った LiteSVM のテスト雛形は使っていない
 - 画面の文言は英語（公式ルール第12条）。日本語に戻さない
 - 見た目は Basecoat 1.0.2 の CDN（basecoat.cdn.min.css）で整える。Tailwind やビルドは入れない。色は :root と html.dark の変数で変える
 - 画面の DEMO_WEEK_MS（ミリ秒）と、module 内の DEMO_INTERVAL（秒）は同じ長さにそろえる
-- 模擬の画面には sim-note（Simulated）を付ける。本物の取引は logTx で On-chain activity に記録し、Explorer リンクを出す
+- 模擬の画面には sim-note（Simulated）を付ける。本物の取引は logTx（親の履歴）か showEvent（右側パネル）で記録し、Explorer リンクを出す
+- 右側パネルは、左の画面の役割と、その画面で審査員に伝えたいことだけを書く（renderAside）。関係ない情報を足さない
+- 画面に、プログラムにない機能を「できる」と書かない
 - ロゴは app/brand/ の SVG を使う（最終版 1b：屋根の形の輪の南京錠に、アーチ扉の家。紫1色、Claude Design で調整済み）。48px 以上は stayvault-mark.svg、40px 以下は stayvault-mark-small.svg、文字つきは stayvault-logo-horizontal.svg。形や色を作り直さない。ロゴに緑を使わない
 - アプリ内の文字は Bricolage Grotesque（800）で「Stay」を --ink、「Vault」を --jac。favicon は stayvault.html の <link rel="icon"> に埋め込み済み
 
@@ -41,5 +52,6 @@ Solana上の家賃エスクロー。親が全週分を入金し、入居確認�
 - 鍵のバックアップ（*-backup.json）は .gitignore に当てはまらない。リポジトリの中に置かない
 - wallet-demo.json は端末ごとに scripts/setup-demo.mjs で作る
 - Windows では Gemini、Mac では Claude Code を使う。どちらもこのファイルの決まりに従う
-- 例外: app/demo-public.json は審査員向けに意図的に公開する devnet 専用のデモ財布。コミットしてよい。作り直すときは scripts/make-public-demo.mjs を使う
+- 例外: app/demo-public.json は審査員向けに意図的に公開する devnet 専用のデモ財布（親役・管理会社役・ST業者役）と物件の情報。コミットしてよい。作り直すときは scripts/make-public-demo.mjs を使う
+- GitHub Pages は main から公開している。feat/escrow で作業し、確認が済んでから main にマージする
 - ~/.config/solana/id.json は更新権限とテスト用USDCの発行権限を持つので、どんな理由でも公開しない。demo-public.json に含めない
