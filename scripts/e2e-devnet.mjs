@@ -1,4 +1,4 @@
-// devnet にデプロイした StayVault を、5つの命令すべてについて通しで試す。
+// devnet にデプロイした StayVault を、7つの命令について通しで試す（init_property は setup-demo.mjs が実行済み）。
 // 実行: リポジトリのルートで `node scripts/e2e-devnet.mjs`
 // 前提: デプロイ済みで、scripts/setup-demo.mjs で app/wallet-demo.json を作ってあること。
 // 画面（app/stayvault.html）と同じ方法で命令を組み立てるので、これが通れば画面側の組み立ても正しい。
@@ -19,10 +19,15 @@ const PID = new PublicKey(cfg.programId);
 const MINT = new PublicKey(cfg.mint);
 const parent = Keypair.fromSecretKey(Uint8Array.from(cfg.parent));
 const operator = Keypair.fromSecretKey(Uint8Array.from(cfg.operator));
+const authority = Keypair.fromSecretKey(Uint8Array.from(cfg.authority));
+const PROPERTY = new PublicKey(cfg.property);
+const PROPERTY_VAULT = new PublicKey(cfg.propertyVault);
+const MANAGER_TOKEN = new PublicKey(cfg.managerToken);
+const FEE_TOKEN = new PublicKey(cfg.feeToken);
+const HOLDERS = cfg.holders.map((h) => ({ ...h, token: new PublicKey(h.token) }));
 
 const ata = (o) => PublicKey.findProgramAddressSync([o.toBuffer(), TOKEN.toBuffer(), MINT.toBuffer()], ATA)[0];
 const parentAta = ata(parent.publicKey);
-const operatorAta = ata(operator.publicKey);
 const acc = (pubkey, isWritable = false, isSigner = false) => ({ pubkey, isWritable, isSigner });
 const disc = (name) => crypto.createHash("sha256").update("global:" + name).digest().subarray(0, 8);
 const ix = (name, keys, args = Buffer.alloc(0)) =>
@@ -30,6 +35,8 @@ const ix = (name, keys, args = Buffer.alloc(0)) =>
 const send = (ixs, signers) => sendAndConfirmTransaction(conn, new Transaction().add(...ixs), signers); // 手数料は先頭の署名者（親）
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const bal = async (a) => Number((await getAccount(conn, a)).amount);
+// Property の reserve_balance（8 + 32×5 + 8 + 2×3 + 4 = 186 バイト目から u64）
+const reserveBalance = async () => Number((await conn.getAccountInfo(PROPERTY)).data.readBigUInt64LE(186));
 
 let step = 0;
 function ok(msg) { console.log(`✅ ${++step}. ${msg}`); }
@@ -48,7 +55,7 @@ async function expectError(promise, code, msg) {
   fail(`${msg}（成功してしまった）`);
 }
 
-// 画面と同じ並びで create_vault の引数を組み立てる
+// 画面と同じ並びで create_vault の引数を組み立てる（引数は変更なし。アカウントの最後に物件が加わった）
 function newVault({ weekly, weeks, interval, deadlineIn }) {
   const now = BigInt(Math.floor(Date.now() / 1000));
   const args = Buffer.alloc(42);
@@ -63,12 +70,13 @@ function newVault({ weekly, weeks, interval, deadlineIn }) {
   const vaultToken = PublicKey.findProgramAddressSync([Buffer.from("vault_token"), vault.toBuffer()], PID)[0];
   const create = ix("create_vault", [
     acc(parent.publicKey, true, true), acc(operator.publicKey), acc(MINT), acc(parentAta, true),
-    acc(vault, true), acc(vaultToken, true), acc(TOKEN), acc(SystemProgram.programId),
+    acc(vault, true), acc(vaultToken, true), acc(TOKEN), acc(SystemProgram.programId), acc(PROPERTY),
   ], args);
   return { vault, vaultToken, create };
 }
-const releaseIx = (v) => ix("release", [acc(v.vault, true), acc(v.vaultToken, true), acc(operatorAta, true), acc(TOKEN)]);
-const confirmIx = (v) => ix("confirm_move_in", [acc(operator.publicKey, false, true), acc(v.vault, true)]);
+const releaseIx = (v) => ix("release", [acc(v.vault, true), acc(v.vaultToken, true), acc(PROPERTY_VAULT, true), acc(TOKEN)]);
+const confirmIx = (v, parentSigns = true) =>
+  ix("confirm_move_in", [acc(operator.publicKey, false, true), acc(v.vault, true), acc(parent.publicKey, false, parentSigns)]);
 const moveOutIx = (v) => ix("move_out", [
   acc(parent.publicKey, false, true), acc(operator.publicKey, false, true), acc(v.vault, true),
   acc(v.vaultToken, true), acc(parentAta, true), acc(TOKEN),
@@ -76,31 +84,68 @@ const moveOutIx = (v) => ix("move_out", [
 const refundIx = (v) => ix("refund_unconfirmed", [
   acc(parent.publicKey, false, true), acc(v.vault, true), acc(v.vaultToken, true), acc(parentAta, true), acc(TOKEN),
 ]);
+const distributeIx = (signer, holders = HOLDERS) => ix("distribute", [
+  acc(signer.publicKey, false, true), acc(PROPERTY, true), acc(PROPERTY_VAULT, true),
+  acc(MANAGER_TOKEN, true), acc(FEE_TOKEN, true), acc(TOKEN),
+  ...holders.map((h) => acc(h.token, true)),
+]);
 
-const WEEKLY = 100_000_000; // 100 USDC
+// 画面と同じ計算で、分配の期待値を出す
+function expectedSplit(gross) {
+  const part = (bps) => Math.floor((gross * bps) / 10_000);
+  const manager = part(900), fee = part(100), reserve = part(300);
+  const net = gross - manager - fee - reserve;
+  const shares = HOLDERS.map((h) => Math.floor((net * h.units) / 1000));
+  return { manager, fee, kept: reserve + (net - shares.reduce((a, c) => a + c, 0)), shares };
+}
+
+const WEEKLY = 213_000_000; // 213 USDC（週300 AUD）
 console.log("Program ID:", PID.toBase58());
+console.log("Property  :", PROPERTY.toBase58());
 
-// --- シナリオA: 入金 → 確認前は払えない → 入居確認 → 2週分払う → 途中退去 ---
-const a = newVault({ weekly: WEEKLY, weeks: 3, interval: 2, deadlineIn: 300 });
-const op0 = await bal(operatorAta);
+// --- シナリオA: 入金 → 入居確認（親＋管理会社） → 4週分を金庫へ → 分配 → 途中退去 ---
+const a = newVault({ weekly: WEEKLY, weeks: 6, interval: 2, deadlineIn: 300 });
 const pa0 = await bal(parentAta);
 
 await send([a.create], [parent]);
-expectEq(await bal(a.vaultToken), WEEKLY * 3, "create_vault: 3週分がエスクローに入った");
+expectEq(await bal(a.vaultToken), WEEKLY * 6, "create_vault: 6週分がエスクローに入った");
 
 await expectError(send([releaseIx(a)], [parent]), "NotConfirmed", "release: 入居確認の前は払い出せない");
+// 親を手数料の支払者にすると、それだけで親の署名が付いてしまう。ここでは管理会社役だけで送る
+await expectError(send([confirmIx(a, false)], [operator]), "AccountNotSigner", "confirm_move_in: 親の署名がないと通らない");
 
+// 分配の総額をこのシナリオの家賃だけにするため、先に金庫に残っている分（修繕積立を除く）を分配しておく
+if ((await bal(PROPERTY_VAULT)) > (await reserveBalance())) await send([distributeIx(authority)], [parent, authority]);
+
+const pv0 = await bal(PROPERTY_VAULT);
 await send([confirmIx(a), releaseIx(a)], [parent, operator]);
-expectEq((await bal(operatorAta)) - op0, WEEKLY, "confirm_move_in + release: 初週分が運営者に届いた");
+expectEq((await bal(PROPERTY_VAULT)) - pv0, WEEKLY, "confirm_move_in + release: 初週分がSPV金庫に届いた");
+for (let w = 2; w <= 4; w++) {
+  await sleep(2500);
+  await send([releaseIx(a)], [parent]);
+}
+expectEq((await bal(PROPERTY_VAULT)) - pv0, WEEKLY * 4, "release: 4週分がSPV金庫に届いた");
 
-await sleep(3000);
-await send([releaseIx(a)], [parent]);
-expectEq((await bal(operatorAta)) - op0, WEEKLY * 2, "release: 2週目が運営者に届いた");
+await expectError(send([distributeIx(operator)], [parent, operator]), "ConstraintHasOne", "distribute: ST業者以外は分配できない");
+await expectError(send([distributeIx(authority, [...HOLDERS].reverse())], [parent, authority]), "WrongHolderAccount",
+  "distribute: 名簿と違う口座には送れない");
+
+const gross = (await bal(PROPERTY_VAULT)) - (await reserveBalance());
+const exp = expectedSplit(gross);
+const m0 = await bal(MANAGER_TOKEN), f0 = await bal(FEE_TOKEN), r0 = await reserveBalance();
+const h0 = await Promise.all(HOLDERS.map((h) => bal(h.token)));
+await send([distributeIx(authority)], [parent, authority]);
+expectEq((await bal(MANAGER_TOKEN)) - m0, exp.manager, `distribute: 管理費 9%（${exp.manager / 1e6} USDC）が管理会社に届いた`);
+expectEq((await bal(FEE_TOKEN)) - f0, exp.fee, `distribute: 手数料 1%（${exp.fee / 1e6} USDC）がStayVaultに届いた`);
+expectEq((await reserveBalance()) - r0, exp.kept, `distribute: 修繕積立（${exp.kept / 1e6} USDC）が金庫に残った`);
+for (let i = 0; i < HOLDERS.length; i++) {
+  expectEq((await bal(HOLDERS[i].token)) - h0[i], exp.shares[i], `distribute: ${HOLDERS[i].name} に ${exp.shares[i] / 1e6} USDC`);
+}
+await expectError(send([distributeIx(authority)], [parent, authority]), "NothingToDistribute", "distribute: 分配する額がなければ通らない");
 
 await send([moveOutIx(a)], [parent, operator]);
 expectEq(await bal(a.vaultToken), 0, "move_out: エスクローが空になった");
-expectEq(pa0 - (await bal(parentAta)), WEEKLY * 2, "move_out: 未払いの1週分が親に戻った");
-
+expectEq(pa0 - (await bal(parentAta)), WEEKLY * 4, "move_out: 未払いの2週分が親に戻った");
 await expectError(send([releaseIx(a)], [parent]), "Closed", "release: 退去後は払い出せない");
 
 // --- シナリオB: 期限までに入居確認がなければ、親だけで全額を取り戻せる ---

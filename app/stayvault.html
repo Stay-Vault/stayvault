@@ -1,272 +1,771 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>StayVault — 家賃の送金</title>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Figtree:wght@500;700;800&display=swap" rel="stylesheet">
+<title>StayVault</title>
+<script>
+// Basecoat switches to dark mode with a .dark class on <html>. Follow the OS setting.
+(function(){try{const m=matchMedia('(prefers-color-scheme: dark)');const s=()=>document.documentElement.classList.toggle('dark',m.matches);s();m.addEventListener('change',s)}catch(e){}})();
+</script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cstyle%3Esvg{color:#6E56CF}@media (prefers-color-scheme:dark){svg{color:#A898F0}}%3C/style%3E%3Cpath d=%22M22 27V18.5L32 10.2L42 18.5V27%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%227%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3C/path%3E%3Crect x=%2210%22 y=%2227%22 width=%2244%22 height=%2228%22 rx=%229%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%227%22%3E%3C/rect%3E%3Cpath d=%22M30.62 33.65Q32 32.5 33.38 33.65L39.62 38.85Q41 40 41 41.8V47Q41 48.5 39.5 48.5H24.5Q23 48.5 23 47V41.8Q23 40 24.38 38.85Z%22 fill=%22currentColor%22%3E%3C/path%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Basecoat 1.0.2 (shadcn/ui look, no React, no build). Standalone CDN bundle: Tailwind is not needed -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.2/dist/basecoat.cdn.min.css">
 <style>
-:root{--bg:#F3F5F8;--panel:#FFF;--ink:#16213A;--sub:#5B6478;--line:#DDE2EA;--jac:#6D4FA3;--jac-soft:#EDE7F7;--ok:#2E8A68;--ok-soft:#E2F2EB;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1524;--panel:#172035;--ink:#E8ECF4;--sub:#9AA3B8;--line:#2A3550;--jac:#A98BE0;--jac-soft:#2A2344;--ok:#5BC39A;--ok-soft:#173A30}}
-:root[data-theme="dark"]{--bg:#0F1524;--panel:#172035;--ink:#E8ECF4;--sub:#9AA3B8;--line:#2A3550;--jac:#A98BE0;--jac-soft:#2A2344;--ok:#5BC39A;--ok-soft:#173A30}
-*{box-sizing:border-box;margin:0}
-html,body{height:100%;background:var(--bg)}
-body{font-family:"Zen Kaku Gothic New",system-ui,sans-serif;color:var(--ink);line-height:1.7;font-size:15px}
-.num{font-family:"Figtree","Zen Kaku Gothic New",sans-serif;font-feature-settings:"tnum"}
-.app{max-width:440px;margin:0 auto;min-height:100%;background:var(--panel);display:flex;flex-direction:column}
-@media(min-width:480px){.app{margin:24px auto;min-height:auto;border:1px solid var(--line);border-radius:22px;overflow:hidden}}
-.top{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
-.back{border:0;background:none;color:var(--ink);font-size:22px;width:32px;cursor:pointer;visibility:hidden}
-.back.show{visibility:visible}
-.logo{font-family:Figtree;font-weight:800;font-size:18px;letter-spacing:-.02em}.logo span{color:var(--jac)}
-.bar{height:3px;background:var(--line)}.bar i{display:block;height:100%;background:var(--jac);transition:width .3s}
-.screen{display:none;padding:24px 20px 28px;flex:1}.screen.active{display:block}
-h1{font-size:22px;font-weight:700;line-height:1.4;margin-bottom:6px}
-.lead{color:var(--sub);font-size:14px;margin-bottom:20px}
-label{display:block;font-size:13px;color:var(--sub);margin:14px 0 5px}
-input{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:11px;background:var(--bg);color:var(--ink);font:inherit}
-input:focus,button:focus-visible{outline:2px solid var(--jac);outline-offset:1px}
-.btn{display:block;width:100%;border:0;border-radius:12px;padding:14px;font:inherit;font-weight:700;cursor:pointer;margin-top:22px;background:var(--jac);color:#fff}
-.btn:disabled{opacity:.4;cursor:not-allowed}
-.btn.ghost{background:none;border:1px solid var(--line);color:var(--ink);margin-top:10px}
-.hero{text-align:center;padding:30px 0 10px}
-.hero .logo{font-size:34px}
-.hero p{color:var(--sub);margin-top:8px}
-.tabs{display:flex;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px;margin-top:18px}
-.tabs button{flex:1;border:0;background:none;border-radius:9px;padding:9px;font:inherit;font-size:14px;color:var(--sub);cursor:pointer}
-.tabs button[aria-selected="true"]{background:var(--panel);color:var(--ink);font-weight:700}
-.rcp{list-style:none;padding:0}
-.rcp li{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px}
-.rcp li[aria-checked="true"]{border:2px solid var(--jac);background:var(--jac-soft)}
-.rcp b{display:block;font-size:15px}.rcp small{color:var(--sub);font-size:12px}
-.tag{font-size:12px;color:var(--ok);background:var(--ok-soft);border-radius:999px;padding:2px 10px;white-space:nowrap}
-.add{border:1px dashed var(--line);border-radius:14px;padding:12px;text-align:center;color:var(--sub);font-size:14px}
-.amt{display:flex;align-items:baseline;gap:8px;border-bottom:2px solid var(--jac);padding:6px 0}
-.amt input{border:0;background:none;padding:0;font-family:Figtree;font-size:40px;font-weight:800;outline:none}
-.amt span{font-weight:700;color:var(--sub)}
-.chips{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
-.chips button{border:1px solid var(--line);background:none;color:var(--ink);border-radius:999px;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer}
-.conv{margin-top:18px;background:var(--bg);border-radius:12px;padding:14px;font-size:14px}
-.conv .big{font-size:24px;font-weight:800}
-.sched{font-size:13px;color:var(--sub);margin-top:8px}
-dl{display:grid;grid-template-columns:auto 1fr;gap:9px 14px;font-size:14px;padding:16px;border:1px solid var(--line);border-radius:14px}
-dt{color:var(--sub)}dd{text-align:right}
-.total{border-top:1px solid var(--line);padding-top:9px;font-weight:700}
-.note{font-size:12px;color:var(--sub);margin-top:12px}
-.bank{border:2px solid var(--jac);border-radius:16px;padding:18px;margin-top:6px}
-.bank .row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;gap:10px}
-.bank .row:last-child{border:0}
-.bank .row span{color:var(--sub)}
-.copy{border:1px solid var(--line);background:none;color:var(--jac);border-radius:8px;padding:2px 10px;font:inherit;font-size:12px;cursor:pointer;margin-left:8px}
-.warn{margin-top:14px;background:var(--jac-soft);border-radius:12px;padding:12px 14px;font-size:13px}
-.deadline{text-align:center;margin:4px 0 16px;font-size:14px;color:var(--sub)}
-.deadline b{color:var(--ink);font-size:18px}
-.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);opacity:0;background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:13px;transition:opacity .2s;pointer-events:none}
-.toast.show{opacity:1}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
-.acct{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
-.acct[aria-checked="true"]{border:2px solid var(--jac);background:var(--jac-soft)}
-.acct small{display:block;color:var(--sub);font-size:12px}
-.err{margin-top:14px;border:1px solid #C0504D;border-radius:12px;padding:12px 14px;font-size:13px;color:#C0504D;display:none}
-.err.show{display:block}
-.months{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin:18px 0 6px}
-.m{height:28px;border-radius:6px;background:var(--jac-soft)}.m.paid{background:var(--ok)}.m.next{border:2px solid var(--jac)}
-.big2{font-family:Figtree;font-size:40px;font-weight:800;line-height:1.1}
-.status{display:inline-block;font-size:12px;color:var(--jac);background:var(--jac-soft);border-radius:999px;padding:3px 12px;margin-bottom:10px}
+/* ================= Brand (palette A1 "Refined") =================
+   Jacaranda  = the colour Brisbane turns every Oct-Nov, when rent starts. Used for actions and "where you are".
+   Eucalyptus = paid. Warm paper instead of cold grey. One display face (Bricolage Grotesque) for names and numbers. */
+:root{
+  --page:#F1EEE8; --paper:#FAF8F5; --ink:#1C1826; --sub:#6E6879; --faint:#9D97A6; --line:#E9E4DC;
+  --jac:#6E56CF; --jac-ink:#45368F; --jac-soft:#F0ECFB; --jac-mist:#E6E0F8;
+  --euc:#2E7D5B; --euc-soft:#E3F0E9; --demo:#8A5A0B; --err:#B42318;
+  --display:"Bricolage Grotesque","Figtree",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+  --background:var(--paper); --foreground:var(--ink); --card:var(--paper); --card-foreground:var(--ink);
+  --popover:var(--paper); --popover-foreground:var(--ink);
+  --primary:var(--jac); --primary-foreground:#FFFFFF; --secondary:var(--jac-soft); --secondary-foreground:var(--jac-ink);
+  --muted:#F3F0EA; --muted-foreground:var(--sub); --accent:var(--jac-soft); --accent-foreground:var(--jac-ink);
+  --destructive:var(--err); --border:var(--line); --input:#DDD7CD; --ring:var(--jac); --radius:0.8rem;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html.dark{
+  --page:#0E0C14; --paper:#16131E; --ink:#F3F0F9; --sub:#A29CB0; --faint:#7E7890; --line:#2B2736;
+  --jac:#A898F0; --jac-ink:#E3DDFA; --jac-soft:#25203A; --jac-mist:#2C2742;
+  --euc:#5BC39A; --euc-soft:#173A2D; --demo:#F2B55A; --err:#F97066;
+  --primary-foreground:#16131E; --muted:#1F1B29; --input:#3A3547;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{min-height:100%}
+body{margin:0;background:var(--page);color:var(--ink);font-family:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums}
+[hidden]{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+
+/* ================= Stage: phone on desktop, full screen on mobile ================= */
+.stage{min-height:100vh}
+.app{position:relative;max-width:440px;margin:0 auto;min-height:100vh;background:var(--paper);display:flex;flex-direction:column}
+/* From tablet width up, the app is drawn as a phone screen at 9:16 */
+@media(min-width:480px){.app{margin:28px auto;width:440px;max-width:calc(100% - 32px);min-height:0;aspect-ratio:9/16;border:1px solid var(--line);border-radius:44px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}.app::-webkit-scrollbar{display:none}}
+/* The property panel sits under the phone on small screens and beside it on desktop */
+.aside{max-width:440px;margin:0 auto;padding:28px 22px 48px;box-sizing:border-box}
+@media(min-width:960px){
+  .stage{display:grid;grid-template-columns:auto 360px;gap:56px;justify-content:center;align-items:center;padding:32px 24px;box-sizing:border-box}
+  .app{margin:0;width:auto;max-width:none;height:min(820px,calc(100vh - 84px));aspect-ratio:9/16;border:10px solid #1C1826;border-radius:56px}
+  html.dark .app{border-color:#2B2736}
+  .aside{margin:0;padding:0;max-width:none;max-height:calc(100vh - 64px);overflow-y:auto;scrollbar-width:thin}
+}
+
+/* ================= Top bar ================= */
+.top{display:flex;align-items:center;gap:6px;padding:14px 16px 10px;position:sticky;top:0;background:var(--paper);z-index:5}
+.top .btn{visibility:hidden}.top .btn.show{visibility:visible}
+.logo{display:flex;align-items:center;gap:7px;font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:-.02em}.logo .wm span{color:var(--jac)}
+.lm{color:var(--jac);flex:none}
+.lm-big{display:block;margin-bottom:22px}
+.net{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--faint)}
+.net i{width:6px;height:6px;border-radius:50%;background:var(--faint)}
+.net.live{color:var(--euc)}.net.live i{background:var(--euc)}
+.net.bad{color:var(--err)}.net.bad i{background:var(--err)}
+.bar{height:2px;margin:0 16px;background:var(--line);border-radius:2px;overflow:hidden}.bar i{display:block;height:100%;background:var(--jac);width:0;transition:width .35s}
+
+/* ================= Screens ================= */
+.screen{display:none;padding:22px 22px 30px;flex:1}.screen.active{display:block}
+h1{font-family:var(--display);font-size:26px;font-weight:700;line-height:1.2;letter-spacing:-.02em;margin:0 0 8px}
+.lead{color:var(--sub);font-size:14.5px;margin:0 0 22px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.actions{display:flex;flex-direction:column;gap:10px;margin-top:26px}
+.actions .btn{width:100%}
+.btn[data-size="lg"]{height:50px;border-radius:14px;font-size:15.5px;font-weight:600}
+.btn[aria-busy="true"]{pointer-events:none}
+.hint{font-size:12.5px;color:var(--sub);margin:0}
+.acc{color:var(--jac)}
+
+/* Partner wallet logo: the official MetaMask file, placed by hand in brand/partners/ (not drawn here). Hidden if the file is missing */
+.choices .field .wl-row{display:flex!important;flex-direction:row!important;align-items:center;gap:12px}
+.choices .field .wl-row h3{margin:0}
+.wl-logo{flex:none;display:block;width:auto;max-width:none;object-fit:contain}
+.choices .field .wl-row .wl-logo{width:28px;height:28px}
+dd.wl-inline .wl-logo{width:16px;height:16px}
+.wl-inline{display:inline-flex;align-items:center;gap:6px;justify-content:flex-end}
+.sim-note{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--demo);margin:18px 0 0}
+.sim-note::before{content:"";flex:none;width:6px;height:6px;margin-top:6px;border-radius:50%;border:1.5px dashed var(--demo)}
+
+.hero{padding:34px 0 6px}
+.hero h1{font-size:32px;margin-top:6px}
+
+.choices{display:flex;flex-direction:column;gap:10px}
+.choices label{display:block;border:1px solid var(--line);border-radius:16px;padding:14px 16px;cursor:pointer;background:var(--paper);transition:border-color .2s,background .2s}
+.choices label:has(input:checked){border-color:var(--jac);background:var(--jac-soft)}
+.choices label:has(input:disabled){opacity:.5;cursor:not-allowed}
+.choices h3{font-size:15.5px;font-weight:600;margin:0}
+.choices p{font-size:12.5px;color:var(--sub);margin:2px 0 0}
+
+.sum{margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+.sum .k{font-size:12.5px;color:var(--sub)}
+.sum .v{font-family:var(--display);font-size:32px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+.sum .e{font-size:13px;color:var(--faint)}
+.sum .s{font-size:13px;color:var(--sub);margin-top:8px}
+.rows{margin:0}
+.rows>div{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid var(--line);font-size:14px}
+.rows>div:last-child{border-bottom:1px solid var(--line)}
+.rows dt{color:var(--sub)}.rows dd{margin:0;text-align:right}
+.rows .total{font-weight:700}
+.rows .total dd{font-family:var(--display);font-size:18px}
+.rows small{display:block;font-size:12px;color:var(--faint);font-weight:400;font-family:"Figtree",sans-serif}
+.fee-note{font-size:12px;color:var(--faint);margin:10px 0 0}
+
+/* ================= Home: the vault dial ================= */
+.who{text-align:center;font-size:13px;color:var(--sub);margin-top:4px}
+.dialbox{position:relative;width:290px;height:290px;margin:4px auto 0;max-width:100%}
+.dialbox svg{display:block;width:100%;height:100%}
+.seg{fill:var(--jac-mist);transition:fill .5s ease}
+.seg.paid{fill:var(--euc)}
+.seg.refunded{fill:var(--line)}
+.seg.next{fill:var(--jac);opacity:.55}
+.ring-line{fill:none;stroke:var(--line)}
+.mon{font-size:9px;fill:var(--faint);font-family:"Figtree",sans-serif}
+.needle{transform-origin:150px 150px;transition:transform .7s cubic-bezier(.34,1.56,.64,1)}
+.needle path{fill:var(--jac)}
+.center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+.center .lbl{font-size:12px;color:var(--jac);font-weight:600}
+.center .bal{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:-.03em;line-height:1.05;margin-top:4px}
+.center .cur{font-size:12px;color:var(--sub)}
+.center .eq{font-size:12px;color:var(--faint);margin-top:6px}
+.stat{text-align:center;font-size:12.5px;color:var(--sub);margin:4px 0 20px}
+.home-rows>div{display:flex;justify-content:space-between;gap:12px;padding:13px 0;border-top:1px solid var(--line);font-size:14px}
+.home-rows>div:last-child{border-bottom:1px solid var(--line)}
+.home-rows span:first-child{color:var(--sub)}
+
+/* Move-in approval and move-out confirmation */
+.mo{margin-top:16px;border:1px solid var(--line);border-radius:18px;padding:16px}
+.mo.ask{border-color:var(--jac);background:var(--jac-soft);margin:0 0 18px}
+.mo h3{font-family:var(--display);font-size:17px;margin:0 0 8px}
+.mo .split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.mo .split div{font-size:12px;color:var(--sub)}
+.mo .split b{display:block;font-family:var(--display);font-size:18px;color:var(--ink)}
+.mo .row{display:flex;gap:8px;margin-top:14px}.mo .row .btn{flex:1}
+
+.hist-h{font-size:13px;color:var(--sub);font-weight:600;margin:26px 0 2px}
+.hist{list-style:none;padding:0;margin:0}
+.hist li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0}
+.hist li.new{animation:slidein .5s ease-out}
+@keyframes slidein{from{opacity:0;transform:translateY(-6px)}}
+.hist .t{font-size:14.5px}
+.hist .m{font-size:12px;color:var(--faint)}
+.hash{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:12px;color:var(--jac);text-decoration:none;white-space:nowrap}
+.hash svg{width:13px;height:13px}
+.hash:hover{text-decoration:underline}
+.linkish{border:0;background:none;color:var(--sub);font:inherit;font-size:13px;padding:6px 0;cursor:pointer}
+.quiet{display:flex;justify-content:center;margin-top:18px}
+.quiet .btn{color:var(--sub)}
+
+/* Demo controls: dashed text links, so nobody mistakes them for the product */
+.demo{margin-top:22px;text-align:center}
+.demo-b{display:flex;justify-content:center;align-items:center;gap:16px;font-size:12px;color:var(--demo)}
+.demo-b b{font-weight:600}
+.dlink{border:0;background:none;font:inherit;font-size:12px;color:var(--demo);padding:2px 0;border-bottom:1px dashed var(--demo);cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.dlink:disabled{opacity:.45;cursor:default}
+.dlink svg{width:12px;height:12px}
+.demo p{font-size:11px;color:var(--demo);opacity:.85;margin:8px 0 0}
+
+.status-line{display:none;align-items:center;gap:8px;font-size:13px;color:var(--sub);margin-top:12px}
+.status-line.show{display:flex}
+.spin{width:16px;height:16px;flex:none;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.toast-wrap{position:sticky;bottom:0;height:0;z-index:10}
+.toast{position:absolute;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,8px);opacity:0;pointer-events:none;
+  background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:14px;font-size:13.5px;transition:opacity .2s,transform .2s;width:max-content;max-width:calc(100% - 32px);display:flex;gap:12px;align-items:center}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast a{color:inherit;font-weight:700;white-space:nowrap}
+.toast.err{background:var(--err);color:#fff}
+
+/* ================= The property side: what the parent doesn't see ================= */
+.aside h2{font-family:var(--display);font-size:24px;letter-spacing:-.02em;line-height:1.2;margin:0 0 10px}
+.aside>p{color:var(--sub);font-size:14px;margin:0 0 22px}
+.aside .step{font-size:12.5px;color:var(--jac);font-weight:600;margin:0 0 8px}
+.aside .facts{margin:0 0 22px}
+.anote{display:flex;gap:8px;font-size:12.5px;color:var(--sub);margin:4px 0 0}
+.anote::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;margin-top:6px}
+.anote.live::before{background:var(--euc)}
+.anote.sim::before{border:1.5px dashed var(--demo)}
+.aside .k{font-size:12.5px;color:var(--sub);font-weight:600;margin:0 0 8px}
+.event{border:1px solid var(--line);background:var(--paper);border-radius:18px;padding:16px 18px;margin-bottom:24px}
+.event .t{font-family:var(--display);font-size:17px;font-weight:700}
+.event .d{font-size:13.5px;color:var(--sub);margin:6px 0 10px}
+.flash{animation:flash .9s ease-out}
+@keyframes flash{0%{border-color:var(--jac);box-shadow:0 0 0 4px var(--jac-soft)}100%{border-color:var(--line);box-shadow:none}}
+
+/* Property vault: rent waiting for the monthly payout. This block is the one bold element of the panel */
+.vault{border-radius:20px;padding:18px;background:var(--jac-soft);margin-bottom:24px}
+.vault .top-l{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.vault .nm{font-weight:600;font-size:14px}
+.vault .bal{font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:-.02em;line-height:1.1;margin-top:6px}
+.vault .bal small{font-family:"Figtree",sans-serif;font-size:13px;font-weight:500;color:var(--sub);margin-left:4px}
+.meter{display:flex;gap:6px;margin:14px 0 8px}
+.meter i{flex:1;height:6px;border-radius:3px;background:var(--jac-mist);transition:background .4s}
+.meter i.on{background:var(--jac)}
+.vault .w{font-size:12.5px;color:var(--sub)}
+.vault .ctl{margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.vault .ctl a{font-size:12px}
+
+.payout{margin:0 0 6px}
+.payout>div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line);font-size:13.5px}
+.payout>div:last-child{border-bottom:1px solid var(--line)}
+.payout dt{color:var(--sub)}.payout dd{margin:0;text-align:right}
+.payout .gross dd,.payout .gross dt{color:var(--ink);font-weight:600}
+.payout .net dt,.payout .net dd{color:var(--euc);font-weight:700}
+.payout small{display:block;font-size:11.5px;color:var(--faint)}
+.pnote{font-size:12px;color:var(--faint);margin:8px 0 24px}
+
+.inv{list-style:none;padding:0;margin:0 0 8px;border-radius:16px;border:1px solid var(--line);background:var(--paper)}
+.inv li{display:grid;grid-template-columns:1fr auto;gap:1px 12px;padding:10px 14px;border-top:1px solid var(--line)}
+.inv li:first-child{border-top:0}
+.inv .n{font-size:14px;font-weight:600}
+.inv .u{font-size:12px;color:var(--faint)}
+.inv .a{font-family:var(--display);font-weight:700;font-size:16px;text-align:right}
+.inv .arr{font-size:12px;text-align:right;display:inline-flex;gap:4px;align-items:center;justify-content:flex-end;white-space:nowrap}
+.inv .arr.ok{color:var(--euc);font-weight:600}
+.inv .arr.sent{color:var(--sub)}
+.inv .arr.proj{color:var(--faint)}
+.inv .arr svg{width:13px;height:13px;flex:none}
+.inv-h{display:flex;justify-content:space-between;gap:10px}
+.inv-h span:last-child{font-weight:500;color:var(--faint)}
+.splitbar{display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px;margin:2px 0 10px}
+.splitbar i{display:block;height:100%}
+.sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:7px;vertical-align:1px}
+.endbar{display:flex;height:16px;border-radius:8px;overflow:hidden;gap:2px;margin:6px 0 14px}
+.endbar i{display:block;height:100%}
+.leg{margin:0 0 4px}
+.leg>div{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-size:14px}
+.leg dt{color:var(--sub)}.leg dd{margin:0}
+.leg .hi dt,.leg .hi dd{color:var(--euc);font-weight:700}
+.leg .ctl{font-size:12px}
+.cap{font-size:12px;color:var(--faint);margin:0 0 20px}
+.ilist{list-style:none;padding:0;margin:0 0 10px;border-top:1px solid var(--line)}
+.ilist li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.ilist .p{color:var(--faint);margin-left:6px;font-size:12px;display:inline-block;min-width:30px}
+.ilist .ok{color:var(--euc);display:inline-flex;align-items:center;gap:4px;font-weight:600}
+.ilist .ok svg{width:13px;height:13px}
+.ilist .ilink{margin-left:8px;font-size:11.5px}
+.ilist .ilink svg{width:14px;height:14px}
+.endlinks{display:flex;gap:16px;font-size:12px;color:var(--faint);flex-wrap:wrap}
+.c-back{background:var(--jac-mist)}.c-wait{background:var(--jac-soft);background-image:repeating-linear-gradient(45deg,transparent 0 4px,var(--jac-mist) 4px 8px)}
+.c-inv{background:var(--euc)}.c-mgr{background:var(--jac)}.c-res{background:var(--faint)}.c-fee{background:var(--jac-ink)}
+.inv li.flash{animation:flashrow 1.2s ease-out}
+@keyframes flashrow{0%{background:var(--euc-soft)}100%{background:transparent}}
+.inv-f{font-size:12px;color:var(--faint);margin:0 0 24px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+
+.legend{list-style:none;padding:0;margin:0;font-size:13px;color:var(--sub)}
+.legend li{display:flex;gap:8px;padding:4px 0}
+.legend i{flex:none;width:8px;height:8px;border-radius:50%;margin-top:6px}
+.legend .l i{background:var(--euc)}
+.legend .s i{border:1.5px dashed var(--demo)}
+
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
-<div class="app">
-  <div class="top"><button class="back" id="back" aria-label="戻る" onclick="history_back()">‹</button><div class="logo">Stay<span>Vault</span></div></div>
-  <div class="bar"><i id="bar"></i></div>
+<div class="stage">
+<div class="app" id="app">
+  <div class="top">
+    <button type="button" class="btn" data-variant="ghost" data-size="icon-sm" id="back" aria-label="Back" onclick="history_back()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <div class="logo"><svg class="lm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="22" height="22" aria-hidden="true"><path d="M22 27V18.5L32 10.2L42 18.5V27" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path><rect x="10" y="27" width="44" height="28" rx="9" fill="none" stroke="currentColor" stroke-width="7"></rect><path d="M30.62 33.65Q32 32.5 33.38 33.65L39.62 38.85Q41 40 41 41.8V47Q41 48.5 39.5 48.5H24.5Q23 48.5 23 47V41.8Q23 40 24.38 38.85Z" fill="currentColor"></path></svg><b class="wm">Stay<span>Vault</span></b></div>
+    <span class="net" id="net"><i></i><span id="netT">Connecting to devnet…</span></span>
+  </div>
+  <div class="bar" id="barW"><i id="bar"></i></div>
 
+  <!-- 1. Sign in (simulated) -->
   <section class="screen active" data-s="login">
-    <div class="hero"><div class="logo">Stay<span>Vault</span></div><p>入金した家賃は、寮に届くまで守られます。</p></div>
-    <div class="tabs" role="tablist">
-      <button role="tab" id="tab-in" aria-selected="true" aria-controls="auth-in" onclick="authTab('in')">ログイン</button>
-      <button role="tab" id="tab-up" aria-selected="false" aria-controls="auth-up" onclick="authTab('up')">新規登録</button>
+    <div class="hero"><svg class="lm lm-big" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="52" height="52" aria-hidden="true"><path d="M21.5 28V19L32 9.81L42.5 19V28" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path><rect x="11" y="28" width="42" height="28" rx="9" fill="none" stroke="currentColor" stroke-width="5"></rect><path d="M30.49 34.82Q32 33.5 33.51 34.82L38.49 39.18Q40 40.5 40 42.5V47.5Q40 49 38.5 49H25.5Q24 49 24 47.5V42.5Q24 40.5 25.51 39.18ZM30 49V45a2 2 0 0 1 4 0V49Z" fill="currentColor" fill-rule="evenodd"></path></svg><h1>Set rent aside.<br>Pay it week by week.</h1></div>
+    <div class="stack">
+      <div role="group" class="field"><label for="em">Email</label><input class="input" id="em" type="email" autocomplete="off" value="demo@stayvault.app"></div>
+      <div role="group" class="field"><label for="pw">Password</label><input class="input" id="pw" type="password" autocomplete="off" value="stayvault-demo-2026"></div>
     </div>
-    <div id="auth-in" role="tabpanel" aria-labelledby="tab-in">
-      <label for="em">メールアドレス</label><input id="em" type="email" autocomplete="off" value="demo@stayvault.app">
-      <label for="pw">パスワード</label><input id="pw" type="password" autocomplete="off" value="stayvault-demo-2026">
-      <p class="note">デモ用のアカウント情報を入力済みです</p>
-      <button class="btn" onclick="afterLogin()">ログイン</button>
-    </div>
-    <div id="auth-up" role="tabpanel" aria-labelledby="tab-up" hidden>
-      <label for="em2">メールアドレス</label><input id="em2" type="email" autocomplete="off" value="demo@stayvault.app">
-      <label for="pw2">パスワード</label><input id="pw2" type="password" autocomplete="off" value="stayvault-demo-2026">
-      <label for="pw3">パスワード（確認用）</label><input id="pw3" type="password" autocomplete="off" value="stayvault-demo-2026">
-      <p class="note">デモ用のアカウント情報を入力済みです</p>
-      <button class="btn" onclick="afterLogin()">登録する</button>
-    </div>
+    <div class="actions"><button type="button" class="btn" data-size="lg" onclick="afterLogin()">Sign in</button></div>
+    <p class="sim-note"><span>Simulated sign-in</span></p>
   </section>
 
+  <!-- 2. Connect wallet (simulated) -->
   <section class="screen" data-s="connect">
-    <h1>USDCを持っている口座を接続</h1>
-    <p class="lead">家賃はこの口座からエスクローへ送られます。接続は初回だけです。</p>
-    <div class="acct" aria-checked="true"><div><b>SBI VCトレード</b><small>USDC取扱い</small></div></div>
-    <div class="acct" aria-checked="false"><div><b>その他の取引所</b><small>準備中</small></div></div>
-    <button class="btn" onclick="connected=true;toast('SBI VCトレードを接続しました');afterLogin()">連携を許可する</button>
+    <h1>Connect wallet</h1>
+    <p class="lead">You pay in USDC from your own wallet. Refunds go back to it.</p>
+    <div class="choices" role="radiogroup" aria-label="Wallet">
+      <label for="wl-mm"><div role="group" class="field" data-orientation="horizontal"><section><div class="wl-row"><img class="wl-logo" src="brand/partners/metamask-fox.svg" width="28" height="28" alt="" onerror="this.remove()"><h3>MetaMask</h3></div></section><input id="wl-mm" type="radio" name="wl" checked></div></label>
+      <label for="wl-other"><div role="group" class="field" data-orientation="horizontal"><section><h3>Other wallets</h3><p>Soon</p></section><input id="wl-other" type="radio" name="wl" disabled></div></label>
+    </div>
+    <p class="sim-note"><span>Simulated. A demo wallet signs for you.</span></p>
+    <div class="actions"><button type="button" class="btn" data-size="lg" onclick="connected=true;toast('MetaMask connected');afterLogin()">Connect</button></div>
   </section>
 
-  <section class="screen" data-s="register">
-    <h1>寮を登録</h1>
-    <p class="lead">お子さまが住む寮と、家賃の振込先を入力してください。振込先は寮の請求書や契約書に書かれています。</p>
-    <label for="dn">寮の名前</label><input id="dn" placeholder="例：Toowong Student House">
-    <label for="dm">週あたりの家賃（AUD）</label><input id="dm" type="number" inputmode="numeric" placeholder="例：320">
-    <label for="dw">支払い曜日</label><select id="dw" style="width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:11px;background:var(--bg);color:var(--ink);font:inherit"><option value="1">毎週月曜日</option><option value="2">毎週火曜日</option><option value="3">毎週水曜日</option><option value="4">毎週木曜日</option><option value="5">毎週金曜日</option><option value="6">毎週土曜日</option><option value="0">毎週日曜日</option></select>
-    <label for="dd">退去予定日</label><input id="dd" type="date" value="2027-03-31">
-    <p style="font-size:13px;font-weight:700;margin-top:22px">寮の振込先（オーストラリアの銀行）</p>
-    <label for="bn">銀行名</label><input id="bn" placeholder="例：Commonwealth Bank">
-    <label for="bb">支店コード（BSB・6桁）</label><input id="bb" inputmode="numeric" maxlength="7" placeholder="例：064-000">
-    <label for="ba">口座番号</label><input id="ba" inputmode="numeric" placeholder="例：12345678">
-    <button class="btn" onclick="addDorm()">登録する</button>
-  </section>
-
+  <!-- 3. Select dorm (dorms are listed by their owners, not by parents) -->
   <section class="screen" data-s="select">
-    <h1>どの寮に支払いますか</h1>
-    <p class="lead">登録済みの寮から選んでください。</p>
-    <ul class="rcp" id="rcp"></ul>
-    <div class="add" style="cursor:pointer" onclick="go('register')">＋ 寮を登録</div>
-    <button class="btn" onclick="go('period')">次へ</button>
+    <h1>Choose a dorm</h1>
+    <p class="lead">Dorms that take rent through StayVault.</p>
+    <div class="choices" role="radiogroup" aria-label="Dorm" id="rcp"></div>
+    <div class="actions"><button type="button" class="btn" data-size="lg" onclick="go('period')">Continue</button></div>
   </section>
 
+  <!-- 4. Period -->
   <section class="screen" data-s="period">
-    <h1>何か月分を入れますか</h1>
+    <h1>How long?</h1>
     <p class="lead" id="pName"></p>
-    <ul class="rcp" id="mOpts"></ul>
-    <div class="conv">寮に届く合計<div class="big num" id="aud"></div><div class="sched" id="sched"></div></div>
-    <button class="btn" onclick="go('confirm')">確認へ</button>
+    <div class="choices" role="radiogroup" aria-label="Period" id="mOpts"></div>
+    <div class="sum"><div class="k">You set aside</div><div class="v num" id="tot"></div><div class="e num" id="totA"></div><div class="s" id="sched"></div></div>
+    <div class="actions"><button type="button" class="btn" data-size="lg" onclick="go('confirm')">Review</button></div>
   </section>
 
+  <!-- 5. Review & pay (real devnet transaction) -->
   <section class="screen" data-s="confirm">
-    <h1>内容の確認</h1>
-    <p class="lead">レートは契約時点で固定され、以後の為替変動は反映されません。</p>
-    <dl class="num">
-      <dt>寮</dt><dd id="cName"></dd>
-      <dt>期間</dt><dd id="cSch"></dd>
-      <dt>寮に届く合計</dt><dd id="cAud"></dd>
-      <dt>固定レート</dt><dd>1 USDC = 1.52 AUD</dd>
-      <dt>エスクロー入金額</dt><dd id="cUsdc"></dd>
-      <dt>手数料</dt><dd id="cFeeT"></dd>
-      <dd style="grid-column:1/-1;text-align:left;font-size:12px;color:var(--sub);background:var(--bg);border-radius:8px;padding:8px 10px">
-        StayVault利用料（入金額の0.5%）：<span id="cSvc"></span><br>
-        SBI VCトレードの送金手数料（1回ごと・固定）：1.00 USDC<br>
-        寮への毎週の支払いに追加の手数料はかかりません
-      </dd>
-      <dt class="total">お支払い額</dt><dd class="total" id="cTot"></dd>
+    <h1>Review</h1>
+    <dl class="rows num">
+      <div><dt>Dorm</dt><dd id="cName"></dd></div>
+      <div><dt>Period</dt><dd id="cSch"></dd></div>
+      <div><dt>Weekly rent</dt><dd><span id="cWk"></span><small id="cWkA"></small></dd></div>
+      <div><dt>Payments</dt><dd id="cN"></dd></div>
+      <div class="total"><dt>You set aside</dt><dd id="cTot"></dd></div>
+      <div><dt>Refunds to</dt><dd class="wl-inline"><img class="wl-logo" src="brand/partners/metamask-fox.svg" width="16" height="16" alt="" onerror="this.remove()">MetaMask</dd></div>
     </dl>
-    <dl style="margin-top:12px">
-      <dt>振込先</dt><dd id="cBank"></dd>
-      <dt>退去予定日</dt><dd class="num" id="cOut"></dd>
-      <dt>支払元</dt><dd>SBI VCトレード</dd>
-      <dt>入居確認の期限</dt><dd class="num">10/15</dd>
-      <dt>返金先</dt><dd>SBI VCトレード（変更不可）</dd>
-    </dl>
-    <p class="note">期限までに入居が確認されない場合は全額、途中退去した場合はまだ寮に払っていない週の分が返金先に戻ります。StayVaultはこの資金を動かす権限を持ちません。</p>
-        <button class="btn" onclick="pay()">SBI VCトレードから支払う</button>
+    <p class="fee-note">The dorm gets one week at a time, only after you approve move-in. Weeks not yet paid always come back to you. No fee for parents.</p>
+    <div class="actions"><button type="button" class="btn" data-size="lg" id="payBtn" onclick="pay()">Set aside</button></div>
+    <div class="status-line" id="payStatus" role="status" aria-live="polite"></div>
   </section>
 
+  <!-- 6. Home: the vault dial -->
   <section class="screen" data-s="home">
-    <span class="status" id="st">入居確認待ち</span>
-    <h1 id="hName"></h1>
-    <p class="lead">エスクローで保全中</p>
-    <div class="big2 num" id="hBal"></div>
-    <div class="months" id="months"></div>
-    <p class="note" id="hNext"></p>
-    <dl style="margin-top:16px">
-      <dt>週額</dt><dd class="num" id="hMo"></dd>
-      <dt>返金先</dt><dd>SBI VCトレード</dd>
-    </dl>
-    <button class="btn ghost" onclick="demoPay()">（デモ）支払日を進める</button>
-    <button class="btn ghost" style="color:#B7791F;border-color:#B7791F" onclick="leave()">途中退去を申請</button>
+    <div class="who" id="hWho"></div>
+    <div class="dialbox">
+      <svg id="dial" viewBox="0 0 300 300" role="img" aria-labelledby="dialT"><title id="dialT">Weekly payments</title></svg>
+      <div class="center" aria-live="polite">
+        <div class="lbl" id="dLbl">Protected</div>
+        <div class="bal num" id="hBal"></div>
+        <div class="cur">USDC</div>
+        <div class="eq num" id="hEq"></div>
+      </div>
+    </div>
+    <div class="stat" id="hStat"></div>
+
+    <div class="mo ask" id="miBox" hidden>
+      <h3 id="miT">Did Yuri move in?</h3>
+      <p class="hint" id="miD"></p>
+      <div class="row"><button type="button" class="btn" id="miGo" onclick="approveMoveIn()">Approve move-in</button></div>
+    </div>
+
+    <div class="home-rows num">
+      <div><span>Next payment</span><span id="rNext"></span></div>
+      <div><span id="rPaidK">Paid to the dorm</span><span id="mPaid"></span></div>
+      <div><span id="rRefK">Refundable now</span><span id="mRef"></span></div>
+    </div>
+
+    <div class="mo" id="moBox" hidden>
+      <h3>Move out early?</h3>
+      <div class="split"><div>Stays with the dorm<b class="num" id="moKeep"></b></div><div>Back to your MetaMask<b class="num" id="moBack"></b></div></div>
+      <p class="hint">You and the dorm both sign, so the refund is immediate.</p>
+      <div class="row"><button type="button" class="btn" data-variant="ghost" onclick="$('moBox').hidden=true">Cancel</button><button type="button" class="btn" id="moGo" onclick="leave()">Confirm move-out</button></div>
+    </div>
+
+    <div class="hist-h">History</div>
+    <ul class="hist" id="hist"></ul>
+    <button type="button" class="linkish" id="histMore" hidden onclick="histAll=!histAll;renderHist()"></button>
+
+    <div class="quiet" id="leaveWrap"><button type="button" class="btn" data-variant="ghost" data-size="sm" id="leaveBtn" onclick="askLeave()">Move out early</button></div>
+
+    <div class="demo" id="demo">
+      <div class="demo-b"><b>Demo</b>
+        <button type="button" class="dlink" id="dPause" onclick="togglePause()"></button>
+        <button type="button" class="dlink" id="dNext" onclick="nextWeek()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5v14l12-7z"/><path d="M20 5v14"/></svg>Next week</button>
+      </div>
+      <p id="demoNote"></p>
+    </div>
   </section>
+  <div class="toast-wrap"><div class="toast" id="toast" role="status" aria-live="polite"></div></div>
 </div>
-<div class="toast" id="toast"></div>
+
+<!-- The property side: the rent after it leaves the parent's escrow. The parent's app never shows this -->
+<!-- Explains only the screen on the left: its role and what a judge should notice. The parent's app never shows this -->
+<aside class="aside" aria-label="What this screen shows" aria-live="polite">
+  <div class="step" id="aStep"></div>
+  <h2 id="aTitle"></h2>
+  <p id="aBody"></p>
+  <dl class="payout facts num" id="aRows" hidden></dl>
+
+  <div id="aEvW" hidden>
+    <div class="k">Last on-chain event</div>
+    <div class="event" id="ev"><div class="t" id="evT"></div><div class="d" id="evD"></div><div id="evL"></div></div>
+  </div>
+
+  <div id="aVaultW" hidden>
+    <div class="k">Property vault</div>
+    <div class="vault" id="vault">
+      <div class="top-l"><span class="nm" id="vName"></span><span id="vLink"></span></div>
+      <div class="bal num"><span id="vBal">0.00</span><small>USDC waiting for payout</small></div>
+      <div class="meter" id="vMeter" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="w" id="vWeeks"></div>
+      <div class="ctl"><span class="w" id="vAuto">Pays out every 4 weeks of rent.</span><button type="button" class="dlink" id="vNow" onclick="payoutNow()" hidden>Pay out now</button></div>
+    </div>
+  </div>
+
+  <div id="aPayW" hidden>
+    <div class="k" id="pK"></div>
+    <div class="splitbar" id="splitbar" aria-hidden="true"></div>
+    <dl class="payout num" id="payout"></dl>
+    <p class="pnote">Taken from the rent by the property, never from the parent.</p>
+  </div>
+
+  <div id="aInvW" hidden>
+    <div class="k inv-h"><span>Investors (token holders)</span><span>Received in total</span></div>
+    <ul class="inv num" id="inv"></ul>
+    <div class="inv-f"><span id="invTot"></span><span id="invL"></span></div>
+    <p class="pnote" id="invNote" hidden>A check means the payout reached the investor's wallet: its USDC balance on devnet was read before and after the payout.</p>
+  </div>
+
+  <div id="aEndW" hidden></div>
+
+  <p class="anote" id="aNote" hidden></p>
+</aside>
+</div>
+
 <script>
-const RATE=1.52;let connected=false,bal=5000,dorms=[],sel=0,months=3,paidM=0,stack=[];
+const AUD_USD=0.71, CHILD='Yuri';   // 1 AUD = 0.71 USD (late Sep 2026, rounded)
+// One dorm is already listed by its owner (the token issuer). Rates are in basis points of rent collected.
+const DORMS=[{n:'Stay-Dorm',c:'Brisbane',m:300,w:1,d:'2027-09-30',
+  bps:{manager:900,reserve:300,stayvault:100},units:1000,
+  holders:[{n:'Investor A',u:400},{n:'Investor B',u:250},{n:'Investor C',u:200},{n:'Investor D',u:100},{n:'Investor E',u:50}]}];
+const PAYOUT_WEEKS=4;
+let connected=false,sel=0,months=3,paidM=0,stack=[],ended=false,createdAt=0,acts=[],approved=false;
 const $=id=>document.getElementById(id);
-const f=n=>n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+' USDC';
-const order=['login','connect','register','select','period','confirm','home'];
+const f=n=>n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' USDC';
+const fn=n=>n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fm=u=>f(u/1e6);                 // micro-USDC to text
+const aud=n=>Math.round(n).toLocaleString('en-US')+' AUD';
+const audU=u=>aud(u/AUD_USD);         // USDC amount shown in AUD
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const DW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const md=d=>`${MON[d.getMonth()]} ${d.getDate()}`;
+const ymd=s=>{const [y,mo,da]=s.split('-').map(Number),d=new Date(y,mo-1,da);return `${MON[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`};
+const EXPLORER=sig=>`https://explorer.solana.com/tx/${sig}?cluster=devnet`;
+const ADDR=a=>`https://explorer.solana.com/address/${a}?cluster=devnet`;
+const DEMO_WEEK_MS=10000;   // must match DEMO_INTERVAL in the module below
+const order=['login','connect','select','period','confirm','home'];
+const RM=matchMedia('(prefers-reduced-motion: reduce)');
+const dorm=()=>DORMS[sel];
+const weekly=()=>Math.round(dorm().m*AUD_USD*100)/100;     // 300 AUD -> 213.00 USDC
+const weeklyMicro=()=>Math.round(weekly()*1e6);
+
 function go(v,push=true){const cur=document.querySelector('.screen.active').dataset.s;if(push&&cur!==v)stack.push(cur);
 document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.dataset.s===v));
 $('back').classList.toggle('show',!['login','home'].includes(v)&&stack.length>0);
-$('bar').style.width=(order.indexOf(v)/6*100)+'%';
-if(v==='select')renderDorms();if(v==='period')renderMo();if(v==='period'||v==='confirm')calc();if(v==='home')renderHome();window.scrollTo(0,0)}
+$('barW').hidden=v==='home';$('bar').style.width=(order.indexOf(v)/(order.length-1)*100)+'%';
+if(v==='select')renderDorms();if(v==='period')renderMo();if(v==='period'||v==='confirm')calc();if(v==='home')renderHome();renderAside();
+window.scrollTo(0,0);$('app').scrollTop=0}
 function history_back(){const p=stack.pop();if(p)go(p,false)}
-function afterLogin(){if(!connected)return go('connect');if(!dorms.length)return go('register');go('select')}
-function authTab(t){['in','up'].forEach(k=>{$('tab-'+k).setAttribute('aria-selected',k===t);$('auth-'+k).hidden=k!==t})}
-function addDorm(){const n=$('dn').value.trim(),m=+$('dm').value,w=+$('dw').value,d=$('dd').value,bn=$('bn').value.trim(),bb=$('bb').value.replace(/\D/g,''),ba=$('ba').value.trim();
-if(!n||!m||!d||!bn||!ba){toast('すべての項目を入力してください');return}if(bb.length!==6){toast('支店コード（BSB）は6桁です');return}
-dorms.push({n,m,w,d,bn,bb:bb.slice(0,3)+'-'+bb.slice(3),ba});sel=dorms.length-1;['dn','dm','bn','bb','ba'].forEach(i=>$(i).value='');toast('登録しました');go('select')}
-function renderDorms(){$('rcp').innerHTML=dorms.map((d,i)=>`<li aria-checked="${i===sel}" onclick="sel=${i};renderDorms()"><div><b>${d.n}</b><small>週 ${d.m.toLocaleString()} AUD・毎週${WD[d.w]}曜 ・ ${d.d.replaceAll('-','/')} 退去予定<br>${d.bn} ・ ****${d.ba.slice(-4)}</small></div></li>`).join('')}
-const WD=['日','月','火','水','木','金','土'];
-function firstPay(){const d=new Date('2026-10-01');while(d.getDay()!==dorms[sel].w)d.setDate(d.getDate()+1);return d}
-function weeksUntil(o){const d=firstPay();let n=0;while(d<o&&n<60){n++;d.setDate(d.getDate()+7)}return Math.max(1,n)}
-function outMonths(){const o=new Date(dorms[sel].d);return Math.max(1,(o.getFullYear()-2026)*12+o.getMonth()-9+(o.getDate()>1?1:0))}
-function weeksFor(mo){const e=new Date('2026-10-01');e.setMonth(e.getMonth()+mo);const o=new Date(dorms[sel].d);return weeksUntil(e<o?e:new Date(o.getTime()+864e5))}
-let selMo=3;
-function renderMo(){const om=outMonths();const opts=[1,3,6,12].filter(m=>m<om).map(m=>({m,l:m+'か月分'}));opts.push({m:om,l:'退去日まで（'+om+'か月）'});if(!opts.some(o=>o.m===selMo))selMo=opts[0].m;
-$('mOpts').innerHTML=opts.map(o=>`<li aria-checked="${o.m===selMo}" onclick="selMo=${o.m};renderMo();calc()"><div><b>${o.l}</b><small>${weeksFor(o.m)}週分の支払い</small></div></li>`).join('')}
-const md=d=>`${d.getMonth()+1}/${d.getDate()}`;
+function afterLogin(){go(connected?'select':'connect')}
 
-function calc(){const d=dorms[sel];months=weeksFor(selMo);const aud=d.m*months,u=aud/RATE,svc=u*0.005,tot=u+svc+1;
-$('pName').textContent=`${d.n} ・ 週 ${d.m.toLocaleString()} AUD ・ ${d.d.replaceAll('-','/')} 退去予定`;$('aud').textContent=aud.toLocaleString()+' AUD';
-$('sched').textContent=`${md(firstPay())}（${WD[d.w]}）から毎週${WD[d.w]}曜日に${d.m.toLocaleString()} AUDずつ、${months}回に分けて寮へ支払われます`;
-$('cName').textContent=d.n;$('cBank').textContent=`${d.bn} ${d.bb} ****${d.ba.slice(-4)}`;$('cOut').textContent=d.d.replaceAll('-','/');$('cSch').textContent=`${selMo}か月分（${d.m.toLocaleString()} AUD × ${months}週・毎週${WD[d.w]}曜）`;$('cAud').textContent=aud.toLocaleString()+' AUD';
-$('cUsdc').textContent=f(u);$('cSvc').textContent=f(svc);$('cFeeT').textContent=f(svc+1);$('cTot').textContent=f(tot);return tot}
+function renderDorms(){$('rcp').innerHTML=DORMS.map((d,i)=>`<label for="dorm-${i}"><div role="group" class="field" data-orientation="horizontal"><section><h3>${esc(d.n)}, ${esc(d.c)}</h3><p>${aud(d.m)} a week, until ${ymd(d.d)}</p></section><input id="dorm-${i}" type="radio" name="dorm" ${i===sel?'checked':''} onchange="sel=${i};renderVault()"></div></label>`).join('')}
+
+function firstPay(){const d=new Date('2026-10-01');while(d.getDay()!==dorm().w)d.setDate(d.getDate()+1);return d}
+function weeksUntil(o){const d=firstPay();let n=0;while(d<o&&n<60){n++;d.setDate(d.getDate()+7)}return Math.max(1,n)}
+function outMonths(){const o=new Date(dorm().d+'T00:00');return Math.max(1,(o.getFullYear()-2026)*12+o.getMonth()-9+(o.getDate()>1?1:0))}
+function weeksFor(mo){const e=new Date('2026-10-01');e.setMonth(e.getMonth()+mo);const o=new Date(dorm().d+'T00:00');return weeksUntil(e<o?e:new Date(o.getTime()+864e5))}
+let selMo=3;
+const moLabel=m=>m===1?'1 month':m===12?'1 year':m+' months';
+function renderMo(){const om=outMonths();const opts=[1,3,6,12].filter(m=>m<=om);if(!opts.includes(selMo))selMo=opts[0];
+$('mOpts').innerHTML=opts.map(m=>`<label for="mo-${m}"><div role="group" class="field" data-orientation="horizontal"><section><h3>${moLabel(m)}</h3><p>${weeksFor(m)} weekly payments</p></section><input id="mo-${m}" type="radio" name="mo" ${m===selMo?'checked':''} onchange="selMo=${m};calc();renderAside()"></div></label>`).join('')}
+
+function calc(){const d=dorm();months=weeksFor(selMo);const tot=weekly()*months;
+$('pName').textContent=`${d.n}, ${d.c}. ${aud(d.m)} a week (${f(weekly())}).`;
+$('tot').textContent=f(tot);$('totA').textContent='≈ '+aud(d.m*months);
+$('sched').textContent=`${months} payments, weekly from ${DW[d.w]}, ${md(firstPay())}`;
+$('cName').textContent=`${d.n}, ${d.c}`;$('cSch').textContent=moLabel(selMo);
+$('cWk').textContent=f(weekly());$('cWkA').textContent=aud(d.m);$('cN').textContent=`${months} weeks`;
+$('cTot').textContent=f(tot);$('payBtn').textContent='Set aside '+f(tot);return tot}
+
+/* ---- Busy state: spinner in the button, other actions disabled, status line ---- */
+const SPIN='<svg class="spin" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
 let busy=false;
-async function pay(){if(busy)return;busy=true;calc();toast('エスクローへ送金しています…');
-try{await SV.create(dorms[sel].m/RATE,months);paidM=0;stack=[];toast('エスクローへ送金しました');go('home')}
-catch(e){console.error(e);toast('送金できませんでした。コンソールのエラーを確認してください')}finally{busy=false}}
-function renderHome(){const d=dorms[sel];const left=(months-paidM)*d.m/RATE;
-$('hName').textContent=d.n;$('hBal').textContent=f(left);$('hMo').textContent=d.m.toLocaleString()+` AUD（毎週${WD[d.w]}曜）`;
-$('st').textContent=paidM===0?'入居確認待ち':paidM>=months?'契約終了':'支払い中';
-$('months').style.gridTemplateColumns=`repeat(${Math.min(months,13)},1fr)`;
-$('months').innerHTML=Array.from({length:months},(_,i)=>`<div class="m${i<paidM?' paid':i===paidM?' next':''}"></div>`).join('');
-$('hNext').textContent=paidM<months?`支払い済み ${paidM} / ${months}週`:'すべての週が寮へ支払われました'}
-async function demoPay(){if(busy||paidM>=months)return;busy=true;
-try{if(paidM===0)await SV.confirmAndRelease();else await SV.release();
-paidM++;renderHome();toast(paidM===1?'入居が確認され、初週分を支払いました':'今週分を寮へ支払いました')}
-catch(e){console.error(e);toast('まだ支払日ではありません（デモは10秒で1週）')}finally{busy=false}}
-async function leave(){if(busy)return;busy=true;
-try{const back=(months-paidM)*dorms[sel].m/RATE;await SV.moveOut();months=paidM;renderHome();$('st').textContent='途中退去';toast(f(back)+' を返金しました')}
-catch(e){console.error(e);toast('返金できませんでした。コンソールのエラーを確認してください')}finally{busy=false}}
-function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}
-go('login',false);
+async function run(btn,statusId,label,fn){if(busy)return;busy=true;
+const old=btn.innerHTML;btn.innerHTML=SPIN+label;btn.setAttribute('aria-busy','true');btn.disabled=true;
+document.querySelectorAll('.actions .btn').forEach(b=>{if(b!==btn)b.disabled=true});
+const st=$(statusId);st.innerHTML=SPIN+'<span>Waiting for Solana devnet to confirm. This usually takes a few seconds.</span>';st.classList.add('show');
+try{return await fn()}finally{btn.innerHTML=old;btn.removeAttribute('aria-busy');st.classList.remove('show');busy=false;
+document.querySelectorAll('.actions .btn').forEach(b=>b.disabled=false);if(document.querySelector('.screen.active').dataset.s==='home')renderHome()}}
+function svReady(){if(window.SV)return true;toast(svErr?'Could not reach the demo wallet. Reload the page.':'Still connecting to Solana devnet. Try again in a moment.',{err:true});return false}
+
+/* ================= Home: the vault dial ================= */
+const AUTO_BATCH=8;        // auto-play pays at most 8 weeks (two payouts), then pauses to save the shared demo wallet's devnet SOL
+let autoOn=false,autoLeft=0,nextAt=0,forceOne=false,fails=0,histAll=false,hidPaused=false,pausedLeft=0,busyHome=false;
+function weekDate(k){const d=firstPay();d.setDate(d.getDate()+7*k);return d}
+const dlabel=d=>`${DW[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}`;
+const onchainDue=k=>createdAt-15000+k*DEMO_WEEK_MS+2500;   // mirrors first_pay_ts = now-15s and interval = 10s in the program
+const phase=()=>ended?'ended':paidM>=months?'complete':paidM===0?'deposited':'paying';
+const IC={
+  ext:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/><path d="M11 13l9-9"/><path d="M15 4h5v5"/></svg>',
+  pause:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 5v14"/><path d="M16 5v14"/></svg>',
+  play:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>'};
+const short=sig=>sig.length>10?sig.slice(0,4)+'\u2026'+sig.slice(-4):sig;
+const txLink=sig=>`<a class="hash" href="${EXPLORER(sig)}" target="_blank" rel="noopener">${esc(short(sig))} ${IC.ext}<span class="sr-only"> (opens Solana Explorer)</span></a>`;
+
+/* Plain-language explanations for the property panel */
+const EXPLAIN={
+  deposit:'The parent\u2019s USDC moved into an escrow account owned by the StayVault program. Nobody can touch it until move-in is approved.',
+  movein:'The parent approved the move-in and the dorm co-signed. In the same transaction, week 1 went to the property vault.',
+  release:'One week of rent went to the property vault because its due date passed. Anyone can trigger this, and the destination is fixed.',
+  payout:'The property vault paid out: 9% to the property manager, 1% to StayVault, 3% kept for repairs, and the rest to investors by units held.',
+  refund:'The parent and the dorm both signed. The weeks not yet paid went straight back to the parent\u2019s wallet.'};
+let evSet=false;
+function showEvent(title,sig,kind){evSet=true;$('evT').textContent=title;$('evD').textContent=EXPLAIN[kind]||'';$('evL').innerHTML=txLink(sig);
+const ev=$('ev');ev.classList.remove('flash');void ev.offsetWidth;ev.classList.add('flash')}
+// Parent-side events go to the app's history; payouts only show on the property side
+function logTx(title,meta,sig,kind){acts.unshift({title,meta,sig,fresh:true});renderHist();showEvent(title,sig,kind)}
+function renderHist(){const SHOW=2,list=histAll?acts:acts.slice(0,SHOW);
+$('hist').innerHTML=list.length?list.map(a=>`<li class="${a.fresh?'new':''}"><div><div class="t">${esc(a.title)}</div><div class="m">${esc(a.meta)}</div></div>${txLink(a.sig)}</li>`).join(''):'<li><div class="m">Nothing yet</div></li>';
+acts.forEach(a=>a.fresh=false);
+const more=acts.length-SHOW;$('histMore').hidden=more<=0;$('histMore').textContent=histAll?'Show fewer':`Show ${more} earlier`}
+
+let tweenId=0;
+function tweenNum(el,from,to,fmt){const id=++tweenId;if(RM.matches||from===to){el.textContent=fmt(to);return}
+const t0=performance.now(),dur=700;const step=t=>{if(id!==tweenId)return;const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);el.textContent=fmt(from+(to-from)*e);if(p<1)requestAnimationFrame(step)};requestAnimationFrame(step)}
+let shownBal=0,dialN=0;
+
+/* The dial: one segment per week, clockwise from the top. The needle steps one notch per payment. */
+function buildDial(n){const C=150,R1=104,R2=120,g=Math.min(0.035,Math.PI/n*.3),step=2*Math.PI/n;let h='<title id="dialT">Weekly payments</title>';
+const pt=(r,t)=>`${(C+r*Math.cos(t)).toFixed(2)} ${(C+r*Math.sin(t)).toFixed(2)}`;
+for(let i=0;i<n;i++){const a=i*step-Math.PI/2+g/2,b=a+step-g;
+  h+=`<path class="seg" id="sg${i}" d="M${pt(R2,a)} A${R2} ${R2} 0 0 1 ${pt(R2,b)} L${pt(R1,b)} A${R1} ${R1} 0 0 0 ${pt(R1,a)}Z"><title>Week ${i+1}: ${dlabel(weekDate(i))}</title></path>`}
+h+=`<circle class="ring-line" cx="${C}" cy="${C}" r="96"/>`;
+for(let i=0;i<n;i++){const a=weekDate(i),b=i?weekDate(i-1):null;if(i===0||(a.getMonth()!==b.getMonth()&&(n<=14||a.getMonth()%3===0))){const t=i*step-Math.PI/2+step/2;
+  h+=`<text class="mon" text-anchor="middle" x="${(C+134*Math.cos(t)).toFixed(1)}" y="${(C+134*Math.sin(t)+3).toFixed(1)}">${MON[a.getMonth()]}</text>`}}
+h+=`<g class="needle" id="needle"><path d="M${C} ${C-R1+2} l-5 9 h10 z"/></g>`;
+$('dial').innerHTML=h;dialN=n}
+function renderDial(ph){const n=months;if(dialN!==n)buildDial(n);
+for(let i=0;i<n;i++){$('sg'+i).setAttribute('class','seg'+(i<paidM?' paid':ph==='ended'?' refunded':(i===paidM&&ph!=='complete')?' next':''))}
+const k=ph==='complete'?n:Math.min(paidM,n);const step=360/n;
+$('needle').style.transform=`rotate(${(k+.5)*step}deg)`;$('needle').style.opacity=ph==='ended'?'0':'1';
+$('dial').setAttribute('aria-label',`${paidM} of ${n} weekly payments made`)}
+
+function renderHome(){const d=dorm(),ph=phase(),n=months;
+const left=ph==='ended'?0:(months-paidM)*weekly();
+$('hWho').textContent=`${CHILD}'s rent at ${d.n}, ${d.c}`;
+if(left!==shownBal||!$('hBal').textContent){tweenNum($('hBal'),shownBal,left,fn);shownBal=left}
+$('hEq').textContent=ph==='ended'?'Refunded to MetaMask':`\u2248 ${audU(left)}`;
+$('dLbl').textContent={deposited:'Protected',paying:'Protected',complete:'All paid',ended:'Closed'}[ph];
+$('hStat').textContent={deposited:'Waiting for your move-in approval',paying:`Week ${paidM} of ${n}. ${CHILD} moved in ${md(weekDate(0))}`,
+  complete:`All ${n} weeks paid to ${d.n}`,ended:`${CHILD} moved out after ${paidM} of ${n} weeks`}[ph];
+renderDial(ph);
+$('miBox').hidden=ph!=='deposited';
+if(ph==='deposited'){$('miT').textContent=`Did ${CHILD} move in?`;
+  $('miD').textContent=`${d.n} signed that ${CHILD} picked up the keys on ${md(weekDate(0))}. Approve to pay week 1. Nothing leaves the escrow until you do. If nobody confirms within 14 days, you can take it all back.`;
+  $('miGo').disabled=busyHome}
+$('rNext').innerHTML=ph==='paying'?`<span class="acc">${dlabel(weekDate(paidM))}</span>, ${f(weekly())}`:ph==='deposited'?'After you approve move-in':'None';
+$('rPaidK').textContent=`Paid to ${d.n}`;$('mPaid').textContent=f(paidM*weekly());
+$('rRefK').textContent=ph==='ended'?'Refunded':'Refundable now';$('mRef').textContent=f(ph==='ended'?(months-paidM)*weekly():left);
+$('leaveWrap').hidden=ph!=='paying';$('demo').hidden=ph!=='paying';if(ph!=='paying')$('moBox').hidden=true;
+$('dPause').innerHTML=(autoOn?IC.pause+'Pause':IC.play+'Resume');
+$('dNext').disabled=busyHome||forceOne;$('leaveBtn').disabled=busyHome;
+$('demoNote').textContent=!autoOn&&autoLeft<=0&&!forceOne
+  ?`Paused after ${AUTO_BATCH} weeks to save devnet fees. Resume or use Next week.`
+  :(autoOn||forceOne)?'Not part of the real app. One week passes every 10 seconds.':'Paused. Payments wait until you resume.';
+renderHist();renderVault()}
+
+/* ================= Property vault and monthly payout ================= */
+let pendingMicro=0,weeksSince=0,payoutDue=false,lastSplit=null,lastPayoutSig=null,paidOut=0,invTotals=DORMS[0].holders.map(()=>0),flashInv=false,lastArrivals=null,cum={g:0,mgr:0,sv:0,res:0,net:0};
+function split(g){const d=dorm(),b=d.bps;const mgr=Math.floor(g*b.manager/1e4),sv=Math.floor(g*b.stayvault/1e4);let res=Math.floor(g*b.reserve/1e4);
+const net0=g-mgr-sv-res;const hs=d.holders.map(h=>Math.floor(net0*h.u/d.units));const net=hs.reduce((a,c)=>a+c,0);res+=net0-net;   // rounding dust stays with the reserve
+return{g,mgr,sv,res,net,hs}}
+const pct=b=>(b/100).toLocaleString('en-US')+'%';
+function renderVault(){const d=dorm();
+$('vName').textContent=`${d.n}, ${d.c}`;
+$('vBal').textContent=fn(pendingMicro/1e6);
+const w=Math.min(weeksSince,PAYOUT_WEEKS);$('vMeter').querySelectorAll('i').forEach((el,i)=>el.classList.toggle('on',i<w));
+$('vWeeks').textContent=pendingMicro?`${w} of ${PAYOUT_WEEKS} weeks of rent collected toward the next payout`:'No rent waiting';
+$('vNow').hidden=!(pendingMicro>0&&!payoutDue);$('vNow').disabled=busyHome;
+const closing=['ended','complete'].includes(phase())&&paidOut>0;
+const s=closing?cum:(lastSplit||split(PAYOUT_WEEKS*weeklyMicro()));
+$('pK').textContent=closing?`All ${paidOut} payout${paidOut>1?'s':''} so far`:lastSplit?'Last payout':`Payout for ${PAYOUT_WEEKS} weeks of rent (projected)`;
+const b=d.bps;
+const W=v=>s.g?(v/s.g*100).toFixed(2)+'%':'0';
+$('splitbar').innerHTML=`<i class="c-inv" style="width:${W(s.net)}"></i><i class="c-mgr" style="width:${W(s.mgr)}"></i><i class="c-res" style="width:${W(s.res)}"></i><i class="c-fee" style="width:${W(s.sv)}"></i>`;
+$('payout').innerHTML=`<div class="gross"><dt>Rent collected</dt><dd>${fm(s.g)}</dd></div>
+<div class="net"><dt><span class="sw c-inv"></span>To investors</dt><dd>${fm(s.net)}</dd></div>
+<div><dt><span class="sw c-mgr"></span>Property manager ${pct(b.manager)}</dt><dd>${fm(s.mgr)}</dd></div>
+<div><dt><span class="sw c-res"></span>Repair reserve ${pct(b.reserve)}<small>Stays in the property vault</small></dt><dd>${fm(s.res)}</dd></div>
+<div><dt><span class="sw c-fee"></span>StayVault fee ${pct(b.stayvault)}</dt><dd>${fm(s.sv)}</dd></div>`;
+const addrs=window.SV?.payees;
+const proj=split(Math.max(pendingMicro,PAYOUT_WEEKS*weeklyMicro())).hs;
+const CHK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+const arrival=i=>{const a=lastArrivals?.[i];
+  if(!a)return `<span class="arr proj">Next payout \u2248 +${fn(proj[i]/1e6)}</span>`;
+  return a.ok?`<span class="arr ok">${CHK}+${fn(a.amt/1e6)} arrived</span>`:`<span class="arr sent">+${fn(a.amt/1e6)} sent</span>`};
+$('inv').innerHTML=d.holders.map((h,i)=>`<li class="${flashInv?'flash':''}"><span class="n">${esc(h.n)}</span><span class="a">${fm(invTotals[i])}</span><span class="u">${(h.u/d.units*100).toLocaleString('en-US')}% of units${addrs?` \u00b7 <a class="hash" href="${ADDR(addrs.holders[i])}" target="_blank" rel="noopener">${esc(short(addrs.holders[i]))}<span class="sr-only"> (opens this investor's USDC account in Solana Explorer)</span></a>`:''}</span>${arrival(i)}</li>`).join('');
+$('invNote').hidden=!lastArrivals;
+flashInv=false;
+$('invTot').textContent=paidOut?`Paid out so far: ${fm(invTotals.reduce((a,c)=>a+c,0))} in ${paidOut} payout${paidOut>1?'s':''}`:'Nothing paid out yet';
+$('invL').innerHTML=lastPayoutSig?txLink(lastPayoutSig):'';
+renderAside();
+$('vLink').innerHTML=addrs?`<a class="hash" href="${ADDR(addrs.vault)}" target="_blank" rel="noopener">${esc(short(addrs.vault))} ${IC.ext}<span class="sr-only"> (opens Solana Explorer)</span></a>`:''}
+/* The panel explains the screen on the left, nothing else */
+const rowsHTML=rows=>rows.map(([k,v,c])=>`<div class="${c||''}"><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+function renderAside(){const s=document.querySelector('.screen.active').dataset.s,d=dorm(),b=d.bps,ph=phase();
+let t,body,rows=null,note=null,show={ev:false,vault:false,pay:false,inv:false};
+if(s==='login'){t='A parent in Japan pays a dorm in Brisbane';
+  body=`${CHILD}'s parent sets rent aside from Japan. The dorm gets it one week at a time, and the dorm's investors are paid in USDC.`;note=['sim','Sign-in is simulated.']}
+else if(s==='connect'){t='The parent pays from their own wallet';
+  body='USDC goes from this wallet into escrow, and any refund comes back to it. StayVault never holds the money.';note=['sim','MetaMask is simulated. A demo wallet signs on devnet.']}
+else if(s==='select'){t='The dorm is listed by its owner';
+  body=`The token issuer that owns ${d.n} set the rent and how each payout is split. The parent pays none of these fees.`;
+  rows=[['Weekly rent',`${aud(d.m)} (${f(weekly())})`],['Property manager',pct(b.manager)],['Repair reserve',`${pct(b.reserve)}, kept in the vault`],['StayVault fee',pct(b.stayvault)],['Investors',`${d.holders.length} holders, ${d.units.toLocaleString('en-US')} units`]]}
+else if(s==='period'){t='Set aside, not paid in advance';
+  body='The money goes into escrow, not to the dorm. Queensland limits rent in advance to two weeks, so the dorm only ever receives one week at a time.';
+  rows=[['Weekly payments',`${months}`],['Set aside',f(months*weekly())],['Paid to the dorm today','0.00 USDC']]}
+else if(s==='confirm'){t='One transaction locks the rent';
+  body='Paying creates an escrow account owned by the StayVault program and moves the USDC into it. From then on, only the program\u2019s rules can move it.';note=['live','A real Solana devnet transaction.']}
+else if(ph==='deposited'){t='Move-in needs two signatures';
+  body=`${d.n} has signed that ${CHILD} picked up the keys. Week 1 moves only when the parent approves too. If nobody confirms within 14 days, the parent can take everything back.`;show.ev=true}
+else if(ph==='paying'){t='Rent flows on to the dorm\u2019s investors';
+  body=`Each week\u2019s rent goes to the property vault on its due date. Every ${PAYOUT_WEEKS} weeks the vault pays out by units held, and each investor\u2019s wallet is checked for the arrival.`;
+  show={ev:true,vault:true,pay:true,inv:true};note=['sim','Sped up: one week passes every 10 seconds.']}
+else{t='Where the rent went';
+  body=ph==='ended'?'Paid weeks went to the dorm and on to its investors. Unpaid weeks went back to the parent.':'Every week went to the dorm and on to its investors.';
+  show.end=true}
+$('aStep').textContent=`Step ${order.indexOf(s)+1} of ${order.length}`;$('aTitle').textContent=t;$('aBody').textContent=body;
+$('aRows').hidden=!rows;if(rows)$('aRows').innerHTML=rowsHTML(rows);
+// While rent is flowing, put the investors right under the vault so judges see the arrivals without scrolling
+const seq=s==='home'&&ph==='paying'?['aVaultW','aInvW','aPayW','aEvW']:['aEvW','aPayW','aInvW','aVaultW'];
+seq.forEach(id=>$('aNote').before($(id)));
+$('aEndW').hidden=!show.end;if(show.end)renderEnd();
+$('aEvW').hidden=!(show.ev&&evSet);$('aVaultW').hidden=!show.vault;$('aPayW').hidden=!show.pay;$('aInvW').hidden=!show.inv;
+$('aNote').hidden=!note;if(note){$('aNote').className='anote '+note[0];$('aNote').textContent=note[1]}}
+/* The closing summary: every USDC the parent set aside, in one bar */
+function renderEnd(){const d=dorm(),b=d.bps,back=Math.round((ended?(months-paidM)*weekly():0)*1e6),total=back+cum.g+pendingMicro;
+const parts=[['c-back','Back to the parent',back],['c-inv','To investors',cum.net,'hi'],['c-mgr',`Property manager ${pct(b.manager)}`,cum.mgr],
+  ['c-res',`Repair reserve ${pct(b.reserve)}`,cum.res],['c-fee',`StayVault fee ${pct(b.stayvault)}`,cum.sv],['c-wait','Waiting for the next payout',pendingMicro]].filter(p=>p[2]>0);
+const W=v=>(v/total*100).toFixed(2)+'%';
+const CHK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+$('aEndW').innerHTML=`<div class="k inv-h"><span>Set aside by the parent</span><span>${f(total/1e6)}</span></div><div class="endbar" aria-hidden="true">${parts.map(p=>`<i class="${p[0]}" style="width:${W(p[2])}"></i>`).join('')}</div>
+<dl class="leg num">${parts.map(p=>`<div class="${p[3]||''}"><dt><span class="sw ${p[0]}"></span>${p[1]}</dt><dd>${fn(p[2]/1e6)}</dd></div>`).join('')}</dl>
+<p class="cap">Fees come out of the rent, never from the parent.${pendingMicro>0?' <button type="button" class="dlink" onclick="payoutNow()">Pay out now</button>':''}</p>
+${paidOut?`<div class="k inv-h"><span>Investors</span><span>Received (USDC)</span></div>
+<ul class="ilist num">${d.holders.map((h,i)=>`<li><span>${esc(h.n)}<span class="p">${(h.u/d.units*100).toLocaleString('en-US')}%</span>${window.SV?.payees?` <a class="hash ilink" href="${ADDR(SV.payees.holders[i])}" target="_blank" rel="noopener" title="Check this investor's USDC balance on Solana Explorer">${esc(short(SV.payees.holders[i]))} ${IC.ext}<span class="sr-only">Check ${esc(h.n)}'s USDC balance on Solana Explorer</span></a>`:''}</span><span class="${lastArrivals?.[i]?.ok?'ok':''}">${lastArrivals?.[i]?.ok?CHK:''}${fn(invTotals[i]/1e6)}</span></li>`).join('')}</ul>`:''}
+<div class="endlinks">${acts[0]?.sig?`<span>Refund ${txLink(acts[0].sig)}</span>`:''}${lastPayoutSig?`<span>Last payout ${txLink(lastPayoutSig)}</span>`:''}</div>`}
+function addRent(){pendingMicro+=weeklyMicro();weeksSince++;if(weeksSince>=PAYOUT_WEEKS)payoutDue=true}
+async function runPayout(){if(!window.SV||busyHome||pendingMicro<=0){payoutDue=false;return}
+busyHome=true;payoutDue=false;renderHome();const s=split(pendingMicro);
+try{const r=await SV.distribute();const sig=r.sig;const out=r.split||s;   // the program's own numbers (from its event), else our estimate
+  pendingMicro=0;weeksSince=0;lastSplit=out;lastPayoutSig=sig;paidOut++;out.hs.forEach((a,i)=>invTotals[i]+=a);flashInv=true;
+  ['g','mgr','sv','res','net'].forEach(k=>cum[k]+=out[k]);
+  lastArrivals=out.hs.map((a,i)=>({amt:a,ok:!!(r.before&&r.after&&r.after[i]!=null&&r.before[i]!=null&&r.after[i]-r.before[i]>=a)}));
+  showEvent(`Payout ${paidOut}: ${fm(out.net)} to ${out.hs.length} investors`,sig,'payout')}
+catch(e){console.error(e);toast('The monthly payout didn\u2019t go through. The rent is still in the property vault. Use Pay out now to retry.',{err:true})}
+finally{busyHome=false;renderHome()}}
+function payoutNow(){if(!svReady()||busyHome||pendingMicro<=0)return;payoutDue=true}
+
+/* the auto-play loop */
+setInterval(()=>{if(document.querySelector('.screen.active')?.dataset.s!=='home'||busyHome)return;
+if(payoutDue){runPayout();return}
+if(phase()!=='paying')return;
+if((autoOn||forceOne)&&Date.now()>=nextAt)autoRelease()},250);
+
+function schedule(){nextAt=Math.max(onchainDue(paidM),Date.now()+DEMO_WEEK_MS)}
+async function approveMoveIn(){if(!svReady()||busyHome)return;const b=$('miGo'),old=b.innerHTML;busyHome=true;b.disabled=true;b.innerHTML=SPIN+'Approving\u2026';
+try{const sig=await SV.confirmAndRelease();paidM=1;fails=0;addRent();
+  logTx('Week 1 paid',`${dlabel(weekDate(0))}, move-in approved`,sig,'movein');
+  toast('Move-in approved. Week 1 paid.',{sig});autoOn=true;autoLeft=AUTO_BATCH-1;schedule()}
+catch(e){console.error(e);toast('The move-in approval didn\u2019t go through. Nothing left the escrow. Try again.',{err:true})}
+finally{b.innerHTML=old;busyHome=false;renderHome()}}
+async function autoRelease(){if(!window.SV)return;busyHome=true;const manual=forceOne;forceOne=false;renderHome();
+try{const sig=await SV.release();fails=0;paidM++;addRent();if(!manual)autoLeft--;
+  logTx(`Week ${paidM} paid`,`${dlabel(weekDate(paidM-1))}, ${f(weekly())}`,sig,'release');
+  if(paidM>=months){autoOn=false;toast('All rent paid',{sig})}
+  else if(autoOn&&autoLeft<=0)autoOn=false;
+  schedule()}
+catch(e){console.error(e);fails++;
+  if(fails>=2||manual){autoOn=false;fails=0;toast('A weekly payment didn\u2019t go through. Try Next week.',{err:true})}
+  else nextAt=Date.now()+3000}
+finally{busyHome=false;renderHome()}}
+/* Next week: pay the next week as soon as the program allows it, even while paused */
+function nextWeek(){if(!svReady()||busyHome||phase()!=='paying')return;forceOne=true;nextAt=onchainDue(paidM);renderHome()}
+function togglePause(){if(phase()!=='paying')return;
+if(autoOn){autoOn=false;pausedLeft=Math.max(0,nextAt-Date.now())}
+else{autoOn=true;if(autoLeft<=0)autoLeft=AUTO_BATCH;nextAt=Math.max(onchainDue(paidM),Date.now()+(pausedLeft||DEMO_WEEK_MS));pausedLeft=0}
+renderHome()}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&autoOn){hidPaused=true;togglePause()}else if(!document.hidden&&hidPaused){hidPaused=false;if(!autoOn)togglePause()}});
+
+function askLeave(){$('moKeep').textContent=f(paidM*weekly());$('moBack').textContent=f((months-paidM)*weekly());$('moBox').hidden=false;$('moBox').scrollIntoView({behavior:RM.matches?'auto':'smooth',block:'center'})}
+async function leave(){if(!svReady()||busyHome)return;const b=$('moGo'),old=b.innerHTML;busyHome=true;autoOn=false;forceOne=false;b.disabled=true;b.innerHTML=SPIN+'Refunding\u2026';
+try{const back=(months-paidM)*weekly();const sig=await SV.moveOut();ended=true;
+  logTx('Refunded',`${f(back)} back to MetaMask, after ${paidM} of ${months} weeks`,sig,'refund');
+  toast(`Refunded ${f(back)}`,{sig})}
+catch(e){console.error(e);toast('The refund didn\u2019t go through. The escrow is unchanged. Try again.',{err:true})}
+finally{b.innerHTML=old;b.disabled=false;busyHome=false;renderHome()}}
+
+async function pay(){if(!svReady())return;calc();const btn=$('payBtn');
+await run(btn,'payStatus','Moving rent into escrow\u2026',async()=>{
+  try{const sig=await SV.create(weekly(),months);createdAt=Date.now();paidM=0;ended=false;stack=[];acts=[];shownBal=0;dialN=0;
+    autoOn=false;autoLeft=AUTO_BATCH;forceOne=false;
+    logTx('Set aside',`${md(new Date())}, ${f(months*weekly())} from MetaMask`,sig,'deposit');
+    toast('Rent is in escrow. Approve move-in to pay week 1.',{sig});go('home')}
+  catch(e){console.error(e);toast('The deposit didn\u2019t go through. Nothing left your wallet. Try again.',{err:true})}})}
+
+let tt=null;
+function toast(t,o={}){const e=$('toast');e.className='toast'+(o.err?' err':'');e.innerHTML=`<span>${esc(t)}</span>`+(o.sig?`<a href="${EXPLORER(o.sig)}" target="_blank" rel="noopener">View on Explorer</a>`:'');
+requestAnimationFrame(()=>e.classList.add('show'));clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),o.sig||o.err?5000:2200)}
+
+let svErr=false;
+window.addEventListener('sv-ready',()=>{$('net').className='net live';$('netT').textContent='Solana devnet';renderVault()});
+setTimeout(()=>{if(!window.SV&&!svErr)window.dispatchEvent(new Event('sv-error'))},20000);
+window.addEventListener('sv-error',()=>{svErr=true;$('net').className='net bad';$('netT').textContent='Devnet unavailable'});
+go('login',false);renderVault();
 </script>
+
 <script type="module">
-// === StayVault エスクロー接続（devnet）===
-// ログイン・口座接続・オフランプはモックのまま。署名は wallet-demo.json のデモ財布で行う
+// === StayVault on devnet ===
+// Sign-in and MetaMask stay simulated. Transactions are signed with the demo wallets in the config file.
+// Roles: parent = pays rent; operator = the dorm's property manager (signs move-in and move-out);
+// authority = the token issuer that owns the property (signs the monthly payout).
+// The property, its vault, the fee rates and the investor list were registered beforehand by
+// scripts/make-public-demo.mjs (init_property), so the demo starts with the dorm already listed.
 import { Buffer } from "https://esm.sh/buffer@6.0.3";
 import { Connection, Keypair, PublicKey, Transaction, TransactionInstruction, SystemProgram } from "https://esm.sh/@solana/web3.js@1.98.0";
 
+try {
 const TOKEN = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 const ATA = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
-const DEMO_INTERVAL = 10n;      // デモでは10秒を1週として扱う
-const DEMO_DEADLINE = 600n;     // 入居確認の期限：作成から10分
+const DEMO_INTERVAL = 10n;      // one demo week = 10 seconds (keep DEMO_WEEK_MS above in sync)
+const DEMO_DEADLINE = 600n;     // move-in confirmation deadline: 10 minutes after creation
 
-// 手元の開発では wallet-demo.json、公開版（GitHub Pages）では demo-public.json を使う
+// Local development uses wallet-demo.json; the public build (GitHub Pages) uses demo-public.json
 async function loadCfg() {
   for (const f of ["./wallet-demo.json", "./demo-public.json"]) {
     const r = await fetch(f, { cache: "no-store" });
     if (r.ok) { console.log("demo config:", f); return r.json(); }
   }
-  throw new Error("wallet-demo.json も demo-public.json も見つかりません");
+  throw new Error("Neither wallet-demo.json nor demo-public.json was found");
 }
 const cfg = await loadCfg();
+if (!cfg.property) throw new Error("The config file has no property. Re-create it with scripts/make-public-demo.mjs");
 const conn = new Connection(cfg.rpc, "confirmed");
 const PID = new PublicKey(cfg.programId), MINT = new PublicKey(cfg.mint);
 const parent = Keypair.fromSecretKey(Uint8Array.from(cfg.parent));
 const operator = Keypair.fromSecretKey(Uint8Array.from(cfg.operator));
+const authority = Keypair.fromSecretKey(Uint8Array.from(cfg.authority));
+const PROPERTY = new PublicKey(cfg.property), PROPERTY_VAULT = new PublicKey(cfg.propertyVault);
+const MANAGER_TOKEN = new PublicKey(cfg.managerToken), FEE_TOKEN = new PublicKey(cfg.feeToken);
+const HOLDER_TOKENS = cfg.holders.map(h => new PublicKey(h.token));
 let vault, vaultToken;
 
+const sha = async s => new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)));
 const ata = o => PublicKey.findProgramAddressSync([o.toBuffer(), TOKEN.toBuffer(), MINT.toBuffer()], ATA)[0];
 const acc = (pubkey, isWritable = false, isSigner = false) => ({ pubkey, isWritable, isSigner });
 async function ix(name, keys, args = new Uint8Array()) {
-  // Anchorの命令識別子 = sha256("global:<命令名>") の先頭8バイト
-  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("global:" + name)));
+  // Anchor instruction discriminator = first 8 bytes of sha256("global:<name>")
+  const h = await sha("global:" + name);
   return new TransactionInstruction({ programId: PID, keys, data: Buffer.concat([Buffer.from(h.slice(0, 8)), Buffer.from(args)]) });
 }
 async function send(ixs, signers) {
@@ -280,16 +779,42 @@ async function send(ixs, signers) {
   console.log("tx:", `https://explorer.solana.com/tx/${sig}?cluster=devnet`);
   return sig;
 }
-const releaseIx = () => ix("release", [acc(vault, true), acc(vaultToken, true), acc(ata(operator.publicKey), true), acc(TOKEN)]);
+const releaseIx = () => ix("release", [acc(vault, true), acc(vaultToken, true), acc(PROPERTY_VAULT, true), acc(TOKEN)]);
+
+// Read the program's Distributed event from the transaction logs, so the panel shows the amounts the program actually sent.
+// Layout: discriminator(8) property(32) payout(u32) gross, manager, fee, reserve (u64 each) shares(Vec<u64>)
+const EVENT = (await sha("event:Distributed")).slice(0, 8);
+async function readDistributed(sig) {
+  for (let i = 0; i < 10; i++) {
+    const tx = await conn.getTransaction(sig, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
+    if (tx?.meta?.logMessages) {
+      for (const line of tx.meta.logMessages) {
+        if (!line.startsWith("Program data: ")) continue;
+        const b = Buffer.from(line.slice(14), "base64");
+        if (!b.subarray(0, 8).equals(Buffer.from(EVENT))) continue;
+        let o = 8 + 32 + 4;
+        const u64 = () => { const v = Number(b.readBigUInt64LE(o)); o += 8; return v; };
+        const g = u64(), mgr = u64(), sv = u64(), res = u64();
+        const n = b.readUInt32LE(o); o += 4;
+        const hs = []; for (let k = 0; k < n; k++) hs.push(u64());
+        return { g, mgr, sv, res, hs, net: hs.reduce((a, c) => a + c, 0) };
+      }
+      return null;
+    }
+    await new Promise(r => setTimeout(r, 800));
+  }
+  return null;
+}
 
 window.SV = {
+  payees: { vault: PROPERTY_VAULT.toBase58(), manager: cfg.managerToken, fee: cfg.feeToken, holders: cfg.holders.map(h => h.token) },
   async create(weeklyUsdc, weeks) {
     const id = BigInt(Date.now()), now = BigInt(Math.floor(Date.now() / 1000));
     const buf = new ArrayBuffer(42), dv = new DataView(buf);
     dv.setBigUint64(0, id, true);                                        // vault_id
-    dv.setBigUint64(8, BigInt(Math.round(weeklyUsdc * 1e6)), true);      // weekly_amount（小数6桁）
+    dv.setBigUint64(8, BigInt(Math.round(weeklyUsdc * 1e6)), true);      // weekly_amount (6 decimals)
     dv.setUint16(16, weeks, true);                                       // total_weeks
-    dv.setBigInt64(18, now - 15n, true);                                 // first_pay_ts（devnetの時計が数秒遅れても初週を払えるよう15秒前にする）
+    dv.setBigInt64(18, now - 15n, true);                                 // first_pay_ts (15 s early so week 1 is payable even if the devnet clock lags)
     dv.setBigInt64(26, DEMO_INTERVAL, true);                             // interval_secs
     dv.setBigInt64(34, now + DEMO_DEADLINE, true);                       // confirm_deadline
     const idLe = new Uint8Array(buf, 0, 8);
@@ -297,12 +822,13 @@ window.SV = {
     vaultToken = PublicKey.findProgramAddressSync([Buffer.from("vault_token"), vault.toBuffer()], PID)[0];
     return send([await ix("create_vault", [
       acc(parent.publicKey, true, true), acc(operator.publicKey), acc(MINT), acc(ata(parent.publicKey), true),
-      acc(vault, true), acc(vaultToken, true), acc(TOKEN), acc(SystemProgram.programId),
+      acc(vault, true), acc(vaultToken, true), acc(TOKEN), acc(SystemProgram.programId), acc(PROPERTY),
     ], new Uint8Array(buf))], [parent]);
   },
-  // 初回：運営者の入居確認と初週の払い出しを1トランザクションで
+  // Move-in: the parent and the property manager both sign; week 1 goes to the property vault in the same transaction
   async confirmAndRelease() {
-    return send([await ix("confirm_move_in", [acc(operator.publicKey, false, true), acc(vault, true)]), await releaseIx()], [parent, operator]);
+    return send([await ix("confirm_move_in", [acc(operator.publicKey, false, true), acc(vault, true), acc(parent.publicKey, false, true)]),
+      await releaseIx()], [parent, operator]);
   },
   async release() { return send([await releaseIx()], [parent]); },
   async moveOut() {
@@ -311,8 +837,33 @@ window.SV = {
       acc(vaultToken, true), acc(ata(parent.publicKey), true), acc(TOKEN),
     ])], [parent, operator]);
   },
+  // Monthly payout: the token issuer signs; the program splits the vault by the property's rates and investor list
+  async distribute() {
+    const before = await this.balances();
+    const sig = await send([await ix("distribute", [
+      acc(authority.publicKey, false, true), acc(PROPERTY, true), acc(PROPERTY_VAULT, true),
+      acc(MANAGER_TOKEN, true), acc(FEE_TOKEN, true), acc(TOKEN),
+      ...HOLDER_TOKENS.map(t => acc(t, true)),
+    ])], [parent, authority]);
+    let split = null;
+    try { split = await readDistributed(sig); } catch (e) { console.warn("could not read the payout event", e); }
+    const after = await this.balances();
+    return { sig, split, before, after };
+  },
+  // Each investor's USDC balance, read straight from their token account (amount = u64 at byte 64)
+  async balances() {
+    try {
+      const infos = await conn.getMultipleAccountsInfo(HOLDER_TOKENS, "confirmed");
+      return infos.map(i => i ? Number(new DataView(i.data.buffer, i.data.byteOffset, i.data.byteLength).getBigUint64(64, true)) : null);
+    } catch (e) { console.warn("could not read investor balances", e); return null; }
+  },
 };
-console.log("StayVault escrow ready:", PID.toBase58());
+console.log("StayVault escrow ready:", PID.toBase58(), "property:", PROPERTY.toBase58());
+window.dispatchEvent(new Event("sv-ready"));
+} catch (e) {
+  console.error(e);
+  window.dispatchEvent(new Event("sv-error"));
+}
 </script>
 </body>
 </html>
