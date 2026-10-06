@@ -103,6 +103,10 @@ dd.wl-inline .wl-logo{width:16px;height:16px}
 .choices label:has(input:disabled){opacity:.5;cursor:not-allowed}
 .choices h3{font-size:15.5px;font-weight:600;margin:0}
 .choices p{font-size:12.5px;color:var(--sub);margin:2px 0 0}
+.choices .date-in{display:block;box-sizing:border-box;width:100%;margin-top:12px;padding:9px 12px;font:inherit;font-size:14.5px;color:var(--ink);background:var(--paper);border:1px solid var(--input);border-radius:10px;color-scheme:light dark}
+.choices .date-in:focus-visible{outline:2px solid var(--ring);outline-offset:1px}
+.choices .date-hint{font-size:12px;color:var(--faint);margin-top:8px}
+.choices label:not(:has(#mo-date:checked)) :is(.date-in,.date-hint){display:none}
 
 .sum{margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
 .sum .k{font-size:12.5px;color:var(--sub)}
@@ -474,15 +478,27 @@ function firstPay(){const d=new Date('2026-10-01');while(d.getDay()!==dorm().w)d
 function weeksUntil(o){const d=firstPay();let n=0;while(d<o&&n<60){n++;d.setDate(d.getDate()+7)}return Math.max(1,n)}
 function outMonths(){const o=new Date(dorm().d+'T00:00');return Math.max(1,(o.getFullYear()-2026)*12+o.getMonth()-9+(o.getDate()>1?1:0))}
 function weeksFor(mo){const e=new Date('2026-10-01');e.setMonth(e.getMonth()+mo);const o=new Date(dorm().d+'T00:00');return weeksUntil(e<o?e:new Date(o.getTime()+864e5))}
-let selMo=3;
-const moLabel=m=>m===1?'1 month':m===12?'1 year':m+' months';
-function renderMo(){const om=outMonths();const opts=[1,3,6,12].filter(m=>m<=om);if(!opts.includes(selMo))selMo=opts[0];
-$('mOpts').innerHTML=opts.map(m=>`<label for="mo-${m}"><div role="group" class="field" data-orientation="horizontal"><section><h3>${moLabel(m)}</h3><p>${weeksFor(m)} weekly payments</p></section><input id="mo-${m}" type="radio" name="mo" ${m===selMo?'checked':''} onchange="selMo=${m};calc();renderAside()"></div></label>`).join('')}
+let selMo=3,outDate='';   // selMo: 1/3/6/12 months, or 'date' when the parent picks a move-out date
+const moLabel=m=>m==='date'?'Until '+ymd(outDate):m===1?'1 month':m===12?'1 year':m+' months';
+const isoD=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+// Earliest move-out is the day after the first payment (one payment), latest is the dorm's end date
+function outRange(){const a=firstPay();a.setDate(a.getDate()+1);return [isoD(a),dorm().d]}
+function clampOut(s){const [lo,hi]=outRange();return !s?'':s<lo?lo:s>hi?hi:s}
+// Every weekly payment due before the move-out day is set aside (whole weeks, no daily proration)
+const dateWeeks=()=>weeksUntil(new Date(outDate+'T00:00'));
+const dateNote=()=>{const n=dateWeeks();return `${n} weekly payment${n>1?'s':''}, last on ${dlabel(weekDate(n-1))}`};
+function renderMo(){const om=outMonths();const opts=[1,3,6,12].filter(m=>m<=om);if(selMo!=='date'&&!opts.includes(selMo))selMo=opts[0];
+if(!outDate){const e=new Date('2026-10-01');e.setMonth(e.getMonth()+3);outDate=clampOut(isoD(e))}
+const [lo,hi]=outRange();
+$('mOpts').innerHTML=opts.map(m=>`<label for="mo-${m}"><div role="group" class="field" data-orientation="horizontal"><section><h3>${moLabel(m)}</h3><p>${weeksFor(m)} weekly payments</p></section><input id="mo-${m}" type="radio" name="mo" ${m===selMo?'checked':''} onchange="selMo=${m};calc();renderAside()"></div></label>`).join('')
++`<label for="mo-date"><div role="group" class="field" data-orientation="horizontal"><section><h3>Pick a move-out date</h3><p id="moDateP">${dateNote()}</p></section><input id="mo-date" type="radio" name="mo" ${selMo==='date'?'checked':''} onchange="selMo='date';calc();renderAside()"></div>`
++`<input type="date" class="date-in" id="outDate" aria-label="Move-out date" min="${lo}" max="${hi}" value="${outDate}" onchange="pickOut(this)"><p class="date-hint">Rent is paid in whole weeks. If plans change, unpaid weeks come back when you move out.</p></label>`}
+function pickOut(el){const v=clampOut(el.value);if(!v){el.value=outDate;return}outDate=el.value=v;selMo='date';$('mo-date').checked=true;$('moDateP').textContent=dateNote();calc();renderAside()}
 
-function calc(){const d=dorm();months=weeksFor(selMo);const tot=weekly()*months;
+function calc(){const d=dorm();months=selMo==='date'?dateWeeks():weeksFor(selMo);const tot=weekly()*months;
 $('pName').textContent=`${d.n}, ${d.c}. ${aud(d.m)} a week (${f(weekly())}).`;
 $('tot').textContent=f(tot);$('totA').textContent='≈ '+aud(d.m*months);
-$('sched').textContent=`${months} payments, weekly from ${DW[d.w]}, ${md(firstPay())}`;
+$('sched').textContent=`${months} payment${months>1?'s':''}, weekly from ${DW[d.w]}, ${md(firstPay())}`;
 $('cName').textContent=`${d.n}, ${d.c}`;$('cSch').textContent=moLabel(selMo);
 $('cWk').textContent=f(weekly());$('cWkA').textContent=aud(d.m);$('cN').textContent=`${months} weeks`;
 $('cTot').textContent=f(tot);$('payBtn').textContent='Set aside '+f(tot);return tot}
