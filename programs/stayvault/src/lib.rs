@@ -183,7 +183,7 @@ pub mod stayvault {
     /// 月次分配。ST業者（物件の権限者）が署名する。
     /// 金庫の残高から修繕積立の残高を除いた額を総額とし、管理費・手数料を送り、修繕積立は金庫に残し、
     /// 残りを名簿の口数比で投資家へ送る。投資家の口座は remaining_accounts に名簿の順で渡す
-    pub fn distribute<'info>(ctx: Context<'_, '_, 'info, 'info, Distribute<'info>>) -> Result<()> {
+    pub fn distribute<'info>(ctx: Context<'info, Distribute<'info>>) -> Result<()> {
         let p = &ctx.accounts.property;
         let holders = p.holders.clone();
         require!(
