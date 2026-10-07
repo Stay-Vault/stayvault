@@ -9,9 +9,9 @@ import {
 import { createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 export const PROPERTY = {
-  managerBps: 900,   // 管理費 9%
-  reserveBps: 300,   // 修繕積立 3%（金庫に残す）
-  feeBps: 100,       // StayVault の手数料 1%
+  managerBps: 1000,  // 不動産管理会社 10%
+  reserveBps: 1700,  // 金庫に残す 17% = 修繕積立 10% + その他費用 7%（保険・税金など。画面では2つに分けて表示）
+  feeBps: 300,       // StayVault の利用料 3%（ネットワーク手数料もここから払う）。残りの 70% が投資家
   totalUnits: 1000,
   holders: [
     { name: "Investor A", units: 400 },
@@ -27,26 +27,28 @@ const acc = (pubkey, isWritable = false, isSigner = false) => ({ pubkey, isWrita
 
 /**
  * conn: Connection、funder: SOL とテスト用USDC の発行権限を持つ財布（~/.config/solana/id.json）
- * solForParent: 親役に渡す SOL（取引手数料はすべて親役が払う）、usdcForParent: 親役に入れるテスト用USDC
- * solForOperator: 管理会社役に渡す SOL（e2e 用。公開デモでは 0）
+ * solForSponsor: StayVault役（手数料の支払者）に渡す SOL。取引手数料と口座の作成費用はすべてここから払う
+ * usdcForParent: 親役に入れるテスト用USDC。親役には SOL を渡さない（親の負担ゼロ）
  */
-export async function createDemo({ conn, funder, programId, solForParent, usdcForParent, solForOperator = 0 }) {
+export async function createDemo({ conn, funder, programId, solForSponsor, usdcForParent }) {
   const PID = new PublicKey(programId);
   const parent = Keypair.generate();
+  const sponsor = Keypair.generate();     // StayVault役。すべての取引の手数料と、エスクローの口座の作成費用を払う
   const operator = Keypair.generate();    // 管理会社役（入居確認と退去に署名）
   const authority = Keypair.generate();   // ST業者役（物件の権限者。distribute に署名）
   const feeOwner = Keypair.generate();    // StayVault の手数料の受取先（公開鍵だけ使う）
   const investors = PROPERTY.holders.map(() => Keypair.generate()); // 投資家（公開鍵だけ使う）
 
   await sendAndConfirmTransaction(conn, new Transaction().add(SystemProgram.transfer({
-    fromPubkey: funder.publicKey, toPubkey: parent.publicKey, lamports: Math.round(solForParent * LAMPORTS_PER_SOL),
+    fromPubkey: funder.publicKey, toPubkey: sponsor.publicKey, lamports: Math.round(solForSponsor * LAMPORTS_PER_SOL),
   })), [funder]);
-  // 管理会社役は署名するだけなので通常は SOL 不要。e2e の「親の署名なし」の確認でだけ手数料を払う
-  if (solForOperator > 0) {
-    await sendAndConfirmTransaction(conn, new Transaction().add(SystemProgram.transfer({
-      fromPubkey: funder.publicKey, toPubkey: operator.publicKey, lamports: Math.round(solForOperator * LAMPORTS_PER_SOL),
-    })), [funder]);
-  }
+
+  // 投資家と手数料の受取先の財布に、口座の維持に必要な最小限の SOL を入れる。
+  // SOL が 0 の財布はオンチェーンに存在しない扱いになり、Solana Explorer で開くと Not found になるため
+  const minRent = await conn.getMinimumBalanceForRentExemption(0);
+  await sendAndConfirmTransaction(conn, new Transaction().add(
+    ...[feeOwner, ...investors].map((k) => SystemProgram.transfer({ fromPubkey: funder.publicKey, toPubkey: k.publicKey, lamports: minRent }))
+  ), [funder]);
 
   // テスト用USDC（小数6桁）。発行権限は funder に残るので、公開された鍵で勝手に発行されることはない
   const mint = await createMint(conn, funder, funder.publicKey, null, 6);
@@ -90,6 +92,7 @@ export async function createDemo({ conn, funder, programId, solForParent, usdcFo
     programId,
     mint: mint.toBase58(),
     parent: Array.from(parent.secretKey),
+    sponsor: Array.from(sponsor.secretKey),
     operator: Array.from(operator.secretKey),
     authority: Array.from(authority.secretKey),
     property: property.toBase58(),

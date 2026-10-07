@@ -255,7 +255,7 @@ dd.wl-inline .wl-logo{width:16px;height:16px}
 .ilist .ilink svg{width:14px;height:14px}
 .endlinks{display:flex;gap:16px;font-size:12px;color:var(--faint);flex-wrap:wrap}
 .c-back{background:var(--jac-mist)}.c-wait{background:var(--jac-soft);background-image:repeating-linear-gradient(45deg,transparent 0 4px,var(--jac-mist) 4px 8px)}
-.c-inv{background:var(--euc)}.c-mgr{background:var(--jac)}.c-res{background:var(--faint)}.c-fee{background:var(--jac-ink)}
+.c-inv{background:var(--euc)}.c-mgr{background:var(--jac)}.c-res{background:var(--faint)}.c-oth{background:#C8B48E}.c-fee{background:var(--jac-ink)}
 .inv li.flash{animation:flashrow 1.2s ease-out}
 @keyframes flashrow{0%{background:var(--euc-soft)}100%{background:transparent}}
 .inv-f{font-size:12px;color:var(--faint);margin:0 0 24px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
@@ -435,7 +435,9 @@ dd.wl-inline .wl-logo{width:16px;height:16px}
 const AUD_USD=0.71, CHILD='Yuri';   // 1 AUD = 0.71 USD (late Sep 2026, rounded)
 // One dorm is already listed by its owner (the token issuer). Rates are in basis points of rent collected.
 const DORMS=[{n:'Stay-Dorm',c:'Brisbane',m:300,w:1,d:'2027-09-30',
-  bps:{manager:900,reserve:300,stayvault:100},units:1000,
+  // On-chain the program knows three rates: manager, StayVault fee, and "reserve" (what stays in the vault).
+  // The reserve is shown as two parts: repair reserve 10% and other costs 7% (insurance, taxes...). Investors get the rest (70%).
+  bps:{manager:1000,reserve:1700,stayvault:300,repair:1000,other:700},units:1000,
   holders:[{n:'Investor A',u:400},{n:'Investor B',u:250},{n:'Investor C',u:200},{n:'Investor D',u:100},{n:'Investor E',u:50}]}];
 const PAYOUT_WEEKS=4;
 let connected=false,sel=0,months=3,paidM=0,stack=[],ended=false,createdAt=0,acts=[],approved=false;
@@ -517,7 +519,7 @@ const EXPLAIN={
   deposit:'The parent\u2019s USDC moved into an escrow account owned by the StayVault program. Nobody can touch it until move-in is approved.',
   movein:'The parent approved the move-in and the dorm co-signed. In the same transaction, week 1 went to the property vault.',
   release:'One week of rent went to the property vault because its due date passed. Anyone can trigger this, and the destination is fixed.',
-  payout:'The property vault paid out: 9% to the property manager, 1% to StayVault, 3% kept for repairs, and the rest to investors by units held.',
+  payout:'The property vault paid out: 10% to the property manager, 3% to StayVault, 17% kept for repairs and other costs, and 70% to investors by units held.',
   refund:'The parent and the dorm both signed. The weeks not yet paid went straight back to the parent\u2019s wallet.'};
 let evSet=false;
 function showEvent(title,sig,kind){evSet=true;$('evT').textContent=title;$('evD').textContent=EXPLAIN[kind]||'';$('evL').innerHTML=txLink(sig);
@@ -575,10 +577,12 @@ $('demoNote').textContent=!autoOn&&autoLeft<=0&&!forceOne
 renderHist();renderVault()}
 
 /* ================= Property vault and monthly payout ================= */
-let pendingMicro=0,weeksSince=0,payoutDue=false,lastSplit=null,lastPayoutSig=null,paidOut=0,invTotals=DORMS[0].holders.map(()=>0),flashInv=false,lastArrivals=null,cum={g:0,mgr:0,sv:0,res:0,net:0};
+let pendingMicro=0,weeksSince=0,payoutDue=false,lastSplit=null,lastPayoutSig=null,paidOut=0,invTotals=DORMS[0].holders.map(()=>0),flashInv=false,lastArrivals=null,cum={g:0,mgr:0,sv:0,res:0,rp:0,oth:0,net:0};
 function split(g){const d=dorm(),b=d.bps;const mgr=Math.floor(g*b.manager/1e4),sv=Math.floor(g*b.stayvault/1e4);let res=Math.floor(g*b.reserve/1e4);
 const net0=g-mgr-sv-res;const hs=d.holders.map(h=>Math.floor(net0*h.u/d.units));const net=hs.reduce((a,c)=>a+c,0);res+=net0-net;   // rounding dust stays with the reserve
-return{g,mgr,sv,res,net,hs}}
+return withKept({g,mgr,sv,res,net,hs})}
+// Split what stays in the vault into the repair reserve and other costs (rounding dust goes to other costs)
+function withKept(s){const rp=Math.floor(s.g*dorm().bps.repair/1e4);return{...s,rp,oth:s.res-rp}}
 const pct=b=>(b/100).toLocaleString('en-US')+'%';
 function renderVault(){const d=dorm();
 $('vName').textContent=`${d.n}, ${d.c}`;
@@ -591,19 +595,20 @@ const s=closing?cum:(lastSplit||split(PAYOUT_WEEKS*weeklyMicro()));
 $('pK').textContent=closing?`All ${paidOut} payout${paidOut>1?'s':''} so far`:lastSplit?'Last payout':`Payout for ${PAYOUT_WEEKS} weeks of rent (projected)`;
 const b=d.bps;
 const W=v=>s.g?(v/s.g*100).toFixed(2)+'%':'0';
-$('splitbar').innerHTML=`<i class="c-inv" style="width:${W(s.net)}"></i><i class="c-mgr" style="width:${W(s.mgr)}"></i><i class="c-res" style="width:${W(s.res)}"></i><i class="c-fee" style="width:${W(s.sv)}"></i>`;
+$('splitbar').innerHTML=`<i class="c-inv" style="width:${W(s.net)}"></i><i class="c-mgr" style="width:${W(s.mgr)}"></i><i class="c-res" style="width:${W(s.rp)}"></i><i class="c-oth" style="width:${W(s.oth)}"></i><i class="c-fee" style="width:${W(s.sv)}"></i>`;
 $('payout').innerHTML=`<div class="gross"><dt>Rent collected</dt><dd>${fm(s.g)}</dd></div>
-<div class="net"><dt><span class="sw c-inv"></span>To investors</dt><dd>${fm(s.net)}</dd></div>
+<div class="net"><dt><span class="sw c-inv"></span>To investors ${pct(1e4-b.manager-b.reserve-b.stayvault)}</dt><dd>${fm(s.net)}</dd></div>
 <div><dt><span class="sw c-mgr"></span>Property manager ${pct(b.manager)}</dt><dd>${fm(s.mgr)}</dd></div>
-<div><dt><span class="sw c-res"></span>Repair reserve ${pct(b.reserve)}<small>Stays in the property vault</small></dt><dd>${fm(s.res)}</dd></div>
-<div><dt><span class="sw c-fee"></span>StayVault fee ${pct(b.stayvault)}</dt><dd>${fm(s.sv)}</dd></div>`;
+<div><dt><span class="sw c-res"></span>Repair reserve ${pct(b.repair)}<small>Stays in the property vault</small></dt><dd>${fm(s.rp)}</dd></div>
+<div><dt><span class="sw c-oth"></span>Other costs ${pct(b.other)}<small>Insurance, taxes. Stays in the property vault</small></dt><dd>${fm(s.oth)}</dd></div>
+<div><dt><span class="sw c-fee"></span>StayVault fee ${pct(b.stayvault)}<small>Also covers the network fees</small></dt><dd>${fm(s.sv)}</dd></div>`;
 const addrs=window.SV?.payees;
 const proj=split(Math.max(pendingMicro,PAYOUT_WEEKS*weeklyMicro())).hs;
 const CHK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
 const arrival=i=>{const a=lastArrivals?.[i];
   if(!a)return `<span class="arr proj">Next payout \u2248 +${fn(proj[i]/1e6)}</span>`;
   return a.ok?`<span class="arr ok">${CHK}+${fn(a.amt/1e6)} arrived</span>`:`<span class="arr sent">+${fn(a.amt/1e6)} sent</span>`};
-$('inv').innerHTML=d.holders.map((h,i)=>`<li class="${flashInv?'flash':''}"><span class="n">${esc(h.n)}</span><span class="a">${fm(invTotals[i])}</span><span class="u">${(h.u/d.units*100).toLocaleString('en-US')}% of units${addrs?` \u00b7 <a class="hash" href="${ADDR(addrs.holders[i])}" target="_blank" rel="noopener">${esc(short(addrs.holders[i]))}<span class="sr-only"> (opens this investor's USDC account in Solana Explorer)</span></a>`:''}</span>${arrival(i)}</li>`).join('');
+$('inv').innerHTML=d.holders.map((h,i)=>`<li class="${flashInv?'flash':''}"><span class="n">${esc(h.n)}</span><span class="a">${fm(invTotals[i])}</span><span class="u">${(h.u/d.units*100).toLocaleString('en-US')}% of units${addrs?` \u00b7 <a class="hash" href="${ADDR(addrs.owners?.[i]||addrs.holders[i])}" target="_blank" rel="noopener">${esc(short(addrs.owners?.[i]||addrs.holders[i]))}<span class="sr-only"> (opens this investor's USDC account in Solana Explorer)</span></a>`:''}</span>${arrival(i)}</li>`).join('');
 $('invNote').hidden=!lastArrivals;
 flashInv=false;
 $('invTot').textContent=paidOut?`Paid out so far: ${fm(invTotals.reduce((a,c)=>a+c,0))} in ${paidOut} payout${paidOut>1?'s':''}`:'Nothing paid out yet';
@@ -619,13 +624,13 @@ if(s==='login'){t='A parent in Japan pays a dorm in Brisbane';
 else if(s==='connect'){t='The parent pays from their own wallet';
   body='USDC goes from this wallet into escrow, and any refund comes back to it. StayVault never holds the money.';note=['sim','MetaMask is simulated. A demo wallet signs on devnet.']}
 else if(s==='select'){t='The dorm is listed by its owner';
-  body=`The token issuer that owns ${d.n} set the rent and how each payout is split. The parent pays none of these fees.`;
-  rows=[['Weekly rent',`${aud(d.m)} (${f(weekly())})`],['Property manager',pct(b.manager)],['Repair reserve',`${pct(b.reserve)}, kept in the vault`],['StayVault fee',pct(b.stayvault)],['Investors',`${d.holders.length} holders, ${d.units.toLocaleString('en-US')} units`]]}
+  body=`The token issuer that owns ${d.n} set the rent and how each payout is split. The parent pays none of these fees, not even network fees.`;
+  rows=[['Weekly rent',`${aud(d.m)} (${f(weekly())})`],['Property manager',pct(b.manager)],['Repair reserve',`${pct(b.repair)}, kept in the vault`],['Other costs',`${pct(b.other)}, kept in the vault`],['StayVault fee',`${pct(b.stayvault)}, covers network fees`],['Investors',`${d.holders.length} holders, ${d.units.toLocaleString('en-US')} units`]]}
 else if(s==='period'){t='Set aside, not paid in advance';
   body='The money goes into escrow, not to the dorm. Queensland limits rent in advance to two weeks, so the dorm only ever receives one week at a time.';
   rows=[['Weekly payments',`${months}`],['Set aside',f(months*weekly())],['Paid to the dorm today','0.00 USDC']]}
 else if(s==='confirm'){t='One transaction locks the rent';
-  body='Paying creates an escrow account owned by the StayVault program and moves the USDC into it. From then on, only the program\u2019s rules can move it.';note=['live','A real Solana devnet transaction.']}
+  body='Paying creates an escrow account owned by the StayVault program and moves the USDC into it. From then on, only the program\u2019s rules can move it.';note=['live','A real Solana devnet transaction. StayVault pays its network fee and the escrow account deposit. The parent\u2019s wallet holds no SOL.']}
 else if(ph==='deposited'){t='Move-in needs two signatures';
   body=`${d.n} has signed that ${CHILD} picked up the keys. Week 1 moves only when the parent approves too. If nobody confirms within 14 days, the parent can take everything back.`;show.ev=true}
 else if(ph==='paying'){t='Rent flows on to the dorm\u2019s investors';
@@ -644,22 +649,22 @@ $('aEvW').hidden=!(show.ev&&evSet);$('aVaultW').hidden=!show.vault;$('aPayW').hi
 $('aNote').hidden=!note;if(note){$('aNote').className='anote '+note[0];$('aNote').textContent=note[1]}}
 /* The closing summary: every USDC the parent set aside, in one bar */
 function renderEnd(){const d=dorm(),b=d.bps,back=Math.round((ended?(months-paidM)*weekly():0)*1e6),total=back+cum.g+pendingMicro;
-const parts=[['c-back','Back to the parent',back],['c-inv','To investors',cum.net,'hi'],['c-mgr',`Property manager ${pct(b.manager)}`,cum.mgr],
-  ['c-res',`Repair reserve ${pct(b.reserve)}`,cum.res],['c-fee',`StayVault fee ${pct(b.stayvault)}`,cum.sv],['c-wait','Waiting for the next payout',pendingMicro]].filter(p=>p[2]>0);
+const parts=[['c-back','Back to the parent',back],['c-inv',`To investors ${pct(1e4-b.manager-b.reserve-b.stayvault)}`,cum.net,'hi'],['c-mgr',`Property manager ${pct(b.manager)}`,cum.mgr],
+  ['c-res',`Repair reserve ${pct(b.repair)}`,cum.rp],['c-oth',`Other costs ${pct(b.other)}`,cum.oth],['c-fee',`StayVault fee ${pct(b.stayvault)}`,cum.sv],['c-wait','Waiting for the next payout',pendingMicro]].filter(p=>p[2]>0);
 const W=v=>(v/total*100).toFixed(2)+'%';
 const CHK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
 $('aEndW').innerHTML=`<div class="k inv-h"><span>Set aside by the parent</span><span>${f(total/1e6)}</span></div><div class="endbar" aria-hidden="true">${parts.map(p=>`<i class="${p[0]}" style="width:${W(p[2])}"></i>`).join('')}</div>
 <dl class="leg num">${parts.map(p=>`<div class="${p[3]||''}"><dt><span class="sw ${p[0]}"></span>${p[1]}</dt><dd>${fn(p[2]/1e6)}</dd></div>`).join('')}</dl>
 <p class="cap">Fees come out of the rent, never from the parent.${pendingMicro>0?' <button type="button" class="dlink" onclick="payoutNow()">Pay out now</button>':''}</p>
 ${paidOut?`<div class="k inv-h"><span>Investors</span><span>Received (USDC)</span></div>
-<ul class="ilist num">${d.holders.map((h,i)=>`<li><span>${esc(h.n)}<span class="p">${(h.u/d.units*100).toLocaleString('en-US')}%</span>${window.SV?.payees?` <a class="hash ilink" href="${ADDR(SV.payees.holders[i])}" target="_blank" rel="noopener" title="Check this investor's USDC balance on Solana Explorer">${esc(short(SV.payees.holders[i]))} ${IC.ext}<span class="sr-only">Check ${esc(h.n)}'s USDC balance on Solana Explorer</span></a>`:''}</span><span class="${lastArrivals?.[i]?.ok?'ok':''}">${lastArrivals?.[i]?.ok?CHK:''}${fn(invTotals[i]/1e6)}</span></li>`).join('')}</ul>`:''}
+<ul class="ilist num">${d.holders.map((h,i)=>`<li><span>${esc(h.n)}<span class="p">${(h.u/d.units*100).toLocaleString('en-US')}%</span>${window.SV?.payees?` <a class="hash ilink" href="${ADDR(SV.payees.owners?.[i]||SV.payees.holders[i])}" target="_blank" rel="noopener" title="Open this investor's wallet on Solana Explorer (USDC is under Tokens)">${esc(short(SV.payees.owners?.[i]||SV.payees.holders[i]))} ${IC.ext}<span class="sr-only">Check ${esc(h.n)}'s USDC balance on Solana Explorer</span></a>`:''}</span><span class="${lastArrivals?.[i]?.ok?'ok':''}">${lastArrivals?.[i]?.ok?CHK:''}${fn(invTotals[i]/1e6)}</span></li>`).join('')}</ul>`:''}
 <div class="endlinks">${acts[0]?.sig?`<span>Refund ${txLink(acts[0].sig)}</span>`:''}${lastPayoutSig?`<span>Last payout ${txLink(lastPayoutSig)}</span>`:''}</div>`}
 function addRent(){pendingMicro+=weeklyMicro();weeksSince++;if(weeksSince>=PAYOUT_WEEKS)payoutDue=true}
 async function runPayout(){if(!window.SV||busyHome||pendingMicro<=0){payoutDue=false;return}
 busyHome=true;payoutDue=false;renderHome();const s=split(pendingMicro);
-try{const r=await SV.distribute();const sig=r.sig;const out=r.split||s;   // the program's own numbers (from its event), else our estimate
+try{const r=await SV.distribute();const sig=r.sig;const out=r.split?withKept(r.split):s;   // the program's own numbers (from its event), else our estimate
   pendingMicro=0;weeksSince=0;lastSplit=out;lastPayoutSig=sig;paidOut++;out.hs.forEach((a,i)=>invTotals[i]+=a);flashInv=true;
-  ['g','mgr','sv','res','net'].forEach(k=>cum[k]+=out[k]);
+  ['g','mgr','sv','res','rp','oth','net'].forEach(k=>cum[k]+=out[k]);
   lastArrivals=out.hs.map((a,i)=>({amt:a,ok:!!(r.before&&r.after&&r.after[i]!=null&&r.before[i]!=null&&r.after[i]-r.before[i]>=a)}));
   showEvent(`Payout ${paidOut}: ${fm(out.net)} to ${out.hs.length} investors`,sig,'payout')}
 catch(e){console.error(e);toast('The monthly payout didn\u2019t go through. The rent is still in the property vault. Use Pay out now to retry.',{err:true})}
@@ -755,6 +760,8 @@ const PID = new PublicKey(cfg.programId), MINT = new PublicKey(cfg.mint);
 const parent = Keypair.fromSecretKey(Uint8Array.from(cfg.parent));
 const operator = Keypair.fromSecretKey(Uint8Array.from(cfg.operator));
 const authority = Keypair.fromSecretKey(Uint8Array.from(cfg.authority));
+if (!cfg.sponsor) throw new Error("The config file has no sponsor. Re-create it with scripts/make-public-demo.mjs");
+const sponsor = Keypair.fromSecretKey(Uint8Array.from(cfg.sponsor));   // StayVault: pays every network fee and the escrow account deposit
 const PROPERTY = new PublicKey(cfg.property), PROPERTY_VAULT = new PublicKey(cfg.propertyVault);
 const MANAGER_TOKEN = new PublicKey(cfg.managerToken), FEE_TOKEN = new PublicKey(cfg.feeToken);
 const HOLDER_TOKENS = cfg.holders.map(h => new PublicKey(h.token));
@@ -768,12 +775,13 @@ async function ix(name, keys, args = new Uint8Array()) {
   const h = await sha("global:" + name);
   return new TransactionInstruction({ programId: PID, keys, data: Buffer.concat([Buffer.from(h.slice(0, 8)), Buffer.from(args)]) });
 }
-async function send(ixs, signers) {
+// StayVault is the fee payer of every transaction, so the parent never spends SOL (their wallet holds none)
+async function send(ixs, signers = []) {
   const tx = new Transaction().add(...ixs);
-  tx.feePayer = parent.publicKey;
+  tx.feePayer = sponsor.publicKey;
   const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash();
   tx.recentBlockhash = blockhash;
-  tx.sign(...signers);
+  tx.sign(sponsor, ...signers);
   const sig = await conn.sendRawTransaction(tx.serialize());
   await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
   console.log("tx:", `https://explorer.solana.com/tx/${sig}?cluster=devnet`);
@@ -807,7 +815,7 @@ async function readDistributed(sig) {
 }
 
 window.SV = {
-  payees: { vault: PROPERTY_VAULT.toBase58(), manager: cfg.managerToken, fee: cfg.feeToken, holders: cfg.holders.map(h => h.token) },
+  payees: { vault: PROPERTY_VAULT.toBase58(), manager: cfg.managerToken, fee: cfg.feeToken, holders: cfg.holders.map(h => h.token), owners: cfg.holders.map(h => h.owner) },
   async create(weeklyUsdc, weeks) {
     const id = BigInt(Date.now()), now = BigInt(Math.floor(Date.now() / 1000));
     const buf = new ArrayBuffer(42), dv = new DataView(buf);
@@ -821,8 +829,8 @@ window.SV = {
     vault = PublicKey.findProgramAddressSync([Buffer.from("vault"), parent.publicKey.toBuffer(), Buffer.from(idLe)], PID)[0];
     vaultToken = PublicKey.findProgramAddressSync([Buffer.from("vault_token"), vault.toBuffer()], PID)[0];
     return send([await ix("create_vault", [
-      acc(parent.publicKey, true, true), acc(operator.publicKey), acc(MINT), acc(ata(parent.publicKey), true),
-      acc(vault, true), acc(vaultToken, true), acc(TOKEN), acc(SystemProgram.programId), acc(PROPERTY),
+      acc(parent.publicKey, false, true), acc(operator.publicKey), acc(MINT), acc(ata(parent.publicKey), true),
+      acc(sponsor.publicKey, true, true), acc(vault, true), acc(vaultToken, true), acc(TOKEN), acc(SystemProgram.programId), acc(PROPERTY),
     ], new Uint8Array(buf))], [parent]);
   },
   // Move-in: the parent and the property manager both sign; week 1 goes to the property vault in the same transaction
@@ -830,7 +838,7 @@ window.SV = {
     return send([await ix("confirm_move_in", [acc(operator.publicKey, false, true), acc(vault, true), acc(parent.publicKey, false, true)]),
       await releaseIx()], [parent, operator]);
   },
-  async release() { return send([await releaseIx()], [parent]); },
+  async release() { return send([await releaseIx()]); },
   async moveOut() {
     return send([await ix("move_out", [
       acc(parent.publicKey, false, true), acc(operator.publicKey, false, true), acc(vault, true),
@@ -844,7 +852,7 @@ window.SV = {
       acc(authority.publicKey, false, true), acc(PROPERTY, true), acc(PROPERTY_VAULT, true),
       acc(MANAGER_TOKEN, true), acc(FEE_TOKEN, true), acc(TOKEN),
       ...HOLDER_TOKENS.map(t => acc(t, true)),
-    ])], [parent, authority]);
+    ])], [authority]);
     let split = null;
     try { split = await readDistributed(sig); } catch (e) { console.warn("could not read the payout event", e); }
     const after = await this.balances();

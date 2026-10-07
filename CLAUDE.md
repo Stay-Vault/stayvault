@@ -15,11 +15,13 @@ Solana上の家賃エスクローと、物件の投資家への家賃分配。�
 
 ## ハッカソンMVPの範囲（2026-10-01 改訂。ST分配モデル）
 - 命令は7つだけ: init_property / create_vault / confirm_move_in / release / refund_unconfirmed / move_out / distribute
-- 署名者: init_property=物件の権限者（ST業者役）、create_vault=親、confirm_move_in=親と運営者の両方、release=不要（誰が実行してもよい）、refund_unconfirmed=親、move_out=親と運営者の両方、distribute=物件の権限者
+- 署名者: init_property=物件の権限者（ST業者役）、create_vault=親（口座の作成費用は payer の StayVault役）、confirm_move_in=親と運営者の両方、release=不要（誰が実行してもよい）、refund_unconfirmed=親、move_out=親と運営者の両方、distribute=物件の権限者
 - operator は「物件の管理会社」の意味で使う。名前は変えない
 - 家賃の送り先は物件のSPV金庫（Property PDA が管理するトークン口座）。release は送り先をこの金庫に固定する
 - distribute は、金庫の残高から修繕積立の残高を除いた額を総額とし、管理費・StayVaultの手数料を送り、修繕積立は金庫に残し、残りを名簿の口数比で投資家へ送る。端数は修繕積立に足す
-- デモの料率は管理費 9%・修繕積立 3%・手数料 1%（bps で Property に保存）。scripts/demo-common.mjs と app/stayvault.html の DORMS をそろえる
+- デモの料率: ST投資家 70%、不動産管理会社 10%、修繕積立 10%、その他費用 7%（保険・税金など）、StayVault 利用料 3%。オンチェーンでは manager_bps=1000、fee_bps=300、reserve_bps=1700（修繕積立とその他費用をまとめて金庫に残す）。画面は修繕積立とその他費用を分けて表示する（DORMS の bps.repair / bps.other）。scripts/demo-common.mjs、scripts/e2e-devnet.mjs、app/stayvault.html の DORMS をそろえる
+- 親の負担はゼロ。すべての取引の手数料の支払者（fee payer）は StayVault役（demo-public.json の sponsor）で、create_vault の口座の作成費用（rent）も payer として StayVault役が払う。親役の財布は SOL を持たない。画面と資料に「親が手数料を払う」と読める表現を書かない
+- 口座を閉じて rent を StayVault に戻す処理は対象外（入れるなら move_out / refund_unconfirmed で閉じる）
 - 投資家名簿は init_property で登録し、デモ中は変えない。上限は10人（MAX_HOLDERS）。distribute には投資家の口座を名簿の順で remaining_accounts に渡す
 - 分配の記録はイベント（Distributed、RentReleased）で残す。記録用のアカウントは作らない
 - 親は手数料を払わない。トランザクション手数料はデモでは親役の財布がすべて払う
@@ -37,6 +39,7 @@ Solana上の家賃エスクローと、物件の投資家への家賃分配。�
 - 画面の DEMO_WEEK_MS（ミリ秒）と、module 内の DEMO_INTERVAL（秒）は同じ長さにそろえる
 - 模擬の画面には sim-note（Simulated）を付ける。本物の取引は logTx（親の履歴）か showEvent（右側パネル）で記録し、Explorer リンクを出す
 - 右側パネルは、左の画面の役割と、その画面で審査員に伝えたいことだけを書く（renderAside）。関係ない情報を足さない
+- 右側パネルの要点: 支払い中は物件の金庫・投資家ごとの着金（分配の前後に残高を読み、一致したら ✓）・分配の内訳。最後の画面は「Where the rent went」（親が預けた額の行き先と手数料の明細、投資家の受取額と、Explorer で着金を確かめられるアドレスのリンク）だけを一目で見せる
 - 画面に、プログラムにない機能を「できる」と書かない
 - ロゴは app/brand/ の SVG を使う（最終版 1b：屋根の形の輪の南京錠に、アーチ扉の家。紫1色、Claude Design で調整済み）。48px 以上は stayvault-mark.svg、40px 以下は stayvault-mark-small.svg、文字つきは stayvault-logo-horizontal.svg。形や色を作り直さない。ロゴに緑を使わない
 - アプリ内の文字は Bricolage Grotesque（800）で「Stay」を --ink、「Vault」を --jac。favicon は stayvault.html の <link rel="icon"> に埋め込み済み
@@ -46,7 +49,9 @@ Solana上の家賃エスクローと、物件の投資家への家賃分配。�
 - Program ID は GJet47eJPYYAxHz5RFvxqVKv3n6d6uWZWPsRUSzjB5ZG。Program ID の鍵（target/deploy/stayvault-keypair.json）は2台に同じものを置いてある
 - anchor build / anchor keys sync はどちらの端末でもよい。keys sync の前に solana address -k target/deploy/stayvault-keypair.json で上の ID が出ることを確かめる
 - DeclaredProgramIdMismatch やID不一致のエラーが出たら、keys sync で ID を書き換えて直そうとしない。まずその端末の鍵ファイルの ID を確かめる
-- anchor deploy は更新権限のある端末だけで実行する。デプロイ前に必ず git pull と anchor build をする
+- デプロイは更新権限のある端末だけで、`RPC_URL=<Helius などの devnet RPC> bash scripts/deploy-devnet.sh` で行う。デプロイ前に必ず git pull と anchor build をする
+- 公開 RPC（api.devnet.solana.com）での anchor deploy は、WSL では書き込みの取引が届かず Blockhash expired が続いて失敗した。途中のバッファを --buffer で再開すると Verifier error になる。失敗したらバッファを閉じて最初からやり直す（deploy-devnet.sh は自動で閉じる）
+- Helius などの RPC の URL（APIキー入り）は、app/demo-public.json、コード、コミット、チャットに書かない。公開デモの rpc は https://api.devnet.solana.com のままにする
 - 更新権限のある財布: Windows (~/.config/solana/id.json、アドレス 9o5Cn87tuPi5JSX5kAg9YPxSnr71pFr9cm1BXUT8LszU)
 - Git に入らないもの: ~/.config/solana/id.json、target/deploy/stayvault-keypair.json、app/wallet-demo.json。どれも秘密鍵入りなので絶対にコミットしない
 - 鍵のバックアップ（*-backup.json）は .gitignore に当てはまらない。リポジトリの中に置かない

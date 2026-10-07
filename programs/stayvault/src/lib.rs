@@ -55,7 +55,7 @@ pub mod stayvault {
         Ok(())
     }
 
-    /// 親がエスクローを作り、全週分のUSDCを一括で入金する（HTMLの「Set aside」ボタン）
+    /// 親がエスクローを作り、全週分のUSDCを一括で入金する（HTMLの「Set aside」ボタン）。口座の作成費用は payer（StayVault）が払う
     pub fn create_vault(
         ctx: Context<CreateVault>,
         vault_id: u64,
@@ -369,16 +369,19 @@ pub struct InitProperty<'info> {
     confirm_deadline: i64
 )]
 pub struct CreateVault<'info> {
-    #[account(mut)]
+    /// 親。自分のUSDCを動かすことに署名するだけで、SOL は払わない
     pub parent: Signer<'info>,
     /// CHECK: 寮の運営者（管理会社）。物件に登録された operator と一致することを property 側で確かめる
     pub operator: UncheckedAccount<'info>,
     pub mint: Account<'info, Mint>,
     #[account(mut, token::mint = mint, token::authority = parent)]
     pub parent_token: Account<'info, TokenAccount>,
+    /// 口座の作成費用（rent）を払う人。親の負担をゼロにするため、StayVault の財布が払う
+    #[account(mut)]
+    pub payer: Signer<'info>,
     #[account(
         init,
-        payer = parent,
+        payer = payer,
         space = 8 + Vault::INIT_SPACE,
         seeds = [b"vault", parent.key().as_ref(), &vault_id.to_le_bytes()],
         bump
@@ -386,7 +389,7 @@ pub struct CreateVault<'info> {
     pub vault: Account<'info, Vault>,
     #[account(
         init,
-        payer = parent,
+        payer = payer,
         seeds = [b"vault_token", vault.key().as_ref()],
         bump,
         token::mint = mint,

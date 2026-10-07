@@ -9,14 +9,14 @@
 - 親がUSDCで全週分を入金する（変更なし）
 - 入居確認は**親と管理会社の両方**が署名する
 - 毎週の家賃は、運営者の口座ではなく**物件のSPV金庫**に入る
-- 4週ごとに、物件の権限者（ST業者役）の署名で**分配**する。管理費9%と手数料1%を送り、修繕積立3%は金庫に残し、残りを投資家5人へ口数比で送る
+- 4週ごとに、物件の権限者（ST業者役）の署名で**分配**する。不動産管理会社10%とStayVaultの利用料3%を送り、修繕積立10%とその他費用7%は金庫に残し、残りの70%を投資家5人へ口数比で送る
 
 機能は増やしすぎない。命令は2つ足すだけで、既存の2つ（refund_unconfirmed、move_out）は変えない。
 
 | 命令 | 扱い | 署名者 |
 | --- | --- | --- |
 | init_property | 追加。物件・SPV金庫・料率・投資家名簿を一度に登録する（デモ前にスクリプトが実行） | ST業者役 |
-| create_vault | 変更。物件を受け取って記録する。引数は同じ | 親 |
+| create_vault | 変更。物件を受け取って記録する。引数は同じ。口座の作成費用は payer（StayVault）が払う | 親（＋StayVault が payer） |
 | confirm_move_in | 変更。親の署名を必須にする | 親＋管理会社 |
 | release | 変更。送り先をSPV金庫にする | 不要 |
 | refund_unconfirmed | 変更なし | 親 |
@@ -42,6 +42,7 @@ zip（`stayvault-st-payout.zip`）の中身と、リポジトリでの扱い。
 | `scripts/make-public-demo.mjs` | 上書き | 公開用の `app/demo-public.json` を作る |
 | `scripts/e2e-devnet.mjs` | 上書き | devnet で7命令を通しで確かめる |
 | `scripts/check-demo.mjs` | 変更なし | ― |
+| `scripts/deploy-devnet.sh` | 新規 | devnet へのデプロイを1コマンドで行う（鍵・残高の確認、バッファの回収、領域の拡張、RPC 経由のデプロイ、結果の確認） |
 | `app/stayvault.html` | 上書き | 新しい画面（9:16、6画面）。右側パネルは画面ごとの説明。分配では投資家ごとの着金を確認し、最後の画面で預けたお金の行き先と手数料の明細を1本の帯グラフで示す |
 | `Anchor.toml` | 上書き | `[programs.devnet]` の節を追加 |
 | `CLAUDE.md` | 上書き | 「ハッカソンMVPの範囲」をST分配モデルに改訂 |
@@ -280,14 +281,29 @@ solana balance        # 3 SOL 以上あること
 
 ### 5-2. デプロイする
 
+公開 RPC（api.devnet.solana.com）と `anchor deploy` の組み合わせでは、WSL から書き込みの取引が届かず失敗した。Helius などの devnet RPC を使い、`scripts/deploy-devnet.sh` で行う。
+
+1. Helius（helius.dev）で無料アカウントを作り、devnet の RPC URL（`https://devnet.helius-rpc.com/?api-key=...`）を取得する
+2. 次を実行する
+
 ```bash
 git pull
 anchor build
-anchor deploy --provider.cluster devnet
-solana program show GJet47eJPYYAxHz5RFvxqVKv3n6d6uWZWPsRUSzjB5ZG --url devnet
+RPC_URL='<HeliusのdevnetのURL>' bash scripts/deploy-devnet.sh
 ```
 
-`Last Deployed In Slot` が新しくなっていれば完了。「account data too small」のようなエラーが出たら、手順4-4の `solana program extend` を行ってから、もう一度 `anchor deploy` する。
+スクリプトは、鍵と残高の確認、残ったバッファの回収、必要なら領域の拡張、RPC 経由・優先手数料つきのデプロイ、結果の確認を順に行う。最後に「✅ 更新できました（Last Deployed In Slot: … → …）」と出れば完了。
+
+Helius の URL には API キーが入っている。`app/demo-public.json`、コード、コミットには書かない（公開デモは api.devnet.solana.com のままでよい）。
+
+### 5-3. うまくいかないとき
+
+| 症状 | 原因と対処 |
+| --- | --- |
+| Blockhash expired が続き、0% のまま進まない | 公開 RPC の混雑、または WSL・社内ネットワークで UDP が通らない。`Ctrl+C` で止め、5-2 のとおり Helius の RPC で実行する |
+| `--buffer` で再開すると Verifier error | 書き込みが途中までのバッファを使ったため。プログラムのバグではない。バッファを閉じて（`solana program close --buffers --url devnet`）最初からやり直す。deploy-devnet.sh は自動で閉じる |
+| insufficient funds | 更新権限の財布の SOL が足りない（2.5 SOL 以上が目安）。faucet で足す |
+| account data too small | プログラムが大きくなった。deploy-devnet.sh が自動で広げる。手で行うなら手順4-4の `solana program extend` |
 
 ---
 
@@ -323,7 +339,7 @@ node scripts/e2e-devnet.mjs
 - confirm_move_in: 親の署名がないと通らない
 - 初週分と4週分がSPV金庫に届く
 - distribute: ST業者以外は分配できない／名簿と違う口座には送れない
-- distribute: 管理費・手数料・修繕積立・投資家5人の金額が計算どおり（4週 852 USDC なら 76.68 / 8.52 / 25.56 / 741.24）
+- distribute: 管理費・手数料・修繕積立・投資家5人の金額が計算どおり（4週 852 USDC なら 管理会社 85.20 / 利用料 25.56 / 金庫に残す 144.84 / 投資家 596.40）
 - distribute: 分配する額がなければ通らない
 - move_out: 未払いの2週分が親に戻る
 - refund_unconfirmed: 期限後に全額が親に戻る
@@ -354,7 +370,7 @@ Windows のブラウザで `http://localhost:8000/app/stayvault.html` を開く�
 | 投資家の行の ✓ | 分配の前後に投資家のUSDC口座の残高を読み、増えた額が分配額と一致したときだけ付く。付かずに「sent」と出たら、Console のエラーを見る |
 | Explorer のリンク | 分配の取引に、投資家5人への送金が並ぶ |
 | Move out early → Confirm move-out | 残りの週が戻り、「Closed」になる |
-| 最後の画面の右側 | 「Where the rent went」。親が預けた額の行き先（親への返金・投資家・管理費9%・修繕積立3%・手数料1%）が1本の帯と金額で並ぶ。投資家5人の累計受取額と着金チェック、口座アドレス（先頭4文字…末尾4文字）のリンクが出る |
+| 最後の画面の右側 | 「Where the rent went」。親が預けた額の行き先（親への返金・投資家70%・管理会社10%・修繕積立10%・その他費用7%・利用料3%）が1本の帯と金額で並ぶ。投資家5人の累計受取額と着金チェック、口座アドレス（先頭4文字…末尾4文字）のリンクが出る |
 | 投資家のアドレスのリンク | Explorer でその投資家のUSDC口座が開き、分配の受け取りが確認できる |
 
 ブラウザの開発者ツール（F12）の Console に赤いエラーが出ていないことも確かめる。終わったら Ubuntu の窓で `Ctrl+C` を押してサーバーを止める。
@@ -423,7 +439,7 @@ GitHub のプルリクエストでマージしてもよい。
 | 命令 | アカウント（上から順） | 引数 |
 | --- | --- | --- |
 | init_property | payer（署名・書込）、authority（署名）、operator、mint、manager_token、fee_token、property（書込）、property_vault（書込）、token_program、system_program | property_id u64、manager_bps u16、reserve_bps u16、fee_bps u16、total_units u32、holders Vec<{token, units u32}> |
-| create_vault | parent（署名・書込）、operator、mint、parent_token（書込）、vault（書込）、vault_token（書込）、token_program、system_program、**property** | 変更なし（42バイト） |
+| create_vault | parent（署名）、operator、mint、parent_token（書込）、**payer（署名・書込。StayVault）**、vault（書込）、vault_token（書込）、token_program、system_program、**property** | 変更なし（42バイト） |
 | confirm_move_in | operator（署名）、vault（書込）、**parent（署名）** | なし |
 | release | vault（書込）、vault_token（書込）、**property_vault（書込）**、token_program | なし |
 | refund_unconfirmed | 変更なし | なし |
@@ -440,13 +456,13 @@ PDA のシード:
 
 distribute は次の順で計算する（画面の `split()` と e2e の `expectedSplit()` も同じ）。
 
-1. 総額 = 金庫の残高 − 修繕積立の残高
-2. 管理費 = 総額 × 900 ÷ 10,000（切り捨て）。手数料（100）と修繕積立（300）も同じ
-3. 投資家への原資 = 総額 − 管理費 − 手数料 − 修繕積立
+1. 総額 = 金庫の残高 − これまでに金庫に残した額（reserve_balance）
+2. 管理会社 = 総額 × 1,000 ÷ 10,000（切り捨て）。利用料（300）と金庫に残す額（1,700 = 修繕積立1,000＋その他費用700）も同じ
+3. 投資家への原資 = 総額 − 管理会社 − 利用料 − 金庫に残す額
 4. 投資家ごと = 原資 × 口数 ÷ 1,000（切り捨て）
-5. 端数（原資 − 投資家への合計）は修繕積立に足し、金庫に残す
+5. 端数（原資 − 投資家への合計）は金庫に残す額に足す。画面では、金庫に残す額を修繕積立（総額の10%）とその他費用（残り）に分けて表示する
 
-例: 4週分 852 USDC → 管理費 76.68、手数料 8.52、修繕積立 25.56、投資家へ 741.24（A 296.496、B 185.31、C 148.248、D 74.124、E 37.062）
+例: 4週分 852 USDC → 管理会社 85.20、利用料 25.56、金庫に残す 144.84（修繕積立 85.20＋その他費用 59.64）、投資家へ 596.40（A 238.56、B 149.10、C 119.28、D 59.64、E 29.82）
 
 ## 付録C. 公開デモの設定ファイル（app/demo-public.json）の項目
 
@@ -460,3 +476,49 @@ distribute は次の順で計算する（画面の `split()` と e2e の `expect
 | holders | 投資家5人の名前・口数・ウォレット・USDC口座（公開鍵だけ） |
 
 SOL を出す財布（`~/.config/solana/id.json`）とテスト用USDCの発行権限は、このファイルに含めない。
+
+## 付録D. 料率を変えたときの反映
+
+料率は物件の登録時（init_property）に Property に保存される。プログラムは変えずに、物件を登録し直す。
+
+1. `scripts/demo-common.mjs` の `PROPERTY`、`app/stayvault.html` の `DORMS` の `bps`、`scripts/e2e-devnet.mjs` の `expectedSplit()` をそろえる
+2. 手元の財布と物件を作り直し、e2e を通す
+
+```bash
+node scripts/setup-demo.mjs
+node scripts/e2e-devnet.mjs
+```
+
+3. 手元で画面を通す（手順7）
+4. 公開デモを作り直して公開する（手順8。`node scripts/make-public-demo.mjs` → `node scripts/check-demo.mjs` → コミット → main に反映）
+
+デプロイ（手順5）は不要。
+
+## 付録E. 親の負担をゼロにする変更の反映
+
+すべての取引の手数料と、エスクローの口座の作成費用を StayVault役が払う形にする。**プログラムが変わるので、デプロイが必要。**
+
+| 変更 | 内容 |
+| --- | --- |
+| `lib.rs` | create_vault に `payer`（StayVault）を追加し、口座の作成費用を親ではなく payer が払う。親は署名だけで、SOL を使わない |
+| `app/stayvault.html` | すべての取引の手数料の支払者を StayVault役（`sponsor`）にする |
+| `scripts/demo-common.mjs` ほか | StayVault役の財布を作って SOL を入れる。親役には SOL を渡さない。check-demo は StayVault役の残高を見る。e2e は最後に「親の SOL が 0 のまま」を確かめる |
+
+手順:
+
+```bash
+cd ~/stayvault
+git checkout feat/escrow && git pull && git merge origin/main
+anchor build
+RPC_URL='<HeliusのdevnetのURL>' bash scripts/deploy-devnet.sh
+node scripts/setup-demo.mjs
+node scripts/e2e-devnet.mjs              # 最後に「親の SOL は 0 のまま」が ✅
+python3 -m http.server 8000              # 手元で画面を通す（Ctrl+C で終了）
+node scripts/make-public-demo.mjs
+node scripts/check-demo.mjs              # 親役の SOL が 0、StayVault役に SOL があること
+git add -A && git commit -m "feat: StayVault pays all network fees and account deposits; parents pay nothing" && git push
+git checkout main && git pull && git merge feat/escrow && git push origin main && git checkout feat/escrow
+```
+
+デプロイしてから公開デモを作り直すまでの間、旧版の公開デモは create_vault のアカウントの並びが合わず失敗する。同じ日に続けて行う。
+
