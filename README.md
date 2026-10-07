@@ -13,7 +13,7 @@ every payment step sends a real devnet transaction. The panel next to the phone 
 3. **Set aside** – the parent deposits every week's rent in USDC into an escrow account owned by the program
 4. **Approve move-in** – the parent and the property manager both sign; week 1 goes to the property vault. After that, one week is released every 10 seconds
 5. **Monthly payout** – every 4 weeks the token issuer signs `distribute`: 70% goes to 5 investors by units held, 10% to the property manager, 3% to StayVault as its service fee, and 17% stays in the vault (a 10% repair reserve and 7% for other costs such as insurance and taxes). While rent flows, the panel lists everyone the vault pays (each investor, the property manager, the repair reserve and other costs kept in the vault, and StayVault) with the last payout, the running total and a link to their account. Each arrival is checked by reading the balance on devnet before and after the payout and marked with ✓
-6. **Move out early** – the parent and the property manager both sign, and unpaid weeks return to the parent. The last screen shows where every USDC the parent set aside went: back to the parent, to the investors, and to each fee
+6. **Move out early** – the parent and the property manager both sign, and unpaid weeks return to the parent. The last screen draws the same money-flow figure as our business document (parent → escrow → property vault (SPV) → investors, property manager and StayVault, with the refund back to the parent), filled with the real amounts from this run. Each box links to its account on Solana Explorer
 
 Every transaction shows a "View on Explorer" link, and each investor's address opens their account on Solana Explorer, where the payouts they received can be checked.
 

@@ -257,6 +257,27 @@ dd.wl-inline .wl-logo{width:16px;height:16px}
 .led .lt.ok{color:var(--euc);font-weight:600}.led .lt.proj{color:var(--faint)}.led .lt svg{width:12px;height:12px;flex:none}
 .led .tt{text-align:right;font-family:var(--display);font-weight:700}
 .vault .w a{font-size:12px}
+.thinbar{display:flex;height:8px;border-radius:3px;overflow:hidden;gap:2px;margin:2px 0 6px}.thinbar i{display:block;height:100%}.c-kept{background:#C8B48E}
+.flow{display:block;width:100%;height:auto;margin:4px 0 8px;overflow:visible}
+.flow .fb{stroke-width:1.2}
+.flow .n-par{fill:var(--jac-mist);stroke:var(--faint)}
+/* Each destination box uses the same colour as its slice of the bar above; the escrow is not a destination, so it stays neutral */
+.flow .n-esc{fill:var(--paper);stroke:var(--faint)}
+.flow .n-vault{fill:rgba(200,180,142,.16);stroke:#C8B48E;stroke-width:1.6}
+.flow .n-inv{fill:var(--euc-soft);stroke:var(--euc);stroke-width:1.6}
+.flow .n-mgr{fill:var(--jac-soft);stroke:var(--jac);stroke-width:1.6}
+.flow .n-fee{fill:var(--paper);stroke:var(--jac-ink);stroke-width:1.6}
+.flow text{font-family:"Figtree",system-ui,sans-serif;fill:var(--ink)}
+.flow .fh{font-size:11.5px;font-weight:700}
+.flow .fa{font-size:13.5px;font-weight:800;font-family:var(--display)}
+.flow .fa.fok{fill:var(--euc)}
+.flow .fs{font-size:10px;fill:var(--sub)}
+.flow .flk{font-size:10px;fill:var(--jac);font-family:var(--mono)}
+.flow .fref{font-size:11px;fill:#C2492B;font-weight:700}
+.flow .flab{font-size:10px;fill:var(--sub);font-weight:600}
+.flow .ar{stroke:var(--ink);stroke-width:1.4;fill:none}
+.flow .ar.rf{stroke:#C2492B;stroke-dasharray:4 3}
+.flow a:hover rect{stroke-width:2}
 .endbar{display:flex;height:16px;border-radius:8px;overflow:hidden;gap:2px;margin:6px 0 14px}
 .endbar i{display:block;height:100%}
 .leg{margin:0 0 4px}
@@ -703,6 +724,28 @@ $('aLedW').innerHTML=`<div class="k led-h"><span>${paidOut?`Paid out in ${paidOu
 <div class="inv-f"><span>\u2713 = arrival checked on devnet. Repairs and other costs stay in the vault.</span></div>`;
 flashLed=false}
 
+/* The closing figure: the same shape as the money-flow figure in the business document.
+   Parent -> escrow -> property vault -> investors / manager / StayVault, with the refund going back to the parent */
+function flowSvg({back,total,d,b,P}){const ck='\u2713 ';
+const box=(x,y,w,h,cls,lines,href,label)=>{let t=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" class="fb ${cls}"/>`;
+  lines.forEach((l,i)=>{t+=`<text x="${x+w/2}" y="${y+17+i*15}" text-anchor="middle" class="${l[1]}">${l[0]}</text>`});
+  return href?`<a href="${ADDR(href)}" target="_blank" rel="noopener"><title>${label} on Solana Explorer</title>${t}</a>`:t};
+const kept=cum.rp+cum.oth,inv=pct(1e4-b.manager-b.reserve-b.stayvault);
+let h=`<svg class="flow num" viewBox="0 0 400 222" role="img" aria-label="Money flow: the parent set aside ${fn(total/1e6)} USDC; ${fn(back/1e6)} went back to the parent; ${fn(cum.g/1e6)} reached the property vault, which paid ${fn(cum.net/1e6)} to investors, ${fn(cum.mgr/1e6)} to the manager and ${fn(cum.sv/1e6)} to StayVault, and kept ${fn(kept/1e6)}.">
+<defs><marker id="fa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>`;
+h+=box(0,8,112,64,'n-par',[['Parent','fh'],[fn(total/1e6),'fa'],['set aside in USDC','fs']]);
+h+=box(144,8,112,64,'n-esc',[['Escrow','fh'],[fn(cum.g/1e6+pendingMicro/1e6),'fa'],['paid on weekly','fs']]);
+h+=box(288,8,112,80,'n-vault',[['Property vault','fh'],[`${lastOther?.res?ck:''}${fn(kept/1e6)}`,`fa${lastOther?.res?' fok':''}`],[`repairs + other ${pct(b.reserve)}`,'fs'],[`SPV ${P.vault?short(P.vault)+' \u2197':''}`,'flk']],P.vault,'Property vault (SPV)');
+h+=`<path class="ar" d="M113 40H141" marker-end="url(#fa)"/><path class="ar" d="M257 40H285" marker-end="url(#fa)"/>`;
+if(back>0)h+=`<path class="ar rf" d="M200 73V100H56V76" marker-end="url(#fa)"/><text x="128" y="116" text-anchor="middle" class="fref">Refund ${fn(back/1e6)}</text>`;
+h+=`<path class="ar" d="M344 89V134H62"/><path class="ar" d="M62 134V151" marker-end="url(#fa)"/><path class="ar" d="M200 134V151" marker-end="url(#fa)"/><path class="ar" d="M338 134V151" marker-end="url(#fa)"/>
+<text x="352" y="118" class="flab">Monthly</text><text x="352" y="129" class="flab">payout</text>`;
+const row=(x,cls,title,amt,ok,href,label,sub)=>box(x,154,124,64,cls,[[title,'fh'],[`${ok?ck:''}${fn(amt/1e6)}`,`fa${ok?' fok':''}`],[sub,href?'flk':'fs']],href,label);
+h+=row(0,'n-inv',`Investors ${inv}`,cum.net,lastArrivals?.length&&lastArrivals.every(a=>a.ok),null,'',`${d.holders.length} holders, see below`);
+h+=row(138,'n-mgr',`Manager ${pct(b.manager)}`,cum.mgr,lastOther?.mgr,P.manager,'Property manager',P.manager?short(P.manager)+' \u2197':'');
+h+=row(276,'n-fee',`StayVault ${pct(b.stayvault)}`,cum.sv,lastOther?.sv,P.fee,'StayVault fee account',P.fee?short(P.fee)+' \u2197':'');
+return h+'</svg>'}
+
 /* The closing summary: every USDC the parent set aside, in one bar */
 function renderEnd(){const d=dorm(),b=d.bps,back=Math.round((ended?(months-paidM)*weekly():0)*1e6),total=back+cum.g+pendingMicro;
 const P=window.SV?.payees||{},alink=a=>a?`<a class="hash ilink" href="${ADDR(a)}" target="_blank" rel="noopener" title="Open on Solana Explorer">${esc(short(a))} ${IC.ext}</a>`:'';
@@ -712,8 +755,7 @@ const parts=[['c-back','Back to the parent',back],['c-inv',`To investors ${pct(1
   ['c-fee',`StayVault fee ${pct(b.stayvault)}`,cum.sv,'',alink(P.fee),lastOther?.sv],['c-wait','Waiting for the next payout',pendingMicro]].filter(p=>p[2]>0);
 const W=v=>(v/total*100).toFixed(2)+'%';
 const CHK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
-$('aEndW').innerHTML=`<div class="k inv-h"><span>Set aside by the parent</span><span>${f(total/1e6)}</span></div><div class="endbar" aria-hidden="true">${parts.map(p=>`<i class="${p[0]}" style="width:${W(p[2])}"></i>`).join('')}</div>
-<dl class="leg num">${parts.map(p=>`<div class="${p[3]||''}"><dt><span class="sw ${p[0]}"></span>${p[1]}${p[4]||''}</dt><dd class="${p[5]?'ok':''}">${p[5]?CHK:''}${fn(p[2]/1e6)}</dd></div>`).join('')}</dl>
+$('aEndW').innerHTML=`<div class="thinbar" aria-hidden="true" title="Share of what the parent set aside">${[['c-back',back],['c-inv',cum.net],['c-mgr',cum.mgr],['c-kept',cum.rp+cum.oth],['c-fee',cum.sv],['c-wait',pendingMicro]].filter(p=>p[1]>0).map(p=>`<i class="${p[0]}" style="width:${(p[1]/total*100).toFixed(2)}%"></i>`).join('')}</div>${flowSvg({back,total,d,b,P,CHK})}
 <p class="cap">Fees come out of the rent, never from the parent. \u2713 = arrival checked on devnet.${pendingMicro>0?' <button type="button" class="dlink" onclick="payoutNow()">Pay out now</button>':''}</p>
 ${paidOut?`<div class="k inv-h"><span>Investors</span><span>Received (USDC)</span></div>
 <ul class="ilist num">${d.holders.map((h,i)=>`<li><span>${esc(h.n)}<span class="p">${(h.u/d.units*100).toLocaleString('en-US')}%</span>${window.SV?.payees?` <a class="hash ilink" href="${ADDR(SV.payees.owners?.[i]||SV.payees.holders[i])}" target="_blank" rel="noopener" title="Open this investor's wallet on Solana Explorer (USDC is under Tokens)">${esc(short(SV.payees.owners?.[i]||SV.payees.holders[i]))} ${IC.ext}<span class="sr-only">Check ${esc(h.n)}'s USDC balance on Solana Explorer</span></a>`:''}</span><span class="${lastArrivals?.[i]?.ok?'ok':''}">${lastArrivals?.[i]?.ok?CHK:''}${fn(invTotals[i]/1e6)}</span></li>`).join('')}</ul>`:''}
