@@ -366,9 +366,9 @@ Windows のブラウザで `http://localhost:8000/app/stayvault.html` を開く�
 | Sign in → Connect → Choose a dorm → How long? → Review | 右側パネルの説明が画面ごとに変わる |
 | Set aside | 数秒で「Rent is in escrow」。ホームに入居確認のカードが出る |
 | Approve move-in | 「Week 1 paid」。右側に物件の金庫が出る |
-| 約40秒待つ | 4週分たまると自動で分配される。右側の表（投資家5人・Manager・Repairs・Other costs・StayVault）の各行に「✓ +○○」が付き、累計が増える。物件の金庫のカードの「Kept for repairs and other costs」も増える |
+| 約40秒待つ | 右側のお金の流れの図で、Escrow が毎週減り、Property vault の分配待ちの額が増える。4週分たまると自動で分配され、Investors／Manager／StayVault の箱に ✓ と累計、投資家5人の表に「✓ +○○」が出る |
 | 表の ✓ | 分配の前後に、投資家・管理会社・StayVault のUSDC口座の残高と、金庫に残した額（Property の reserve_balance）を読み、増えた額が分配額と一致したときだけ付く。付かないときは Console のエラーを見る |
-| 表のアドレスのリンク | Explorer でその口座が開く。Repairs と Other costs は物件の金庫のアドレス |
+| 図と表のアドレスのリンク | Explorer でその口座が開く（Property vault は SPV の金庫） |
 | Explorer のリンク | 分配の取引に、投資家5人への送金が並ぶ |
 | Move out early → Confirm move-out | 残りの週が戻り、「Closed」になる |
 | 最後の画面の右側 | 「Where the rent went」。事業資料と同じ形のお金の流れの図（Parent → Escrow → Property vault（SPV）→ Investors 70%／Manager 10%／StayVault 3%、親への返金は赤の破線）に今回の金額と ✓ が入る。金庫・管理会社・StayVault の箱を押すと Explorer で口座が開く。図の上の細い帯の色は各箱と対応。図の下に投資家5人の受取額とアドレスのリンク |

@@ -39,7 +39,7 @@ Solana上の家賃エスクローと、物件の投資家への家賃分配。�
 - 画面の DEMO_WEEK_MS（ミリ秒）と、module 内の DEMO_INTERVAL（秒）は同じ長さにそろえる
 - 模擬の画面には sim-note（Simulated）を付ける。本物の取引は logTx（親の履歴）か showEvent（右側パネル）で記録し、Explorer リンクを出す
 - 右側パネルは、左の画面の役割と、その画面で審査員に伝えたいことだけを書く（renderAside）。関係ない情報を足さない
-- 右側パネルの要点: 支払い中は物件の金庫（次の分配までの進み、金庫に残した額、直近の取引）と、分配先すべて（投資家5人・管理会社・修繕積立・その他費用・StayVault）を1つの表で見せる。各行にアドレスのリンク、直近の分配額（分配の前後に残高を読み、一致したら ✓）、累計を出す。高さ900pxでスクロールせずに見えること。最後の画面は「Where the rent went」として、事業資料のお金の流れの図と同じ形（Parent → Escrow → Property vault（SPV）→ Investors／Manager／StayVault、親への返金は赤の破線）に今回の金額を入れて見せる。図の上に高さ8pxの帯（色は各箱と1対1で対応）、図の下に投資家5人の受取額とアドレスのリンク
+- 右側パネルの要点: 支払い中も最後の画面と同じお金の流れの図を出し、金額を動かす（Escrow は毎週減り、Property vault は分配待ちの額と金庫に残した額、Investors／Manager／StayVault は累計と ✓）。図の上に今の割合の細い帯、図の下に次の分配までのゲージと直近の取引、投資家5人の表（アドレスのリンク、直近の分配額、累計）。✓ は分配の前後に残高を読んで一致したときだけ。高さ900pxでスクロールせずに見えること。最後の画面は「Where the rent went」として、事業資料のお金の流れの図と同じ形（Parent → Escrow → Property vault（SPV）→ Investors／Manager／StayVault、親への返金は赤の破線）に今回の金額を入れて見せる。図の上に高さ8pxの帯（色は各箱と1対1で対応）、図の下に投資家5人の受取額とアドレスのリンク
 - 画面に、プログラムにない機能を「できる」と書かない
 - ロゴは app/brand/ の SVG を使う（最終版 1b：屋根の形の輪の南京錠に、アーチ扉の家。紫1色、Claude Design で調整済み）。48px 以上は stayvault-mark.svg、40px 以下は stayvault-mark-small.svg、文字つきは stayvault-logo-horizontal.svg。形や色を作り直さない。ロゴに緑を使わない
 - アプリ内の文字は Bricolage Grotesque（800）で「Stay」を --ink、「Vault」を --jac。favicon は stayvault.html の <link rel="icon"> に埋め込み済み
