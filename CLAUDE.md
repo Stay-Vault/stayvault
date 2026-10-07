@@ -37,7 +37,6 @@ Solana上の家賃エスクローと、物件の投資家への家賃分配。�
 - 画面の DEMO_WEEK_MS（ミリ秒）と、module 内の DEMO_INTERVAL（秒）は同じ長さにそろえる
 - 模擬の画面には sim-note（Simulated）を付ける。本物の取引は logTx（親の履歴）か showEvent（右側パネル）で記録し、Explorer リンクを出す
 - 右側パネルは、左の画面の役割と、その画面で審査員に伝えたいことだけを書く（renderAside）。関係ない情報を足さない
-- 右側パネルの要点: 支払い中は物件の金庫・投資家ごとの着金（分配の前後に残高を読み、一致したら ✓）・分配の内訳。最後の画面は「Where the rent went」（親が預けた額の行き先と手数料の明細、投資家の受取額と、Explorer で着金を確かめられるアドレスのリンク）だけを一目で見せる
 - 画面に、プログラムにない機能を「できる」と書かない
 - ロゴは app/brand/ の SVG を使う（最終版 1b：屋根の形の輪の南京錠に、アーチ扉の家。紫1色、Claude Design で調整済み）。48px 以上は stayvault-mark.svg、40px 以下は stayvault-mark-small.svg、文字つきは stayvault-logo-horizontal.svg。形や色を作り直さない。ロゴに緑を使わない
 - アプリ内の文字は Bricolage Grotesque（800）で「Stay」を --ink、「Vault」を --jac。favicon は stayvault.html の <link rel="icon"> に埋め込み済み
@@ -47,9 +46,7 @@ Solana上の家賃エスクローと、物件の投資家への家賃分配。�
 - Program ID は GJet47eJPYYAxHz5RFvxqVKv3n6d6uWZWPsRUSzjB5ZG。Program ID の鍵（target/deploy/stayvault-keypair.json）は2台に同じものを置いてある
 - anchor build / anchor keys sync はどちらの端末でもよい。keys sync の前に solana address -k target/deploy/stayvault-keypair.json で上の ID が出ることを確かめる
 - DeclaredProgramIdMismatch やID不一致のエラーが出たら、keys sync で ID を書き換えて直そうとしない。まずその端末の鍵ファイルの ID を確かめる
-- デプロイは更新権限のある端末だけで、`RPC_URL=<Helius などの devnet RPC> bash scripts/deploy-devnet.sh` で行う。デプロイ前に必ず git pull と anchor build をする
-- 公開 RPC（api.devnet.solana.com）での anchor deploy は、WSL では書き込みの取引が届かず Blockhash expired が続いて失敗した。途中のバッファを --buffer で再開すると Verifier error になる。失敗したらバッファを閉じて最初からやり直す（deploy-devnet.sh は自動で閉じる）
-- Helius などの RPC の URL（APIキー入り）は、app/demo-public.json、コード、コミット、チャットに書かない。公開デモの rpc は https://api.devnet.solana.com のままにする
+- anchor deploy は更新権限のある端末だけで実行する。デプロイ前に必ず git pull と anchor build をする
 - 更新権限のある財布: Windows (~/.config/solana/id.json、アドレス 9o5Cn87tuPi5JSX5kAg9YPxSnr71pFr9cm1BXUT8LszU)
 - Git に入らないもの: ~/.config/solana/id.json、target/deploy/stayvault-keypair.json、app/wallet-demo.json。どれも秘密鍵入りなので絶対にコミットしない
 - 鍵のバックアップ（*-backup.json）は .gitignore に当てはまらない。リポジトリの中に置かない

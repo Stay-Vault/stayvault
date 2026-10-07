@@ -42,7 +42,6 @@ zip（`stayvault-st-payout.zip`）の中身と、リポジトリでの扱い。
 | `scripts/make-public-demo.mjs` | 上書き | 公開用の `app/demo-public.json` を作る |
 | `scripts/e2e-devnet.mjs` | 上書き | devnet で7命令を通しで確かめる |
 | `scripts/check-demo.mjs` | 変更なし | ― |
-| `scripts/deploy-devnet.sh` | 新規 | devnet へのデプロイを1コマンドで行う（鍵・残高の確認、バッファの回収、領域の拡張、RPC 経由のデプロイ、結果の確認） |
 | `app/stayvault.html` | 上書き | 新しい画面（9:16、6画面）。右側パネルは画面ごとの説明。分配では投資家ごとの着金を確認し、最後の画面で預けたお金の行き先と手数料の明細を1本の帯グラフで示す |
 | `Anchor.toml` | 上書き | `[programs.devnet]` の節を追加 |
 | `CLAUDE.md` | 上書き | 「ハッカソンMVPの範囲」をST分配モデルに改訂 |
@@ -281,29 +280,14 @@ solana balance        # 3 SOL 以上あること
 
 ### 5-2. デプロイする
 
-公開 RPC（api.devnet.solana.com）と `anchor deploy` の組み合わせでは、WSL から書き込みの取引が届かず失敗した。Helius などの devnet RPC を使い、`scripts/deploy-devnet.sh` で行う。
-
-1. Helius（helius.dev）で無料アカウントを作り、devnet の RPC URL（`https://devnet.helius-rpc.com/?api-key=...`）を取得する
-2. 次を実行する
-
 ```bash
 git pull
 anchor build
-RPC_URL='<HeliusのdevnetのURL>' bash scripts/deploy-devnet.sh
+anchor deploy --provider.cluster devnet
+solana program show GJet47eJPYYAxHz5RFvxqVKv3n6d6uWZWPsRUSzjB5ZG --url devnet
 ```
 
-スクリプトは、鍵と残高の確認、残ったバッファの回収、必要なら領域の拡張、RPC 経由・優先手数料つきのデプロイ、結果の確認を順に行う。最後に「✅ 更新できました（Last Deployed In Slot: … → …）」と出れば完了。
-
-Helius の URL には API キーが入っている。`app/demo-public.json`、コード、コミットには書かない（公開デモは api.devnet.solana.com のままでよい）。
-
-### 5-3. うまくいかないとき
-
-| 症状 | 原因と対処 |
-| --- | --- |
-| Blockhash expired が続き、0% のまま進まない | 公開 RPC の混雑、または WSL・社内ネットワークで UDP が通らない。`Ctrl+C` で止め、5-2 のとおり Helius の RPC で実行する |
-| `--buffer` で再開すると Verifier error | 書き込みが途中までのバッファを使ったため。プログラムのバグではない。バッファを閉じて（`solana program close --buffers --url devnet`）最初からやり直す。deploy-devnet.sh は自動で閉じる |
-| insufficient funds | 更新権限の財布の SOL が足りない（2.5 SOL 以上が目安）。faucet で足す |
-| account data too small | プログラムが大きくなった。deploy-devnet.sh が自動で広げる。手で行うなら手順4-4の `solana program extend` |
+`Last Deployed In Slot` が新しくなっていれば完了。「account data too small」のようなエラーが出たら、手順4-4の `solana program extend` を行ってから、もう一度 `anchor deploy` する。
 
 ---
 
