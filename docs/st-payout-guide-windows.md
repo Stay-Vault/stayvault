@@ -366,8 +366,9 @@ Windows のブラウザで `http://localhost:8000/app/stayvault.html` を開く�
 | Sign in → Connect → Choose a dorm → How long? → Review | 右側パネルの説明が画面ごとに変わる |
 | Set aside | 数秒で「Rent is in escrow」。ホームに入居確認のカードが出る |
 | Approve move-in | 「Week 1 paid」。右側に物件の金庫が出る |
-| 約40秒待つ | 4週分たまると自動で分配される。右側の投資家5人の行に「✓ +○○ arrived」が付き、「Last payout」の内訳（帯グラフ）が更新される |
-| 投資家の行の ✓ | 分配の前後に投資家のUSDC口座の残高を読み、増えた額が分配額と一致したときだけ付く。付かずに「sent」と出たら、Console のエラーを見る |
+| 約40秒待つ | 4週分たまると自動で分配される。右側の表（投資家5人・Manager・Repairs・Other costs・StayVault）の各行に「✓ +○○」が付き、累計が増える。物件の金庫のカードの「Kept for repairs and other costs」も増える |
+| 表の ✓ | 分配の前後に、投資家・管理会社・StayVault のUSDC口座の残高と、金庫に残した額（Property の reserve_balance）を読み、増えた額が分配額と一致したときだけ付く。付かないときは Console のエラーを見る |
+| 表のアドレスのリンク | Explorer でその口座が開く。Repairs と Other costs は物件の金庫のアドレス |
 | Explorer のリンク | 分配の取引に、投資家5人への送金が並ぶ |
 | Move out early → Confirm move-out | 残りの週が戻り、「Closed」になる |
 | 最後の画面の右側 | 「Where the rent went」。親が預けた額の行き先（親への返金・投資家70%・管理会社10%・修繕積立10%・その他費用7%・利用料3%）が1本の帯と金額で並ぶ。投資家5人の累計受取額と着金チェック、口座アドレス（先頭4文字…末尾4文字）のリンクが出る |

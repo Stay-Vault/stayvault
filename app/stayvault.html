@@ -54,7 +54,7 @@ body{margin:0;background:var(--page);color:var(--ink);font-family:"Figtree",syst
 /* The property panel sits under the phone on small screens and beside it on desktop */
 .aside{max-width:440px;margin:0 auto;padding:28px 22px 48px;box-sizing:border-box}
 @media(min-width:960px){
-  .stage{display:grid;grid-template-columns:auto 360px;gap:56px;justify-content:center;align-items:center;padding:32px 24px;box-sizing:border-box}
+  .stage{display:grid;grid-template-columns:auto 400px;gap:48px;justify-content:center;align-items:center;padding:32px 24px;box-sizing:border-box}
   .app{margin:0;width:auto;max-width:none;height:min(820px,calc(100vh - 84px));aspect-ratio:9/16;border:10px solid #1C1826;border-radius:56px}
   html.dark .app{border-color:#2B2736}
   .aside{margin:0;padding:0;max-width:none;max-height:calc(100vh - 64px);overflow-y:auto;scrollbar-width:thin}
@@ -205,16 +205,17 @@ dd.wl-inline .wl-logo{width:16px;height:16px}
 @keyframes flash{0%{border-color:var(--jac);box-shadow:0 0 0 4px var(--jac-soft)}100%{border-color:var(--line);box-shadow:none}}
 
 /* Property vault: rent waiting for the monthly payout. This block is the one bold element of the panel */
-.vault{border-radius:20px;padding:18px;background:var(--jac-soft);margin-bottom:24px}
+.vault{border-radius:20px;padding:14px 16px;background:var(--jac-soft);margin-bottom:24px}
 .vault .top-l{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
 .vault .nm{font-weight:600;font-size:14px}
 .vault .bal{font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:-.02em;line-height:1.1;margin-top:6px}
 .vault .bal small{font-family:"Figtree",sans-serif;font-size:13px;font-weight:500;color:var(--sub);margin-left:4px}
-.meter{display:flex;gap:6px;margin:14px 0 8px}
+.meter{display:flex;gap:6px;margin:10px 0 6px}
 .meter i{flex:1;height:6px;border-radius:3px;background:var(--jac-mist);transition:background .4s}
 .meter i.on{background:var(--jac)}
 .vault .w{font-size:12.5px;color:var(--sub)}
-.vault .ctl{margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.vault .ctl:has(#vNow[hidden]){display:none}
+.vault .ctl{margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .vault .ctl a{font-size:12px}
 
 .payout{margin:0 0 6px}
@@ -242,6 +243,20 @@ dd.wl-inline .wl-logo{width:16px;height:16px}
 .splitbar{display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px;margin:2px 0 10px}
 .splitbar i{display:block;height:100%}
 .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:7px;vertical-align:1px}
+.led-h{display:grid;grid-template-columns:1fr 78px 62px;gap:8px;padding:0 12px}
+.led-h span:nth-child(n+2){text-align:right;font-weight:500;color:var(--faint)}
+.led{list-style:none;padding:0;margin:0 0 8px;border:1px solid var(--line);border-radius:16px;background:var(--paper)}
+.led li{display:grid;grid-template-columns:1fr 78px 62px;gap:6px;align-items:center;padding:6px 12px;border-top:1px solid var(--line);font-size:13px}
+.led li:first-child{border-top:0}
+.led li.grp{border-top:2px solid var(--line)}
+.led li.flash{animation:flashrow 1.2s ease-out}
+.led .nm{white-space:nowrap}
+.led .p{color:var(--faint);font-size:11.5px;margin-left:4px}
+.led .ilink{margin-left:5px;font-size:10.5px}.led .ilink svg{width:12px;height:12px}
+.led .lt{text-align:right;font-size:12px;white-space:nowrap;display:inline-flex;justify-content:flex-end;align-items:center;gap:3px}
+.led .lt.ok{color:var(--euc);font-weight:600}.led .lt.proj{color:var(--faint)}.led .lt svg{width:12px;height:12px;flex:none}
+.led .tt{text-align:right;font-family:var(--display);font-weight:700}
+.vault .w a{font-size:12px}
 .endbar{display:flex;height:16px;border-radius:8px;overflow:hidden;gap:2px;margin:6px 0 14px}
 .endbar i{display:block;height:100%}
 .leg{margin:0 0 4px}
@@ -256,6 +271,8 @@ dd.wl-inline .wl-logo{width:16px;height:16px}
 .ilist .ok{color:var(--euc);display:inline-flex;align-items:center;gap:4px;font-weight:600}
 .ilist .ok svg{width:13px;height:13px}
 .ilist .ilink{margin-left:8px;font-size:11.5px}
+.leg .ilink{margin-left:8px;font-size:11.5px}.leg .ilink svg{width:13px;height:13px}
+.leg dd.ok{color:var(--euc);display:inline-flex;align-items:center;gap:4px;font-weight:600}.leg dd.ok svg{width:13px;height:13px}
 .ilist .ilink svg{width:14px;height:14px}
 .endlinks{display:flex;gap:16px;font-size:12px;color:var(--faint);flex-wrap:wrap}
 .c-back{background:var(--jac-mist)}.c-wait{background:var(--jac-soft);background-image:repeating-linear-gradient(45deg,transparent 0 4px,var(--jac-mist) 4px 8px)}
@@ -411,7 +428,9 @@ dd.wl-inline .wl-logo{width:16px;height:16px}
       <div class="bal num"><span id="vBal">0.00</span><small>USDC waiting for payout</small></div>
       <div class="meter" id="vMeter" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       <div class="w" id="vWeeks"></div>
-      <div class="ctl"><span class="w" id="vAuto">Pays out every 4 weeks of rent.</span><button type="button" class="dlink" id="vNow" onclick="payoutNow()" hidden>Pay out now</button></div>
+      <div class="w" id="vKept" hidden></div>
+      <div class="w" id="vLast" hidden></div>
+      <div class="ctl"><span class="w" id="vAuto"></span><button type="button" class="dlink" id="vNow" onclick="payoutNow()" hidden>Pay out now</button></div>
     </div>
   </div>
 
@@ -428,6 +447,8 @@ dd.wl-inline .wl-logo{width:16px;height:16px}
     <div class="inv-f"><span id="invTot"></span><span id="invL"></span></div>
     <p class="pnote" id="invNote" hidden>A check means the payout reached the investor's wallet: its USDC balance on devnet was read before and after the payout.</p>
   </div>
+
+  <div id="aLedW" hidden></div>
 
   <div id="aEndW" hidden></div>
 
@@ -537,8 +558,8 @@ const EXPLAIN={
   release:'One week of rent went to the property vault because its due date passed. Anyone can trigger this, and the destination is fixed.',
   payout:'The property vault paid out: 10% to the property manager, 3% to StayVault, 17% kept for repairs and other costs, and 70% to investors by units held.',
   refund:'The parent and the dorm both signed. The weeks not yet paid went straight back to the parent\u2019s wallet.'};
-let evSet=false;
-function showEvent(title,sig,kind){evSet=true;$('evT').textContent=title;$('evD').textContent=EXPLAIN[kind]||'';$('evL').innerHTML=txLink(sig);
+let evSet=false,lastEv=null;
+function showEvent(title,sig,kind){evSet=true;lastEv={title,sig};$('evT').textContent=title;$('evD').textContent=EXPLAIN[kind]||'';$('evL').innerHTML=txLink(sig);
 const ev=$('ev');ev.classList.remove('flash');void ev.offsetWidth;ev.classList.add('flash')}
 // Parent-side events go to the app's history; payouts only show on the property side
 function logTx(title,meta,sig,kind){acts.unshift({title,meta,sig,fresh:true});renderHist();showEvent(title,sig,kind)}
@@ -593,7 +614,7 @@ $('demoNote').textContent=!autoOn&&autoLeft<=0&&!forceOne
 renderHist();renderVault()}
 
 /* ================= Property vault and monthly payout ================= */
-let pendingMicro=0,weeksSince=0,payoutDue=false,lastSplit=null,lastPayoutSig=null,paidOut=0,invTotals=DORMS[0].holders.map(()=>0),flashInv=false,lastArrivals=null,cum={g:0,mgr:0,sv:0,res:0,rp:0,oth:0,net:0};
+let pendingMicro=0,weeksSince=0,payoutDue=false,lastSplit=null,lastPayoutSig=null,paidOut=0,invTotals=DORMS[0].holders.map(()=>0),flashInv=false,flashLed=false,lastArrivals=null,lastOther=null,reserveOnChain=null,cum={g:0,mgr:0,sv:0,res:0,rp:0,oth:0,net:0};
 function split(g){const d=dorm(),b=d.bps;const mgr=Math.floor(g*b.manager/1e4),sv=Math.floor(g*b.stayvault/1e4);let res=Math.floor(g*b.reserve/1e4);
 const net0=g-mgr-sv-res;const hs=d.holders.map(h=>Math.floor(net0*h.u/d.units));const net=hs.reduce((a,c)=>a+c,0);res+=net0-net;   // rounding dust stays with the reserve
 return withKept({g,mgr,sv,res,net,hs})}
@@ -604,7 +625,9 @@ function renderVault(){const d=dorm();
 $('vName').textContent=`${d.n}, ${d.c}`;
 $('vBal').textContent=fn(pendingMicro/1e6);
 const w=Math.min(weeksSince,PAYOUT_WEEKS);$('vMeter').querySelectorAll('i').forEach((el,i)=>el.classList.toggle('on',i<w));
-$('vWeeks').textContent=pendingMicro?`${w} of ${PAYOUT_WEEKS} weeks of rent collected toward the next payout`:'No rent waiting';
+$('vWeeks').textContent=pendingMicro?`${w} of ${PAYOUT_WEEKS} weeks collected for the next payout`:`Pays out every ${PAYOUT_WEEKS} weeks of rent`;
+const kept=reserveOnChain??cum.res;$('vKept').hidden=!(kept>0);$('vKept').textContent=`Kept for repairs and other costs: ${fn(kept/1e6)}`;
+$('vLast').hidden=!lastEv;if(lastEv)$('vLast').innerHTML=`Last: ${esc(lastEv.title)} ${txLink(lastEv.sig)}`;
 $('vNow').hidden=!(pendingMicro>0&&!payoutDue);$('vNow').disabled=busyHome;
 const closing=['ended','complete'].includes(phase())&&paidOut>0;
 const s=closing?cum:(lastSplit||split(PAYOUT_WEEKS*weeklyMicro()));
@@ -650,28 +673,48 @@ else if(s==='confirm'){t='One transaction locks the rent';
 else if(ph==='deposited'){t='Move-in needs two signatures';
   body=`${d.n} has signed that ${CHILD} picked up the keys. Week 1 moves only when the parent approves too. If nobody confirms within 14 days, the parent can take everything back.`;show.ev=true}
 else if(ph==='paying'){t='Rent flows on to the dorm\u2019s investors';
-  body=`Each week\u2019s rent goes to the property vault on its due date. Every ${PAYOUT_WEEKS} weeks the vault pays out by units held, and each investor\u2019s wallet is checked for the arrival.`;
-  show={ev:true,vault:true,pay:true,inv:true};note=['sim','Sped up: one week passes every 10 seconds.']}
+  body=`Rent reaches the vault weekly. Every ${PAYOUT_WEEKS} weeks it pays everyone below, and each arrival is checked on devnet.`;
+  show={vault:true,led:true};note=['sim','Sped up: one week passes every 10 seconds.']}
 else{t='Where the rent went';
   body=ph==='ended'?'Paid weeks went to the dorm and on to its investors. Unpaid weeks went back to the parent.':'Every week went to the dorm and on to its investors.';
   show.end=true}
 $('aStep').textContent=`Step ${order.indexOf(s)+1} of ${order.length}`;$('aTitle').textContent=t;$('aBody').textContent=body;
 $('aRows').hidden=!rows;if(rows)$('aRows').innerHTML=rowsHTML(rows);
 // While rent is flowing, put the investors right under the vault so judges see the arrivals without scrolling
-const seq=s==='home'&&ph==='paying'?['aVaultW','aInvW','aPayW','aEvW']:['aEvW','aPayW','aInvW','aVaultW'];
+const seq=s==='home'&&ph==='paying'?['aVaultW','aLedW','aInvW','aPayW','aEvW']:['aEvW','aPayW','aInvW','aVaultW','aLedW'];
 seq.forEach(id=>$('aNote').before($(id)));
 $('aEndW').hidden=!show.end;if(show.end)renderEnd();
+$('aLedW').hidden=!show.led;if(show.led)renderLedger();
 $('aEvW').hidden=!(show.ev&&evSet);$('aVaultW').hidden=!show.vault;$('aPayW').hidden=!show.pay;$('aInvW').hidden=!show.inv;
 $('aNote').hidden=!note;if(note){$('aNote').className='anote '+note[0];$('aNote').textContent=note[1]}}
+/* While rent flows: one list of everyone the vault pays, with the last payout (checked on devnet) and the running total */
+function renderLedger(){const d=dorm(),b=d.bps,P=window.SV?.payees||{},ls=lastSplit,proj=split(Math.max(pendingMicro,PAYOUT_WEEKS*weeklyMicro()));
+const CHK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+const lnk=a=>a?`<a class="hash ilink" href="${ADDR(a)}" target="_blank" rel="noopener" title="Open on Solana Explorer">${esc(short(a))} ${IC.ext}</a>`:'';
+const rows=[...d.holders.map((h,i)=>({c:'c-inv',n:h.n,p:(h.u/d.units*100).toLocaleString('en-US')+'%',a:P.owners?.[i]||P.holders?.[i],last:ls?.hs[i],ok:lastArrivals?.[i]?.ok,next:proj.hs[i],tot:invTotals[i]})),
+  {c:'c-mgr',n:'Manager',p:pct(b.manager),a:P.manager,last:ls?.mgr,ok:lastOther?.mgr,next:proj.mgr,tot:cum.mgr,grp:1},
+  {c:'c-res',n:'Repairs',p:pct(b.repair),a:P.vault,last:ls?.rp,ok:lastOther?.res,next:proj.rp,tot:cum.rp},
+  {c:'c-oth',n:'Other costs',p:pct(b.other),a:P.vault,last:ls?.oth,ok:lastOther?.res,next:proj.oth,tot:cum.oth},
+  {c:'c-fee',n:'StayVault',p:pct(b.stayvault),a:P.fee,last:ls?.sv,ok:lastOther?.sv,next:proj.sv,tot:cum.sv}];
+const g=paidOut?cum:proj,W=v=>g.g?(v/g.g*100).toFixed(2)+'%':'0';
+$('aLedW').innerHTML=`<div class="k led-h"><span>${paidOut?`Paid out in ${paidOut} payout${paidOut>1?'s':''}`:'Paid out at each payout'}</span><span>${paidOut?'Last payout':'Next payout'}</span><span>Total</span></div>
+<div class="splitbar" aria-hidden="true" style="margin:4px 0 8px"><i class="c-inv" style="width:${W(g.net)}"></i><i class="c-mgr" style="width:${W(g.mgr)}"></i><i class="c-res" style="width:${W(g.rp)}"></i><i class="c-oth" style="width:${W(g.oth)}"></i><i class="c-fee" style="width:${W(g.sv)}"></i></div>
+<ul class="led num">${rows.map(r=>`<li class="${r.grp?'grp ':''}${flashLed?'flash':''}"><span class="nm"><span class="sw ${r.c}"></span>${esc(r.n)}<span class="p">${r.p}</span>${lnk(r.a)}</span><span class="lt ${r.last==null?'proj':r.ok?'ok':''}">${r.last==null?`\u2248 +${fn(r.next/1e6)}`:`${r.ok?CHK:''}+${fn(r.last/1e6)}`}</span><span class="tt">${fn(r.tot/1e6)}</span></li>`).join('')}</ul>
+<div class="inv-f"><span>\u2713 = arrival checked on devnet. Repairs and other costs stay in the vault.</span></div>`;
+flashLed=false}
+
 /* The closing summary: every USDC the parent set aside, in one bar */
 function renderEnd(){const d=dorm(),b=d.bps,back=Math.round((ended?(months-paidM)*weekly():0)*1e6),total=back+cum.g+pendingMicro;
-const parts=[['c-back','Back to the parent',back],['c-inv',`To investors ${pct(1e4-b.manager-b.reserve-b.stayvault)}`,cum.net,'hi'],['c-mgr',`Property manager ${pct(b.manager)}`,cum.mgr],
-  ['c-res',`Repair reserve ${pct(b.repair)}`,cum.rp],['c-oth',`Other costs ${pct(b.other)}`,cum.oth],['c-fee',`StayVault fee ${pct(b.stayvault)}`,cum.sv],['c-wait','Waiting for the next payout',pendingMicro]].filter(p=>p[2]>0);
+const P=window.SV?.payees||{},alink=a=>a?`<a class="hash ilink" href="${ADDR(a)}" target="_blank" rel="noopener" title="Open on Solana Explorer">${esc(short(a))} ${IC.ext}</a>`:'';
+const parts=[['c-back','Back to the parent',back],['c-inv',`To investors ${pct(1e4-b.manager-b.reserve-b.stayvault)}`,cum.net,'hi'],
+  ['c-mgr',`Property manager ${pct(b.manager)}`,cum.mgr,'',alink(P.manager),lastOther?.mgr],
+  ['c-res',`Repair reserve ${pct(b.repair)}`,cum.rp,'',alink(P.vault),lastOther?.res],['c-oth',`Other costs ${pct(b.other)}`,cum.oth,'',alink(P.vault),lastOther?.res],
+  ['c-fee',`StayVault fee ${pct(b.stayvault)}`,cum.sv,'',alink(P.fee),lastOther?.sv],['c-wait','Waiting for the next payout',pendingMicro]].filter(p=>p[2]>0);
 const W=v=>(v/total*100).toFixed(2)+'%';
 const CHK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
 $('aEndW').innerHTML=`<div class="k inv-h"><span>Set aside by the parent</span><span>${f(total/1e6)}</span></div><div class="endbar" aria-hidden="true">${parts.map(p=>`<i class="${p[0]}" style="width:${W(p[2])}"></i>`).join('')}</div>
-<dl class="leg num">${parts.map(p=>`<div class="${p[3]||''}"><dt><span class="sw ${p[0]}"></span>${p[1]}</dt><dd>${fn(p[2]/1e6)}</dd></div>`).join('')}</dl>
-<p class="cap">Fees come out of the rent, never from the parent.${pendingMicro>0?' <button type="button" class="dlink" onclick="payoutNow()">Pay out now</button>':''}</p>
+<dl class="leg num">${parts.map(p=>`<div class="${p[3]||''}"><dt><span class="sw ${p[0]}"></span>${p[1]}${p[4]||''}</dt><dd class="${p[5]?'ok':''}">${p[5]?CHK:''}${fn(p[2]/1e6)}</dd></div>`).join('')}</dl>
+<p class="cap">Fees come out of the rent, never from the parent. \u2713 = arrival checked on devnet.${pendingMicro>0?' <button type="button" class="dlink" onclick="payoutNow()">Pay out now</button>':''}</p>
 ${paidOut?`<div class="k inv-h"><span>Investors</span><span>Received (USDC)</span></div>
 <ul class="ilist num">${d.holders.map((h,i)=>`<li><span>${esc(h.n)}<span class="p">${(h.u/d.units*100).toLocaleString('en-US')}%</span>${window.SV?.payees?` <a class="hash ilink" href="${ADDR(SV.payees.owners?.[i]||SV.payees.holders[i])}" target="_blank" rel="noopener" title="Open this investor's wallet on Solana Explorer (USDC is under Tokens)">${esc(short(SV.payees.owners?.[i]||SV.payees.holders[i]))} ${IC.ext}<span class="sr-only">Check ${esc(h.n)}'s USDC balance on Solana Explorer</span></a>`:''}</span><span class="${lastArrivals?.[i]?.ok?'ok':''}">${lastArrivals?.[i]?.ok?CHK:''}${fn(invTotals[i]/1e6)}</span></li>`).join('')}</ul>`:''}
 <div class="endlinks">${acts[0]?.sig?`<span>Refund ${txLink(acts[0].sig)}</span>`:''}${lastPayoutSig?`<span>Last payout ${txLink(lastPayoutSig)}</span>`:''}</div>`}
@@ -679,9 +722,12 @@ function addRent(){pendingMicro+=weeklyMicro();weeksSince++;if(weeksSince>=PAYOU
 async function runPayout(){if(!window.SV||busyHome||pendingMicro<=0){payoutDue=false;return}
 busyHome=true;payoutDue=false;renderHome();const s=split(pendingMicro);
 try{const r=await SV.distribute();const sig=r.sig;const out=r.split?withKept(r.split):s;   // the program's own numbers (from its event), else our estimate
-  pendingMicro=0;weeksSince=0;lastSplit=out;lastPayoutSig=sig;paidOut++;out.hs.forEach((a,i)=>invTotals[i]+=a);flashInv=true;
+  pendingMicro=0;weeksSince=0;lastSplit=out;lastPayoutSig=sig;paidOut++;out.hs.forEach((a,i)=>invTotals[i]+=a);flashInv=true;flashLed=true;
   ['g','mgr','sv','res','rp','oth','net'].forEach(k=>cum[k]+=out[k]);
-  lastArrivals=out.hs.map((a,i)=>({amt:a,ok:!!(r.before&&r.after&&r.after[i]!=null&&r.before[i]!=null&&r.after[i]-r.before[i]>=a)}));
+  const B=r.before,A=r.after,got=(a,b,amt)=>!!(a!=null&&b!=null&&a-b>=amt);
+  lastArrivals=out.hs.map((a,i)=>({amt:a,ok:!!(B&&A&&got(A.h[i],B.h[i],a))}));
+  lastOther={mgr:!!(B&&A&&got(A.mgr,B.mgr,out.mgr)),sv:!!(B&&A&&got(A.fee,B.fee,out.sv)),res:!!(B&&A&&got(A.res,B.res,out.res))};
+  if(A&&A.res!=null)reserveOnChain=A.res;
   showEvent(`Payout ${paidOut}: ${fm(out.net)} to ${out.hs.length} investors`,sig,'payout')}
 catch(e){console.error(e);toast('The monthly payout didn\u2019t go through. The rent is still in the property vault. Use Pay out now to retry.',{err:true})}
 finally{busyHome=false;renderHome()}}
@@ -739,7 +785,8 @@ function toast(t,o={}){const e=$('toast');e.className='toast'+(o.err?' err':'');
 requestAnimationFrame(()=>e.classList.add('show'));clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),o.sig||o.err?5000:2200)}
 
 let svErr=false;
-window.addEventListener('sv-ready',()=>{$('net').className='net live';$('netT').textContent='Solana devnet';renderVault()});
+window.addEventListener('sv-ready',()=>{$('net').className='net live';$('netT').textContent='Solana devnet';renderVault();
+  SV.balances?.().then(b=>{if(b&&b.res!=null){reserveOnChain=b.res;renderVault()}}).catch(()=>{})});
 setTimeout(()=>{if(!window.SV&&!svErr)window.dispatchEvent(new Event('sv-error'))},20000);
 window.addEventListener('sv-error',()=>{svErr=true;$('net').className='net bad';$('netT').textContent='Devnet unavailable'});
 go('login',false);renderVault();
@@ -875,11 +922,15 @@ window.SV = {
     return { sig, split, before, after };
   },
   // Each investor's USDC balance, read straight from their token account (amount = u64 at byte 64)
+  // Balances straight from the chain: each investor's, the manager's and StayVault's USDC (amount = u64 at byte 64),
+  // and what the property vault keeps for repairs and other costs (Property.reserve_balance = u64 at byte 186)
   async balances() {
     try {
-      const infos = await conn.getMultipleAccountsInfo(HOLDER_TOKENS, "confirmed");
-      return infos.map(i => i ? Number(new DataView(i.data.buffer, i.data.byteOffset, i.data.byteLength).getBigUint64(64, true)) : null);
-    } catch (e) { console.warn("could not read investor balances", e); return null; }
+      const infos = await conn.getMultipleAccountsInfo([...HOLDER_TOKENS, MANAGER_TOKEN, FEE_TOKEN, PROPERTY], "confirmed");
+      const u64 = (i, at) => i ? Number(new DataView(i.data.buffer, i.data.byteOffset, i.data.byteLength).getBigUint64(at, true)) : null;
+      const n = HOLDER_TOKENS.length;
+      return { h: infos.slice(0, n).map(i => u64(i, 64)), mgr: u64(infos[n], 64), fee: u64(infos[n + 1], 64), res: u64(infos[n + 2], 186) };
+    } catch (e) { console.warn("could not read balances", e); return null; }
   },
 };
 console.log("StayVault escrow ready:", PID.toBase58(), "property:", PROPERTY.toBase58());
