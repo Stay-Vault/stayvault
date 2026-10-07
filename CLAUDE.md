@@ -22,6 +22,9 @@ Solana上の家賃エスクローと、物件の投資家への家賃分配。�
 - デモの料率: ST投資家 70%、不動産管理会社 10%、修繕積立 10%、その他費用 7%（保険・税金など）、StayVault 利用料 3%。オンチェーンでは manager_bps=1000、fee_bps=300、reserve_bps=1700（修繕積立とその他費用をまとめて金庫に残す）。画面は修繕積立とその他費用を分けて表示する（DORMS の bps.repair / bps.other）。scripts/demo-common.mjs、scripts/e2e-devnet.mjs、app/stayvault.html の DORMS をそろえる
 - 親の負担はゼロ。すべての取引の手数料の支払者（fee payer）は StayVault役（demo-public.json の sponsor）で、create_vault の口座の作成費用（rent）も payer として StayVault役が払う。親役の財布は SOL を持たない。画面と資料に「親が手数料を払う」と読める表現を書かない
 - 口座を閉じて rent を StayVault に戻す処理は対象外（入れるなら move_out / refund_unconfirmed で閉じる）
+- 公開デモは全員で同じ物件の金庫を使う。画面は開いたときと Set aside の直前に、前の人が残した未分配の家賃を先に分配して片付ける（flushLeftover）。この分は今の人の数字に含めない。Set aside のたびに画面の分配の累計をリセットする（resetPayouts）
+- 最後の図の数字は、その人の実際の額から出す（Parent = 預けた額、Escrow = 寮へ支払った額、Property vault = 金庫に残した額＋分配待ち）
+- デモの入居確認の期限は24時間（DEMO_DEADLINE）。本番の想定は14日
 - 投資家名簿は init_property で登録し、デモ中は変えない。上限は10人（MAX_HOLDERS）。distribute には投資家の口座を名簿の順で remaining_accounts に渡す
 - 分配の記録はイベント（Distributed、RentReleased）で残す。記録用のアカウントは作らない
 - 親は手数料を払わない。トランザクション手数料はデモでは親役の財布がすべて払う

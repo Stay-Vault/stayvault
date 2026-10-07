@@ -715,7 +715,7 @@ const w=Math.min(weeksSince,PAYOUT_WEEKS);
 $('aLedW').innerHTML=thinBar([['c-esc',inEscrow],['c-wait',pendingMicro],['c-inv',cum.net],['c-mgr',cum.mgr],['c-kept',cum.rp+cum.oth],['c-fee',cum.sv]],total)
  +flowSvg({back:0,total,d,b,P,live:true})
  +`<div class="paybar"><div class="meter" aria-hidden="true">${[0,1,2,3].map(i=>`<i class="${i<w?'on':''}"></i>`).join('')}</div>
-<div class="w">${pendingMicro?`${w} of ${PAYOUT_WEEKS} weeks collected for the next payout`:`Pays out every ${PAYOUT_WEEKS} weeks of rent`}${pendingMicro>0&&!payoutDue?' <button type="button" class="dlink" onclick="payoutNow()">Pay out now</button>':''}</div>
+<div class="w">${pendingMicro?`${fn(pendingMicro/1e6)} waiting in the vault: ${w} of ${PAYOUT_WEEKS} weeks for the next payout`:`Pays out every ${PAYOUT_WEEKS} weeks of rent`}${pendingMicro>0&&!payoutDue?' <button type="button" class="dlink" onclick="payoutNow()">Pay out now</button>':''}</div>
 ${lastEv?`<div class="w">Last: ${esc(lastEv.title)} ${txLink(lastEv.sig)}</div>`:''}</div>`
  +ledgerRows(true)}
 
@@ -750,9 +750,9 @@ let h=`<svg class="flow num" viewBox="0 0 400 222" role="img" aria-label="Money 
 h+=box(0,8,112,64,'n-par',[['Parent','fh'],[fn(total/1e6),'fa'],['set aside in USDC','fs']]);
 const inEscrow=ended?0:Math.round((months-paidM)*weekly()*1e6);
 h+=live?box(144,8,112,64,'n-esc',[['Escrow','fh'],[fn(inEscrow/1e6),'fa'],['still protected','fs']])
-       :box(144,8,112,64,'n-esc',[['Escrow','fh'],[fn(cum.g/1e6+pendingMicro/1e6),'fa'],['paid on weekly','fs']]);
-h+=live?box(288,8,112,80,'n-vault',[['Property vault','fh'],[fn(pendingMicro/1e6),'fa'],[`waiting, kept ${fn(kept/1e6)}`,'fs'],[`SPV ${P.vault?short(P.vault)+' \u2197':''}`,'flk']],P.vault,'Property vault (SPV)')
-       :box(288,8,112,80,'n-vault',[['Property vault','fh'],[`${lastOther?.res?ck:''}${fn(kept/1e6)}`,`fa${lastOther?.res?' fok':''}`],[`repairs + other ${pct(b.reserve)}`,'fs'],[`SPV ${P.vault?short(P.vault)+' \u2197':''}`,'flk']],P.vault,'Property vault (SPV)');
+       :box(144,8,112,64,'n-esc',[['Escrow','fh'],[fn(Math.round(paidM*weekly()*1e6)/1e6),'fa'],['paid on weekly','fs']]);
+h+=live?box(288,8,112,80,'n-vault',[['Property vault','fh'],[fn((pendingMicro+kept)/1e6),'fa'],[`incl. ${lastOther?.res?ck:''}${fn(kept/1e6)} kept`,'fs'],[`SPV ${P.vault?short(P.vault)+' \u2197':''}`,'flk']],P.vault,'Property vault (SPV)')
+       :box(288,8,112,80,'n-vault',[['Property vault','fh'],pendingMicro>0?[fn((kept+pendingMicro)/1e6),'fa']:[`${lastOther?.res?ck:''}${fn(kept/1e6)}`,`fa${lastOther?.res?' fok':''}`],[pendingMicro>0?`incl. ${fn(pendingMicro/1e6)} waiting`:`repairs + other ${pct(b.reserve)}`,'fs'],[`SPV ${P.vault?short(P.vault)+' \u2197':''}`,'flk']],P.vault,'Property vault (SPV)');
 h+=`<path class="ar" d="M113 40H141" marker-end="url(#fa)"/><path class="ar" d="M257 40H285" marker-end="url(#fa)"/>`;
 if(back>0)h+=`<path class="ar rf" d="M200 73V100H56V76" marker-end="url(#fa)"/><text x="128" y="116" text-anchor="middle" class="fref">Refund ${fn(back/1e6)}</text>`;
 h+=`<path class="ar" d="M344 89V134H62"/><path class="ar" d="M62 134V151" marker-end="url(#fa)"/><path class="ar" d="M200 134V151" marker-end="url(#fa)"/><path class="ar" d="M338 134V151" marker-end="url(#fa)"/>
@@ -765,7 +765,7 @@ h+=row(276,'n-fee',`StayVault ${pct(b.stayvault)}`,cum.sv,lastOther?.sv,P.fee,'S
 return h+'</svg>'}
 
 /* The closing summary: every USDC the parent set aside, in one bar */
-function renderEnd(){const d=dorm(),b=d.bps,back=Math.round((ended?(months-paidM)*weekly():0)*1e6),total=back+cum.g+pendingMicro;
+function renderEnd(){const d=dorm(),b=d.bps,back=Math.round((ended?(months-paidM)*weekly():0)*1e6),total=Math.round(months*weekly()*1e6);   // what this parent set aside
 const P=window.SV?.payees||{},alink=a=>a?`<a class="hash ilink" href="${ADDR(a)}" target="_blank" rel="noopener" title="Open on Solana Explorer">${esc(short(a))} ${IC.ext}</a>`:'';
 const parts=[['c-back','Back to the parent',back],['c-inv',`To investors ${pct(1e4-b.manager-b.reserve-b.stayvault)}`,cum.net,'hi'],
   ['c-mgr',`Property manager ${pct(b.manager)}`,cum.mgr,'',alink(P.manager),lastOther?.mgr],
@@ -832,8 +832,17 @@ try{const back=(months-paidM)*weekly();const sig=await SV.moveOut();ended=true;
 catch(e){console.error(e);toast('The refund didn\u2019t go through. The escrow is unchanged. Try again.',{err:true})}
 finally{b.innerHTML=old;b.disabled=false;busyHome=false;renderHome()}}
 
+/* The public demo shares one property vault. If an earlier visitor left rent in it without a payout, pay that out first,
+   so this visitor's figures only contain their own rent. StayVault pays the network fee; it is not counted below. */
+async function flushLeftover(){if(!window.SV?.leftover)return;
+try{const left=await SV.leftover();if(left>0){console.log('Paying out',left/1e6,'USDC an earlier session left in the vault');
+  const r=await SV.distribute();if(r?.after?.res!=null)reserveOnChain=r.after.res}}
+catch(e){console.warn('Could not clear the earlier rent; figures may include it',e)}}
+function resetPayouts(){pendingMicro=0;weeksSince=0;payoutDue=false;lastSplit=null;lastPayoutSig=null;paidOut=0;lastArrivals=null;lastOther=null;
+invTotals=dorm().holders.map(()=>0);cum={g:0,mgr:0,sv:0,res:0,rp:0,oth:0,net:0};lastEv=null}
 async function pay(){if(!svReady())return;calc();const btn=$('payBtn');
 await run(btn,'payStatus','Moving rent into escrow\u2026',async()=>{
+  await flushLeftover();resetPayouts();
   try{const sig=await SV.create(weekly(),months);createdAt=Date.now();paidM=0;ended=false;stack=[];acts=[];shownBal=0;dialN=0;
     autoOn=false;autoLeft=AUTO_BATCH;forceOne=false;
     logTx('Set aside',`${md(new Date())}, ${f(months*weekly())} from MetaMask`,sig,'deposit');
@@ -846,7 +855,8 @@ requestAnimationFrame(()=>e.classList.add('show'));clearTimeout(tt);tt=setTimeou
 
 let svErr=false;
 window.addEventListener('sv-ready',()=>{$('net').className='net live';$('netT').textContent='Solana devnet';renderVault();
-  SV.balances?.().then(b=>{if(b&&b.res!=null){reserveOnChain=b.res;renderVault()}}).catch(()=>{})});
+  SV.balances?.().then(b=>{if(b&&b.res!=null){reserveOnChain=b.res;renderVault()}}).catch(()=>{});
+  flushLeftover().then(renderVault)});
 setTimeout(()=>{if(!window.SV&&!svErr)window.dispatchEvent(new Event('sv-error'))},20000);
 window.addEventListener('sv-error',()=>{svErr=true;$('net').className='net bad';$('netT').textContent='Devnet unavailable'});
 go('login',false);renderVault();
@@ -866,7 +876,7 @@ try {
 const TOKEN = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 const ATA = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 const DEMO_INTERVAL = 10n;      // one demo week = 10 seconds (keep DEMO_WEEK_MS above in sync)
-const DEMO_DEADLINE = 600n;     // move-in confirmation deadline: 10 minutes after creation
+const DEMO_DEADLINE = 86400n;   // move-in confirmation deadline: 24 hours after creation (long enough that a judge never runs into it)
 
 // Local development uses wallet-demo.json; the public build (GitHub Pages) uses demo-public.json
 async function loadCfg() {
@@ -982,14 +992,16 @@ window.SV = {
     return { sig, split, before, after };
   },
   // Each investor's USDC balance, read straight from their token account (amount = u64 at byte 64)
+  // Rent sitting in the property vault that no payout has covered yet (what distribute would pay out now)
+  async leftover() { const b = await this.balances(); return b && b.vault != null && b.res != null ? Math.max(0, b.vault - b.res) : 0; },
   // Balances straight from the chain: each investor's, the manager's and StayVault's USDC (amount = u64 at byte 64),
   // and what the property vault keeps for repairs and other costs (Property.reserve_balance = u64 at byte 186)
   async balances() {
     try {
-      const infos = await conn.getMultipleAccountsInfo([...HOLDER_TOKENS, MANAGER_TOKEN, FEE_TOKEN, PROPERTY], "confirmed");
+      const infos = await conn.getMultipleAccountsInfo([...HOLDER_TOKENS, MANAGER_TOKEN, FEE_TOKEN, PROPERTY, PROPERTY_VAULT], "confirmed");
       const u64 = (i, at) => i ? Number(new DataView(i.data.buffer, i.data.byteOffset, i.data.byteLength).getBigUint64(at, true)) : null;
       const n = HOLDER_TOKENS.length;
-      return { h: infos.slice(0, n).map(i => u64(i, 64)), mgr: u64(infos[n], 64), fee: u64(infos[n + 1], 64), res: u64(infos[n + 2], 186) };
+      return { h: infos.slice(0, n).map(i => u64(i, 64)), mgr: u64(infos[n], 64), fee: u64(infos[n + 1], 64), res: u64(infos[n + 2], 186), vault: u64(infos[n + 3], 64) };
     } catch (e) { console.warn("could not read balances", e); return null; }
   },
 };

@@ -14,7 +14,7 @@ const funder = Keypair.fromSecretKey(
 const programId = JSON.parse(fs.readFileSync("target/idl/stayvault.json", "utf8")).address;
 
 // StayVault役に 0.5 SOL（取引手数料と口座の作成費用）。親役は SOL を持たない。テスト用USDCは1年分（52週 × 213 USDC）を超える 20,000
-const demo = await createDemo({ conn, funder, programId, solForSponsor: 0.5, usdcForParent: 20_000 });
+const demo = await createDemo({ conn, funder, programId, solForSponsor: 0.5, usdcForParent: 1_000_000 });
 fs.writeFileSync("app/wallet-demo.json", JSON.stringify({ rpc: RPC, ...demo }, null, 2));
 
 console.log("programId:", programId);
