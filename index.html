@@ -2,10 +2,619 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url=app/stayvault.html">
-<title>StayVault demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.documentElement.classList.add('js');(function(){try{const m=matchMedia('(prefers-color-scheme: dark)');const s=()=>document.documentElement.classList.toggle('dark',m.matches);s();m.addEventListener('change',s)}catch(e){}})();</script>
+<title>StayVault — rent escrow for international students on Solana</title>
+<meta name="description" content="StayVault holds an international student's rent in a Solana escrow, releases it to the dorm week by week after move-in, and pays the dorm's investors their share in USDC every month.">
+<meta property="og:title" content="StayVault — rent moves only after move-in">
+<meta property="og:description" content="Rent escrow for international students and monthly USDC payouts to dorm investors, on Solana.">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cstyle%3Esvg{color:#6E56CF}@media (prefers-color-scheme:dark){svg{color:#A898F0}}%3C/style%3E%3Cpath d=%22M22 27V18.5L32 10.2L42 18.5V27%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%227%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3C/path%3E%3Crect x=%2210%22 y=%2227%22 width=%2244%22 height=%2228%22 rx=%229%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%227%22%3E%3C/rect%3E%3Cpath d=%22M30.62 33.65Q32 32.5 33.38 33.65L39.62 38.85Q41 40 41 41.8V47Q41 48.5 39.5 48.5H24.5Q23 48.5 23 47V41.8Q23 40 24.38 38.85Z%22 fill=%22currentColor%22%3E%3C/path%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.2/dist/basecoat.cdn.min.css">
+<style>
+:root{
+  --page:#F1EEE8; --paper:#FAF8F5; --ink:#1C1826; --sub:#6E6879; --faint:#9D97A6; --line:#E9E4DC;
+  --jac:#6E56CF; --jac-ink:#45368F; --jac-soft:#F0ECFB; --jac-mist:#E6E0F8;
+  --euc:#2E7D5B; --euc-soft:#E3F0E9; --demo:#8A5A0B;
+  --display:"Bricolage Grotesque","Figtree",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+  --background:var(--paper); --foreground:var(--ink); --card:var(--paper); --card-foreground:var(--ink);
+  --primary:var(--jac); --primary-foreground:#F6F3FF; --secondary:var(--jac-soft); --secondary-foreground:var(--jac-ink);
+  --muted:#F3F0EA; --muted-foreground:var(--sub); --accent:var(--jac-soft); --accent-foreground:var(--jac-ink);
+  --border:var(--line); --input:#DDD7CD; --ring:var(--jac); --radius:0.8rem;
+  color-scheme:light;
+}
+html.dark{
+  --page:#0E0C14; --paper:#16131E; --ink:#F3F0F9; --sub:#A29CB0; --faint:#7E7890; --line:#2B2736;
+  --jac:#A898F0; --jac-ink:#E3DDFA; --jac-soft:#25203A; --jac-mist:#2C2742;
+  --euc:#5BC39A; --euc-soft:#173A2D; --demo:#F2B55A;
+  --primary-foreground:#1B1530; --muted:#1F1B29; --input:#3A3547;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--page);color:var(--ink);font-family:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a:not(.btn){color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;line-height:1.1;margin:0}
+h2{font-size:clamp(28px,4vw,40px);font-weight:800}
+h3{font-size:19px;font-weight:700}
+p{margin:0}
+.eyebrow{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--jac);margin-bottom:12px}
+.lede{color:var(--sub);font-size:17px;max-width:620px;margin-top:14px}
+section{padding:88px 0}
+section + section{border-top:1px solid var(--line)}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--page) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:24px;height:64px}
+.logo{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.02em;text-decoration:none}
+.logo span{color:var(--jac)} .logo svg{color:var(--jac);flex:none}
+.nav nav{display:flex;gap:22px;margin-left:auto;font-size:15px;color:var(--sub)}
+.nav nav a{text-decoration:none} .nav nav a:hover{color:var(--ink)}
+.cta-lg{height:46px;padding:0 20px;font-size:15.5px;border-radius:12px}
+@media (max-width:760px){.nav nav{display:none}.nav .wrap>.btn{margin-left:auto}}
+
+/* hero */
+.hero{padding:80px 0 72px}
+.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;padding:5px 12px;border-radius:999px;background:var(--euc-soft);color:var(--euc);margin-bottom:22px}
+.pill i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.hero h1{font-size:clamp(40px,6vw,64px);font-weight:800}
+.hero h1 em{font-style:normal;color:var(--jac)}
+.hero .lede{font-size:18.5px}
+.ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.hero-card{background:var(--paper);border:1px solid var(--line);border-radius:24px;padding:26px;box-shadow:0 1px 0 var(--line),0 24px 48px -32px rgba(28,24,38,.35)}
+.hero-card .k{font-size:13px;color:var(--sub)}
+.weeks{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin:14px 0 20px}
+.weeks i{height:36px;border-radius:8px;background:var(--jac-mist)}
+.weeks i.paid{background:var(--jac)}
+.weeks i.now{background:var(--jac);opacity:.55}
+.flowmini{display:flex;flex-direction:column;gap:10px}
+.flowmini div{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:var(--muted);font-size:14.5px}
+.flowmini b{font-family:var(--display);font-size:17px}
+.flowmini .tag{font-size:12px;color:var(--sub)}
+.sim{display:inline-block;margin-top:14px;font-size:12px;color:var(--demo)}
+@media (max-width:860px){.hero .wrap{grid-template-columns:1fr;gap:40px}}
+
+/* trust strip */
+.strip{padding:22px 0;border-top:1px solid var(--line)}
+.strip .wrap{display:flex;flex-wrap:wrap;gap:12px 32px;align-items:center;justify-content:space-between;font-size:14.5px;color:var(--sub)}
+.strip b{color:var(--ink);font-weight:600}
+.mono{font-family:var(--mono);font-size:13px}
+.strip a{color:var(--jac);text-decoration:none}
+.strip a:hover{text-decoration:underline}
+
+/* problem */
+.problem .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:40px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:26px}
+.stat .big{font-family:var(--display);font-weight:800;font-size:44px;color:var(--jac);line-height:1}
+.stat p{color:var(--sub);margin-top:10px;font-size:15px}
+.demand{margin-top:56px}
+.demand h3{font-size:24px}
+.demand .grid{margin-top:20px}
+.stat p a{display:block;margin-top:8px;font-size:12.5px;color:var(--faint)}
+.bizline{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);font-size:14.5px;color:var(--sub)}
+.bizline b{color:var(--ink)}
+@media (max-width:860px){.problem .grid{grid-template-columns:1fr}}
+
+/* how */
+.steps{list-style:none;margin:44px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;counter-reset:s}
+.steps li{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:24px 22px;counter-increment:s}
+.steps li::before{content:counter(s);display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--jac-soft);color:var(--jac-ink);font-weight:700;font-size:14px;margin-bottom:16px}
+.steps p{color:var(--sub);font-size:15px;margin-top:8px}
+.who{display:inline-block;margin-top:14px;font-size:12.5px;font-weight:600;color:var(--jac-ink);background:var(--jac-soft);padding:3px 9px;border-radius:999px}
+.note{margin-top:22px;color:var(--sub);font-size:15px}
+@media (max-width:960px){.steps{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.steps{grid-template-columns:1fr}}
+
+/* audiences */
+.aud{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:40px}
+.aud .card{border-radius:24px;padding:32px;border:1px solid var(--line);background:var(--paper)}
+.aud .card.inv{background:var(--jac-soft);border-color:transparent}
+.aud ul{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column;gap:14px}
+.aud li{display:flex;gap:12px;font-size:15.5px}
+.aud li svg{flex:none;margin-top:3px;color:var(--jac)}
+.aud li span{color:var(--sub)} .aud li b{color:var(--ink);font-weight:600}
+@media (max-width:860px){.aud{grid-template-columns:1fr}}
+
+/* example */
+.example .wrap{display:grid;grid-template-columns:.9fr 1.1fr;gap:56px;align-items:center}
+.prop{background:var(--paper);border:1px solid var(--line);border-radius:24px;padding:28px}
+.prop header{display:flex;justify-content:space-between;align-items:start;gap:12px}
+.prop .city{font-size:14px;color:var(--sub)}
+.badge-sim{font-size:12px;font-weight:600;color:var(--demo);border:1px solid currentColor;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.split{display:flex;height:16px;border-radius:8px;overflow:hidden;margin:24px 0 18px;gap:2px}
+.split i{display:block;height:100%}
+.c-inv{background:var(--euc)} .c-mgr{background:var(--jac)} .c-res{background:var(--faint)} .c-oth{background:#C8B48E} .c-fee{background:var(--jac-ink)}
+.legend{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.legend li{display:grid;grid-template-columns:12px 1fr auto;gap:12px;align-items:center;font-size:15px}
+.legend li i{width:12px;height:12px;border-radius:3px}
+.legend li b{font-family:var(--display);font-size:17px}
+.legend li small{display:block;color:var(--sub);font-size:13px}
+@media (max-width:860px){.example .wrap{grid-template-columns:1fr;gap:36px}}
+
+/* verify */
+.verify .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:40px}
+.box{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:26px}
+.box h3{margin-bottom:12px}
+.box p{color:var(--sub);font-size:15px}
+.ix{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+.ix td{padding:9px 0;border-top:1px solid var(--line);vertical-align:top}
+.ix td:first-child{font-family:var(--mono);font-size:13px;color:var(--jac);padding-right:14px;white-space:nowrap}
+.ix td:last-child{color:var(--sub)}
+.idrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0 18px}
+.idrow code{font-family:var(--mono);font-size:12.5px;background:var(--muted);padding:6px 10px;border-radius:8px;word-break:break-all}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+@media (max-width:860px){.verify .grid{grid-template-columns:1fr}}
+
+/* faq */
+.faq .list{margin-top:36px;max-width:780px;display:flex;flex-direction:column;gap:10px}
+.faq details{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:0 22px}
+.faq summary{cursor:pointer;list-style:none;padding:18px 0;font-weight:600;font-size:16.5px;display:flex;justify-content:space-between;gap:16px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";color:var(--jac);font-size:22px;line-height:1}
+.faq details[open] summary::after{content:"–"}
+.faq details p{color:var(--sub);padding:0 0 20px;font-size:15.5px}
+
+/* final */
+.final{text-align:center}
+.final .panel{background:var(--ink);color:var(--paper);border-radius:28px;padding:64px 24px}
+html.dark .final .panel{background:var(--jac-soft);color:var(--ink)}
+.final .panel p{opacity:.75;margin:14px auto 0;max-width:520px}
+.final .ctas{justify-content:center}
+/* buttons: set here so they don't depend on Basecoat's layer order */
+a.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border-radius:10px;font:600 14.5px/1 "Figtree",system-ui,sans-serif;text-decoration:none;border:1px solid transparent;cursor:pointer;
+  background:var(--jac);color:var(--primary-foreground)}
+a.btn:hover{background:var(--jac-ink)}
+html.dark a.btn:hover{background:#BDB0F5}
+a.btn[data-variant="outline"]{background:var(--paper);color:var(--ink);border-color:var(--input)}
+a.btn[data-variant="outline"]:hover{background:var(--jac-soft);color:var(--jac-ink);border-color:var(--jac-mist)}
+a.btn[data-variant="ghost"]{background:transparent;color:var(--jac)}
+a.btn[data-variant="ghost"]:hover{background:var(--jac-soft)}
+a.btn:focus-visible{outline:2px solid var(--jac);outline-offset:3px}
+a.btn.cta-lg{height:48px;padding:0 22px;font-size:15.5px;border-radius:12px}
+.final a.btn{background:#F6F3FF;color:#2E2366}
+.final a.btn:hover{background:#FFFFFF;color:var(--jac-ink)}
+.final a.btn[data-variant="outline"]{background:transparent;color:#F6F3FF;border-color:rgba(246,243,255,.4)}
+.final a.btn[data-variant="outline"]:hover{background:rgba(246,243,255,.1)}
+html.dark .final a.btn{background:var(--jac);color:var(--primary-foreground)}
+html.dark .final a.btn:hover{background:#BDB0F5}
+html.dark .final a.btn[data-variant="outline"]{background:transparent;color:var(--ink);border-color:var(--jac-mist)}
+
+
+/* motion */
+.btn{transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px -10px color-mix(in srgb,var(--jac) 70%,transparent)}
+.js .rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
+.js .rv.in{opacity:1;transform:none}
+.wk{float:right;font-weight:600;color:var(--jac);font-variant-numeric:tabular-nums}
+.weeks i{transition:background-color .45s ease,opacity .45s ease,transform .45s ease}
+.weeks i.now{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.3}}
+.flowmini div{transition:background-color .4s ease,box-shadow .4s ease}
+.flowmini div.on{background:var(--jac-soft);box-shadow:inset 3px 0 0 var(--jac)}
+.flowmini div.on b{color:var(--jac)}
+.js .split i{transform:scaleX(0);transform-origin:left;transition:transform .9s cubic-bezier(.2,.7,.2,1)}
+.js .split.in i{transform:none}
+.steps li{transition:border-color .4s ease,box-shadow .4s ease}
+.steps li.lit{border-color:var(--jac);box-shadow:0 0 0 4px var(--jac-soft)}
+.steps li.lit::before{background:var(--jac);color:var(--primary-foreground)}
+.steps li::before{transition:background-color .4s ease,color .4s ease}
+.final .panel{background-image:radial-gradient(600px 240px at 50% 0%,color-mix(in srgb,var(--jac) 35%,transparent),transparent 70%)}
+@media (prefers-reduced-motion:reduce){
+  .js .rv,.js .split i{opacity:1;transform:none;transition:none}
+  .weeks i.now{animation:none}
+  .btn:hover{transform:none}
+}
+
+/* ===== pro motion ===== */
+.hero{position:relative;overflow:hidden;isolation:isolate}
+.aurora{position:absolute;inset:-20% -10% auto;height:120%;z-index:-1;pointer-events:none;filter:blur(60px);opacity:.6}
+.aurora i{position:absolute;border-radius:50%}
+html.dark .aurora{opacity:.4}
+.aurora i:nth-child(1){width:46vw;height:46vw;left:48%;top:0;background:var(--jac-mist);animation:drift1 18s ease-in-out infinite alternate}
+.aurora i:nth-child(2){width:34vw;height:34vw;left:66%;top:28%;background:color-mix(in srgb,var(--jac) 28%,transparent);animation:drift2 22s ease-in-out infinite alternate}
+.aurora i:nth-child(3){width:30vw;height:30vw;left:6%;top:42%;background:color-mix(in srgb,var(--euc) 12%,transparent);animation:drift1 26s ease-in-out infinite alternate-reverse}
+@keyframes drift1{to{transform:translate(-8vw,6vw) scale(1.12)}}
+@keyframes drift2{to{transform:translate(6vw,-5vw) scale(.9)}}
+.hero h1 .ln{display:block;overflow:hidden;padding-bottom:.06em}
+.hero h1 .ln>span{display:inline-block}
+.js .hero h1 .ln>span{transform:translateY(110%);transition:transform 1s cubic-bezier(.16,1,.3,1)}
+.js .hero h1 .ln:nth-child(2)>span{transition-delay:.09s}
+.js .hero h1 .ln:nth-child(3)>span{transition-delay:.18s}
+.js .hx{opacity:0;transform:translateY(14px);transition:opacity .8s ease,transform .8s cubic-bezier(.16,1,.3,1)}
+.js .lede.hx{transition-delay:.35s}
+.js .ctas.hx{transition-delay:.47s}
+.js .hero-card.hx{transition-delay:.3s;transform:translateY(24px) scale(.98)}
+.loaded .hero h1 .ln>span,.loaded .hx{opacity:1;transform:none}
+
+.mag{will-change:transform;transition:transform .5s cubic-bezier(.2,.9,.3,1.4),background-color .18s ease,box-shadow .18s ease}
+.mag svg{transition:transform .3s ease}
+.mag:hover svg{transform:translateX(3px)}
+
+
+
+.drum{display:inline-flex;vertical-align:top}
+.drum .d{display:inline-block;height:1em;overflow:hidden;line-height:1}
+.drum .reel{display:flex;flex-direction:column;transition:transform 1.6s cubic-bezier(.16,1,.3,1)}
+.drum .reel b{display:block;height:1em;line-height:1;font:inherit}
+
+.scrolly{display:grid;grid-template-columns:1fr 1fr;gap:64px;margin-top:44px;align-items:start}
+.scrolly .steps{position:relative;display:flex;flex-direction:column;gap:0;margin:0;padding:0 0 0 34px}
+.scrolly .rail{position:absolute;left:8px;top:36vh;bottom:36vh;width:2px;background:var(--line);border-radius:2px}
+.scrolly .rail i{position:absolute;left:0;top:0;width:100%;height:0;background:var(--jac);border-radius:2px}
+.scrolly .steps li{position:relative;min-height:72vh;display:flex;flex-direction:column;justify-content:center;background:none;border:0;padding:0;opacity:.32;transition:opacity .4s ease}
+.scrolly .steps li::before{content:"";position:absolute;left:-34px;top:50%;margin:0;transform:translateY(-50%);width:18px;height:18px;font-size:0;border:2px solid var(--line);background:var(--page);box-sizing:border-box;transition:background-color .3s ease,border-color .3s ease}
+.scrolly .steps li h3{font-size:26px}
+.scrolly .steps li p{font-size:16.5px;max-width:420px}
+.scrolly .steps li .num{font-size:13px;font-weight:600;color:var(--jac);margin-bottom:10px;letter-spacing:.04em}
+.scrolly .steps li.lit,.scrolly .steps li.done{opacity:1}
+.scrolly .steps li.done{opacity:.55}
+.scrolly .steps li.lit::before,.scrolly .steps li.done::before{background:var(--jac);border-color:var(--jac)}
+.scrolly .steps li.lit{box-shadow:none;border:0}
+.stage{position:sticky;top:max(96px,calc(50vh - 210px));background:var(--paper);border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:0 30px 60px -40px rgba(28,24,38,.4);display:flex;flex-direction:column;gap:20px;margin:12vh 0}
+.st-dots{display:flex;gap:6px}
+.st-dots i{width:22px;height:4px;border-radius:2px;background:var(--jac-mist);transition:background-color .3s ease}
+.st-dots i.on{background:var(--jac)}
+.st-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.st-k{font-size:13px;color:var(--sub)}
+.st-k b{color:var(--jac)}
+.st-cap{font-family:var(--display);font-weight:700;font-size:20px}
+.st-row{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:14px}
+.st-l{font-size:13.5px;color:var(--sub)}
+.st-weeks{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
+.st-weeks i{height:30px;border-radius:7px;background:var(--jac);transition:background-color .5s ease,transform .5s ease}
+.st-weeks i.gone{background:var(--jac-mist);transform:scale(.86)}
+.st-sig{display:flex;gap:10px;flex-wrap:wrap;padding-left:110px}
+.sg{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;padding:6px 12px;border-radius:999px;border:1px dashed var(--input);color:var(--sub);transition:border-color .45s ease,color .45s ease}
+.sg i{font-style:normal;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--muted);color:transparent;font-size:11px;transition:background-color .45s ease,color .45s ease}
+.stage:not([data-scene="0"]) .sg{border-style:solid;border-color:var(--jac);color:var(--ink)}
+.stage:not([data-scene="0"]) .sg i{background:var(--jac);color:var(--primary-foreground)}
+.stage[data-scene="1"] .sg:nth-child(2),.stage[data-scene="1"] .sg:nth-child(2) i{transition-delay:.25s}
+.st-vault{font-size:15px;color:var(--sub)}
+.st-vault b{font-family:var(--display);font-size:26px;color:var(--ink);margin-right:4px}
+.st-pay{opacity:.25;filter:grayscale(1);transition:opacity .5s ease,filter .5s ease}
+.stage[data-scene="3"] .st-pay{opacity:1;filter:none}
+.split.mini{height:12px;margin:0 0 12px}
+.stage .split.mini i{transform:scaleX(0);transform-origin:left;transition:transform .9s cubic-bezier(.16,1,.3,1)}
+.stage[data-scene="3"] .split.mini i{transform:none}
+.st-legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--sub)}
+.st-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+@media (max-width:900px){.scrolly{grid-template-columns:1fr}.stage{display:none}.scrolly .steps{gap:28px}.scrolly .steps li{min-height:0;opacity:1}.scrolly .rail{display:none}}
+
+.spot{position:relative;overflow:hidden}
+.spot::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s ease;background:radial-gradient(360px circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--jac) 13%,transparent),transparent 60%)}
+.spot:hover::after{opacity:1}
+
+@media (prefers-reduced-motion:reduce){
+  .aurora i{animation:none}
+  .js .hero h1 .ln>span,.js .hx{opacity:1;transform:none;transition:none}
+  .drum .reel,.stage *{transition:none!important}
+  .scrolly .steps li{opacity:1}
+}
+footer{padding:36px 0 48px;color:var(--sub);font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:16px 32px;justify-content:space-between;align-items:start}
+footer nav{display:flex;gap:20px;flex-wrap:wrap}
+footer nav a{text-decoration:none} footer nav a:hover{color:var(--ink)}
+footer .fine{flex-basis:100%;font-size:12.5px;color:var(--faint);max-width:760px}
+</style>
 </head>
 <body>
-<p><a href="app/stayvault.html">Open the StayVault demo</a></p>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="StayVault home">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26" aria-hidden="true"><path d="M22 27V18.5L32 10.2L42 18.5V27" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path><rect x="10" y="27" width="44" height="28" rx="9" fill="none" stroke="currentColor" stroke-width="7"></rect><path d="M30.62 33.65Q32 32.5 33.38 33.65L39.62 38.85Q41 40 41 41.8V47Q41 48.5 39.5 48.5H24.5Q23 48.5 23 47V41.8Q23 40 24.38 38.85Z" fill="currentColor"></path></svg>
+      <b>Stay<span>Vault</span></b>
+    </a>
+    <nav aria-label="Sections">
+      <a href="#how">How it works</a>
+      <a href="#parents">Parents</a>
+      <a href="#investors">Investors</a>
+      <a href="#verify">Open source</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn" href="app/stayvault.html">Try the demo</a>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero" id="hero">
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="wrap">
+    <div>
+      <span class="pill hx"><i></i>Live on Solana devnet</span>
+      <h1 aria-label="Rent moves only after your child moves in."><span class="ln" aria-hidden="true"><span>Rent moves only</span></span><span class="ln" aria-hidden="true"><span>after your child</span></span><span class="ln" aria-hidden="true"><span><em>moves in.</em></span></span></h1>
+      <p class="hx lede">StayVault holds an international student's rent in a Solana escrow, releases it to the student's dorm (purpose-built student accommodation, PBSA) one week at a time after move-in, and pays the dorm's investors their share in USDC every month.</p>
+      <div class="ctas hx">
+        <a class="btn cta-lg mag" data-size="lg" href="app/stayvault.html"><span>Try the devnet demo</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="btn cta-lg" data-size="lg" data-variant="outline" href="#how">See how it works</a>
+      </div>
+    </div>
+    <div class="hero-card hx" aria-label="Illustration of weekly rent releases">
+      <div class="k">Weekly rent, set aside in escrow <span class="wk" id="wk" aria-hidden="true"></span></div>
+      <div class="weeks" id="weeks" aria-hidden="true"><i class="paid"></i><i class="paid"></i><i class="paid"></i><i class="now"></i><i></i><i></i><i></i><i></i></div>
+      <div class="flowmini" id="flowmini">
+        <div><span>Parent sets aside rent<br><span class="tag">USDC, all weeks up front</span></span><b>Escrow</b></div>
+        <div><span>Released after move-in<br><span class="tag">one week at a time</span></span><b>Dorm vault</b></div>
+        <div><span>Paid out every month<br><span class="tag">by units held</span></span><b>Investors</b></div>
+      </div>
+      <span class="sim">Illustration. Figures in the demo are devnet test tokens.</span>
+    </div>
+  </div>
+</section>
+
+<div class="strip">
+  <div class="wrap">
+    <span><b>Why Solana:</b> monthly payouts to hundreds of investors cost almost nothing per transfer. Settled in USDC, wallet to wallet.</span>
+    <span><a href="https://github.com/Stay-Vault/stayvault" target="_blank" rel="noopener">Open source on GitHub</a></span>
+  </div>
+</div>
+
+
+<section class="problem">
+  <div class="wrap">
+    <div class="rv eyebrow">The problem</div>
+    <h2 class="rv">Paying rent from another country is easy to get wrong.</h2>
+    <p class="rv lede">Families send rent across borders every week or month, on their own, with no link between the payment and whether the student actually moved in.</p>
+    <div class="grid">
+      <div class="rv stat spot"><div class="big"><span class="drum" data-drum="4">4</span> of 10</div><p>former international students we interviewed had paid rent late at least once.</p></div>
+      <div class="rv stat spot"><div class="big">Manual</div><p>Transfers are scheduled by hand. One interviewee simply forgot a rent transfer.</p></div>
+      <div class="rv stat spot"><div class="big">Off-ramp</div><p>Converting to local currency adds fees on every payment, before the dorm sees a cent.</p></div>
+    </div>
+    <div class="demand">
+      <h3>And investors already want student housing.</h3>
+      <div class="grid">
+        <div class="rv stat spot"><div class="big"><span class="drum" data-drum="6.7">6.7</span></div><p>university students for every PBSA bed in Australia. Demand far outruns supply. <a href="https://www.propertycouncil.com.au/media-releases/student-accommodation-supply-set-to-reach-144300-beds-by-2027" target="_blank" rel="noopener">Property Council of Australia, 2025</a></p></div>
+        <div class="rv stat spot"><div class="big">¥<span class="drum" data-drum="3.5">3.5</span>B</div><p>raised by a student-residence security token in Japan in 2024. The investors exist. <a href="https://www.tr.mufg.jp/ippan/release/pdf_mutb/240131_2.pdf" target="_blank" rel="noopener">MUFG Trust, 2024</a></p></div>
+        <div class="rv stat spot"><div class="big">Missing</div><p>A rail that collects rent from families abroad and pays token holders on-chain. That is StayVault.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how" class="how">
+  <div class="wrap">
+    <div class="rv eyebrow">How it works</div>
+    <h2 class="rv">Four steps, all on-chain.</h2>
+    <p class="rv lede">The escrow and the dorm's vault are program accounts with no private key. StayVault never holds the money.</p>
+    <div class="scrolly">
+      <ol class="steps" id="steps"><span class="rail" aria-hidden="true"><i id="railFill"></i></span>
+        <li data-step="0"><div class="num">STEP 01</div><h3>Set aside</h3><p>The parent deposits every week's rent in USDC into an escrow account owned by the program.</p><span class="who">Parent signs</span></li>
+        <li data-step="1"><div class="num">STEP 02</div><h3>Approve move-in</h3><p>The parent and the property manager both sign. Week 1 is released to the dorm's vault.</p><span class="who">Parent + manager sign</span></li>
+        <li data-step="2"><div class="num">STEP 03</div><h3>Weekly release</h3><p>Each week's rent moves to the property vault once it is due. Anyone can trigger it.</p><span class="who">No signature needed</span></li>
+        <li data-step="3"><div class="num">STEP 04</div><h3>Monthly payout</h3><p>The token issuer runs the payout: investors, the manager and StayVault are paid, and the reserve stays in the vault.</p><span class="who">Token issuer signs</span></li>
+      </ol>
+      <div class="stage" id="stage" data-scene="0" aria-hidden="true">
+        <div class="st-dots" id="stDots"><i class="on"></i><i></i><i></i><i></i></div>
+        <div class="st-head"><span class="st-k">Step <b id="stN">1</b> of 4</span><span class="st-cap" id="stCap">Rent set aside in escrow</span></div>
+        <div class="st-row"><span class="st-l">Escrow</span><div class="st-weeks" id="stWeeks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        <div class="st-sig"><span class="sg"><i>&#10003;</i>Parent</span><span class="sg"><i>&#10003;</i>Property manager</span></div>
+        <div class="st-row"><span class="st-l">Dorm vault</span><div class="st-vault"><b id="stVault">0</b> weeks received</div></div>
+        <div class="st-pay">
+          <div class="split mini"><i class="c-inv" style="width:70%"></i><i class="c-mgr" style="width:10%"></i><i class="c-res" style="width:10%"></i><i class="c-oth" style="width:7%"></i><i class="c-fee" style="width:3%"></i></div>
+          <div class="st-legend"><span><i class="c-inv"></i>Investors 70%</span><span><i class="c-mgr"></i>Manager 10%</span><span><i class="c-res"></i>Repair 10%</span><span><i class="c-oth"></i>Other 7%</span><span><i class="c-fee"></i>StayVault 3%</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="note">Moving out early? The parent and the manager sign again, and the unpaid weeks go back to the parent. If move-in is never confirmed by the deadline, the parent gets everything back.</p>
+  </div>
+</section>
+
+<section id="parents">
+  <div class="wrap">
+    <div class="rv eyebrow">Two sides, one flow</div>
+    <h2 class="rv">Safer for families. Real yield for investors.</h2>
+    <div class="aud">
+      <div class="rv card spot">
+        <h3>For parents</h3>
+        <ul>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Nothing beyond the rent.</b> StayVault pays every network fee and the escrow account deposit.</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Not a prepayment.</b> The dorm can't touch a week's rent until move-in is approved and that week is due.</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Never late.</b> Rent is set aside once, then released on schedule.</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Unpaid weeks come back</b> if your child moves out early.</span></li>
+        </ul>
+      </div>
+      <div class="rv card inv spot" id="investors">
+        <h3>For investors</h3>
+        <ul>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Rent income in USDC</b>, paid out every month.</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Split by units held</b>, straight to each investor's wallet.</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>No off-ramp in between.</b> Rent moves wallet to wallet, from the family to you.</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Every payout is verifiable</b> on Solana Explorer.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="example">
+  <div class="wrap">
+    <div>
+      <div class="rv eyebrow">Where each payout goes</div>
+      <h2 class="rv">Every USDC of rent, accounted for.</h2>
+      <p class="rv lede">Each month the vault's rent is split by fixed rates. In production the token issuer sets the rates for each property; these are the demo settings.</p>
+    </div>
+    <div class="rv prop spot">
+      <header>
+        <div><h3>Stay-Dorm</h3><div class="city">Brisbane · sample PBSA</div></div>
+        <span class="badge-sim">Demo settings</span>
+      </header>
+      <div class="split" id="split" role="img" aria-label="Monthly payout split: investors 70%, property manager 10%, repair reserve 10%, other costs 7%, StayVault 3%">
+        <i class="c-inv" style="width:70%"></i><i class="c-mgr" style="width:10%"></i><i class="c-res" style="width:10%"></i><i class="c-oth" style="width:7%"></i><i class="c-fee" style="width:3%"></i>
+      </div>
+      <ul class="legend">
+        <li><i class="c-inv"></i><span>Investors<small>by units held</small></span><b>70%</b></li>
+        <li><i class="c-mgr"></i><span>Property manager</span><b>10%</b></li>
+        <li><i class="c-res"></i><span>Repair reserve<small>stays in the vault</small></span><b>10%</b></li>
+        <li><i class="c-oth"></i><span>Other costs<small>insurance and taxes, stays in the vault</small></span><b>7%</b></li>
+        <li><i class="c-fee"></i><span>StayVault service fee</span><b>3%</b></li>
+      </ul>
+      <p class="bizline"><b>Business model:</b> StayVault earns 3% of every monthly payout and pays all network fees out of it. Parents pay nothing beyond the rent.</p>
+    </div>
+  </div>
+</section>
+
+<section class="verify" id="verify">
+  <div class="wrap">
+    <div class="rv eyebrow">Open source and verifiable</div>
+    <h2 class="rv">Check every step yourself.</h2>
+    <p class="rv lede">The program is deployed on devnet. Every payment in the demo is a real devnet transaction with a link to Solana Explorer.</p>
+    <div class="grid">
+      <div class="rv box spot">
+        <h3>The program</h3>
+        <p>Seven instructions, written in Rust with Anchor.</p>
+        <table class="ix">
+          <tr><td>init_property</td><td>Registers the dorm, its vault, rates and investors</td></tr>
+          <tr><td>create_vault</td><td>Creates the escrow and deposits every week's rent</td></tr>
+          <tr><td>confirm_move_in</td><td>Parent and manager confirm move-in</td></tr>
+          <tr><td>release</td><td>Sends one week to the vault once it is due</td></tr>
+          <tr><td>refund_unconfirmed</td><td>Returns everything if move-in is never confirmed</td></tr>
+          <tr><td>move_out</td><td>Returns unpaid weeks to the parent</td></tr>
+          <tr><td>distribute</td><td>Pays investors, the manager and StayVault</td></tr>
+        </table>
+      </div>
+      <div class="rv box spot">
+        <h3>Try it without a wallet</h3>
+        <p>The demo uses published devnet-only wallets, so anyone can run the full flow in a browser: set aside rent, approve move-in, watch weekly releases and a monthly payout. In the demo, one week lasts 10 seconds.</p>
+        <div class="idrow"><code>GJet47eJPYYAxHz5RFvxqVKv3n6d6uWZWPsRUSzjB5ZG</code></div>
+        <div class="links">
+          <a class="btn" href="app/stayvault.html">Open the demo</a>
+          <a class="btn" data-variant="outline" href="https://github.com/Stay-Vault/stayvault" target="_blank" rel="noopener">View on GitHub</a>
+          <a class="btn" data-variant="ghost" href="https://explorer.solana.com/address/GJet47eJPYYAxHz5RFvxqVKv3n6d6uWZWPsRUSzjB5ZG?cluster=devnet" target="_blank" rel="noopener">Program on Explorer</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="faq" id="faq">
+  <div class="wrap">
+    <div class="rv eyebrow">FAQ</div>
+    <h2 class="rv">Questions families and investors ask.</h2>
+    <div class="list">
+      <details class="rv"><summary>Is this the same as paying rent in advance?</summary><p>No. The rent sits in an escrow account owned by the program. The dorm receives a week's rent only after move-in is approved and that week becomes due.</p></details>
+      <details class="rv"><summary>What if my child never moves in?</summary><p>If move-in is not confirmed by the deadline, the parent can take everything back from the escrow.</p></details>
+      <details class="rv"><summary>What happens if they move out early?</summary><p>The parent and the property manager both sign, and every week that has not been paid yet goes back to the parent.</p></details>
+      <details class="rv"><summary>Who pays the network fees?</summary><p>StayVault. It pays the fee for every transaction and the escrow account deposit out of its service fee, so parents pay nothing beyond the rent.</p></details>
+      <details class="rv"><summary>Can StayVault move the money?</summary><p>No. The escrow and the property vault are program accounts with no private key. Funds move only by the program's rules and the required signatures.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <div class="rv panel">
+      <h2 class="rv">See the whole flow on devnet.</h2>
+      <p>Run the demo on Solana devnet. No wallet or sign-up needed.</p>
+      <div class="ctas">
+        <a class="btn cta-lg mag" data-size="lg" href="app/stayvault.html">Try the devnet demo</a>
+        <a class="btn cta-lg" data-size="lg" data-variant="outline" href="https://github.com/Stay-Vault/stayvault" target="_blank" rel="noopener">View the code</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="StayVault home">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="22" height="22" aria-hidden="true"><path d="M22 27V18.5L32 10.2L42 18.5V27" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path><rect x="10" y="27" width="44" height="28" rx="9" fill="none" stroke="currentColor" stroke-width="7"></rect><path d="M30.62 33.65Q32 32.5 33.38 33.65L39.62 38.85Q41 40 41 41.8V47Q41 48.5 39.5 48.5H24.5Q23 48.5 23 47V41.8Q23 40 24.38 38.85Z" fill="currentColor"></path></svg>
+      <b>Stay<span>Vault</span></b>
+    </a>
+    <nav aria-label="Footer">
+      <a href="app/stayvault.html">Demo</a>
+      <a href="https://github.com/Stay-Vault/stayvault" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://explorer.solana.com/address/GJet47eJPYYAxHz5RFvxqVKv3n6d6uWZWPsRUSzjB5ZG?cluster=devnet" target="_blank" rel="noopener">Explorer</a>
+    </nav>
+    <p class="fine">StayVault is a hackathon project running on Solana devnet. Demo tokens have no value. Nothing on this site is an offer of securities or investment advice. The dorm, the student and the figures in the demo are fictional sample data.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var RM=false;try{RM=matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+  var FINE=false;try{FINE=matchMedia('(pointer: fine)').matches}catch(e){}
+  var D=document, root=D.documentElement;
+
+  // hero intro: masked headline lines slide up, then the rest fades in
+  requestAnimationFrame(function(){requestAnimationFrame(function(){root.classList.add('loaded')})});
+
+  // drum-roll digits: each digit is a reel of 0-9 that spins to its value
+  D.querySelectorAll('[data-drum]').forEach(function(el){
+    var v=el.dataset.drum; el.setAttribute('aria-label',v); el.textContent='';
+    v.split('').forEach(function(ch,k){
+      if(!/\d/.test(ch)){var t=D.createElement('span');t.textContent=ch;t.setAttribute('aria-hidden','true');el.appendChild(t);return}
+      var d=D.createElement('span');d.className='d';d.setAttribute('aria-hidden','true');
+      var r=D.createElement('span');r.className='reel';
+      for(var n=0;n<20;n++){var b=D.createElement('b');b.textContent=n%10;r.appendChild(b)}
+      r.dataset.to=10+(+ch); r.style.transitionDelay=(k*0.12)+'s';
+      if(RM)r.style.transform='translateY(-'+r.dataset.to+'em)';
+      d.appendChild(r);el.appendChild(d);
+    });
+  });
+  function roll(el){el.querySelectorAll('.reel').forEach(function(r){r.style.transform='translateY(-'+r.dataset.to+'em)'})}
+
+  // reveal on scroll
+  var io=('IntersectionObserver' in window)?new IntersectionObserver(function(es){es.forEach(function(e){
+    if(!e.isIntersecting)return;var t=e.target;t.classList.add('in');io.unobserve(t);if(t.hasAttribute('data-drum'))roll(t);
+  })},{threshold:.2,rootMargin:'0px 0px -8% 0px'}):null;
+  D.querySelectorAll('.rv').forEach(function(el){var p=el.parentElement,k=Array.prototype.indexOf.call(p.children,el);el.style.transitionDelay=Math.min(k,5)*70+'ms';io?io.observe(el):el.classList.add('in')});
+  var sp=D.getElementById('split'); if(sp){io?io.observe(sp):sp.classList.add('in')}
+  D.querySelectorAll('[data-drum]').forEach(function(el){io?io.observe(el):roll(el)});
+
+  // scroll-linked "how it works": the step crossing the middle of the screen drives the panel
+  var stage=D.getElementById('stage'), steps=D.querySelectorAll('#steps li'), list=D.getElementById('steps');
+  if(stage&&steps.length){
+    var caps=['Rent set aside in escrow','Move-in approved by both','Released week by week','Monthly payout to investors'];
+    var weeks=D.getElementById('stWeeks').children, vault=D.getElementById('stVault'), stN=D.getElementById('stN'), cap=D.getElementById('stCap'), dots=D.getElementById('stDots').children, fill=D.getElementById('railFill');
+    var cur=-1, lastG=-1, ticking=false;
+    function paintWeeks(g){if(g===lastG)return;lastG=g;for(var k=0;k<weeks.length;k++)weeks[k].classList.toggle('gone',k<g);vault.textContent=g}
+    function update(){
+      ticking=false;
+      var line=innerHeight*0.5, n=0, prog=0;
+      var lead=innerHeight*0.15;for(var k=0;k<steps.length;k++){var r=steps[k].getBoundingClientRect(),start=r.top+r.height/2-lead;if(start<=line){n=k;prog=Math.min(Math.max((line-start)/r.height,0),1)}}
+      if(n!==cur){cur=n;
+        steps.forEach(function(li,k){li.classList.toggle('lit',k===n);li.classList.toggle('done',k<n)});
+        for(var d=0;d<dots.length;d++)dots[d].classList.toggle('on',d<=n);
+        stage.dataset.scene=n; stN.textContent=n+1; cap.textContent=caps[n];
+      }
+      // weeks follow the scroll inside step 3: 1 -> 4 weeks released
+      paintWeeks(n===0?0:n===1?1:n===2?1+Math.round(prog*3):4);
+      var a=steps[0].getBoundingClientRect(), b=steps[steps.length-1].getBoundingClientRect(), c0=a.top+a.height/2, c1=b.top+b.height/2, total=Math.min(Math.max((line-c0)/(c1-c0),0),1);
+      if(fill)fill.style.height=(total*100)+'%';
+    }
+    function onScroll(){if(!ticking){ticking=true;requestAnimationFrame(update)}}
+    addEventListener('scroll',onScroll,{passive:true}); addEventListener('resize',onScroll); update();
+  }
+
+  // magnetic buttons: pulled toward the pointer, spring back on leave
+  if(FINE&&!RM){D.querySelectorAll('.mag').forEach(function(b){
+    b.addEventListener('pointermove',function(e){var r=b.getBoundingClientRect(),x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2;b.style.transform='translate('+(x*.22).toFixed(1)+'px,'+(y*.35).toFixed(1)+'px)'});
+    b.addEventListener('pointerleave',function(){b.style.transform=''});
+  })}
+
+  // card spotlight that follows the pointer
+  if(FINE){D.querySelectorAll('.spot').forEach(function(c){c.addEventListener('pointermove',function(e){var r=c.getBoundingClientRect();c.style.setProperty('--mx',(e.clientX-r.left)+'px');c.style.setProperty('--my',(e.clientY-r.top)+'px')})})}
+
+  // hero loop: 8 weeks fill, rows highlight in order
+  var w=D.getElementById('weeks'),fm=D.getElementById('flowmini'),wk=D.getElementById('wk');
+  if(w&&fm&&!RM){var cells=w.children,rows=fm.children,n=cells.length,step=0;
+    function paint(){var released=step%(n+2);
+      for(var j=0;j<n;j++){cells[j].className=j<released?'paid':(j===released&&released<n?'now':'')}
+      for(var r=0;r<rows.length;r++)rows[r].classList.remove('on');
+      if(released===0)rows[0].classList.add('on');else if(released%4===0&&released<=n)rows[2].classList.add('on');else if(released<=n)rows[1].classList.add('on');else rows[2].classList.add('on');
+      if(wk)wk.textContent=released===0?'Set aside':(released<=n?'Week '+released+' released':'Paid out');
+      step++}
+    paint();setInterval(paint,1300)}
+})();
+</script>
 </body>
 </html>
