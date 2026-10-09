@@ -3,6 +3,7 @@
 ## Live demo
 
 **Try the demo:** [https://stay-vault.github.io/stayvault/app/stayvault.html](https://stay-vault.github.io/stayvault/app/stayvault.html)
+
 **Website:** [https://stay-vault.github.io/stayvault/](https://stay-vault.github.io/stayvault/)
 
 The demo runs on Solana **devnet** against the deployed StayVault program
