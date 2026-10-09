@@ -2,7 +2,9 @@
 <img src="app/brand/stayvault-logo-horizontal.svg" width="280" alt="StayVault logo: a padlock with a roof-shaped shackle holding a home">
 ## Live demo
 
-**Try it:** [https://Stay-Vault.github.io/stayvault/](https://Stay-Vault.github.io/stayvault/)
+**Try the demo:** [https://stay-vault.github.io/stayvault/app/stayvault.html](https://stay-vault.github.io/stayvault/app/stayvault.html)
+
+**Website:** [https://stay-vault.github.io/stayvault/](https://stay-vault.github.io/stayvault/)
 
 The demo runs on Solana **devnet** against the deployed StayVault program
 (`GJet47eJPYYAxHz5RFvxqVKv3n6d6uWZWPsRUSzjB5ZG`). Sign-in and the MetaMask connection are mocks;
