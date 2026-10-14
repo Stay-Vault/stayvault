@@ -21,7 +21,7 @@ Every transaction shows a "View on Explorer" link, and each investor's address o
 
 Parents pay nothing beyond the rent: StayVault is the fee payer of every transaction and also pays the escrow account deposit, out of its service fee. The parent's demo wallet holds no SOL at all. The rates are demo settings for the listed dorm. In production, the token issuer sets them for each property.
 
-Demo video: <link>
+Demo video:[Watch on YouTube](https://youtu.be/SiwNYBb1LAQ?si=ITsdo3C0akEzv1sq)
 
 ### About the keys in `app/demo-public.json`
 
